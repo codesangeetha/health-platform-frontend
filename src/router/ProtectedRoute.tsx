@@ -8,5 +8,5 @@ export function ProtectedRoute() {
     return <div>Loading...</div>;
   }
 
-  return authState.isAuthenticated ? <Outlet /> : <Navigate to="/login" />;
+  return authState.isAuthenticated ? <Outlet /> : <Navigate to="/" />;
 }

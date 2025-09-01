@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import '../../styles/components/shared.styles.css';
 
@@ -52,7 +52,7 @@ export const DoctorLogin = () => {
           <button type="submit" className="submit-button">Login</button>
         </form>
         <div className="auth-links">
-          <a href="/doctor/forgot-password">Forgot password?</a>
+          <Link to="/forgot-password">Forgot password?</Link>
         </div>
       </div>
     </div>
