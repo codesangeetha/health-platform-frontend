@@ -12,7 +12,10 @@ interface PatientRegisterData {
   lastName: string;
   phone: string;
   dateOfBirth: string; // ISO date YYYY-MM-DD
+  gender: string;
   bloodGroup: string;
+  confirmPassword: string;
+  address: string;
   allergies: string[];
   chronicDiseases: string[];
   emergencyContact: {
@@ -21,6 +24,32 @@ interface PatientRegisterData {
     phone: string;
   };
 }
+
+type FieldKey =
+  | 'firstName'
+  | 'lastName'
+  | 'email'
+  | 'phone'
+  | 'dateOfBirth'
+  | 'gender'
+  | 'bloodGroup'
+  | 'password'
+  | 'confirmPassword'
+  | 'address';
+
+
+type FieldErrors = Partial<Record<FieldKey, string>>;
+type Touched = Partial<Record<FieldKey, boolean>>;
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const nameRegex = /^[A-Za-z][A-Za-z\s'.-]{1,}$/;
+//const phoneRegex = /^[0-9()+\-\s]{7,20}$/;
+const phoneRegex = /^\d{10}$/;
+
+const bloodGroups = new Set(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']);
+//const gender = new Set(['Male', 'Female', 'Other']);
+
+
 
 export const PatientRegister = () => {
   const { register, authState } = useContext(AuthContext);
@@ -37,6 +66,9 @@ export const PatientRegister = () => {
     phone: '',
     dateOfBirth: '',
     bloodGroup: '',
+    confirmPassword: '',
+    gender: '',
+    address: '',
     allergies: [],
     chronicDiseases: [],
     emergencyContact: { name: '', relationship: '', phone: '' },
@@ -45,15 +77,140 @@ export const PatientRegister = () => {
   const [allergyInput, setAllergyInput] = useState('');
   const [diseaseInput, setDiseaseInput] = useState('');
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value } as any));
+  const [confirmPassword, setConfirmPassword] = useState<string>('');
+
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const [touched, setTouched] = useState<Touched>({});
+
+
+  // ---------- Validation helpers ----------
+  const validateFirstName = (v: string) => {
+    const s = v.trim();
+    if (!s) return 'First name is required.';
+    if (!nameRegex.test(s)) return 'Enter a valid first name.';
+    return undefined;
+  };
+  const validateLastName = (v: string) => {
+    const s = v.trim();
+    if (!s) return 'Last name is required.';
+    if (!nameRegex.test(s)) return 'Enter a valid last name.';
+    return undefined;
+  };
+  const validateEmail = (v: string) => {
+    const s = v.trim();
+    if (!s) return 'Email is required.';
+    if (!emailRegex.test(s)) return 'Enter a valid email address.';
+    return undefined;
+  };
+  const validatePhone = (v: string) => {
+    const s = v.trim();
+    if (!s) return 'Phone number is required.';
+    if (!phoneRegex.test(s)) return 'Enter a valid phone number.';
+    return undefined;
+  };
+  const validateDOB = (v: string) => {
+    if (!v) return 'Date of birth is required.';
+    const today = new Date();
+    const d = new Date(v + 'T00:00:00');
+    if (isNaN(d.getTime())) return 'Enter a valid date.';
+    if (d > today) return 'Date of birth cannot be in the future.';
+    return undefined;
+  };
+  const validateGender = (v: string) => {
+    if (!v) return 'Gender is required.';
+    return undefined;
+  };
+  const validateBloodGroup = (v: string) => {
+    if (!v) return 'Blood group is required.';
+    if (!bloodGroups.has(v)) return 'Select a valid blood group.';
+    return undefined;
+  };
+  const validatePassword = (v: string) => {
+    if (!v) return 'Password is required.';
+    if (v.length < 8) return 'Password must be at least 8 characters.';
+    return undefined;
+  };
+  const validateConfirmPassword = (pass: string, confirm: string) => {
+    if (!confirm) return 'Please confirm your password.';
+    if (pass !== confirm) return 'Passwords do not match.';
+    return undefined;
+  };
+  const validateAddress = (v: string) => {
+    if (!v) return 'Address is required.';
+    return undefined;
   };
 
-  const handleEmergencyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setForm(prev => ({ ...prev, emergencyContact: { ...prev.emergencyContact, [name]: value } }));
+  const validateField = (name: FieldKey, value: string): string | undefined => {
+    switch (name) {
+      case 'firstName': return validateFirstName(value);
+      case 'lastName': return validateLastName(value);
+      case 'email': return validateEmail(value);
+      case 'phone': return validatePhone(value);
+      case 'dateOfBirth': return validateDOB(value);
+      case 'gender': return validateGender(value);
+      case 'bloodGroup': return validateBloodGroup(value);
+      case 'password': return validatePassword(value);
+      case 'confirmPassword': return validateConfirmPassword(form.password, value);
+      case 'address': return validateAddress(value);
+      default: return undefined;
+    }
   };
+
+  const validateForm = (): boolean => {
+    const newErrors: FieldErrors = {
+      firstName: validateFirstName(form.firstName),
+      lastName: validateLastName(form.lastName),
+      email: validateEmail(form.email),
+      phone: validatePhone(form.phone),
+      dateOfBirth: validateDOB(form.dateOfBirth),
+      gender: validateGender(form.gender),
+      bloodGroup: validateBloodGroup(form.bloodGroup),
+      password: validatePassword(form.password),
+      confirmPassword: validateConfirmPassword(form.password, confirmPassword),
+      address: validateAddress(form.address),
+    };
+
+    setErrors(newErrors);
+    return Object.values(newErrors).every((m) => !m);
+  };
+
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+
+    if (name === 'confirmPassword') {
+      setConfirmPassword(value);
+      if (touched.confirmPassword) {
+        setErrors((prev) => ({ ...prev, confirmPassword: validateConfirmPassword(form.password, value) }));
+      }
+      return;
+    }
+
+
+    setForm(prev => ({ ...prev, [name]: value } as PatientRegisterData));
+
+    const key = name as FieldKey;
+    if (touched[key]) {
+      setErrors((prev) => ({ ...prev, [key]: validateField(key, value) }));
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    const key = name as FieldKey;
+    setTouched((t) => ({ ...t, [key]: true }));
+    setErrors((prev) => ({
+      ...prev,
+      [key]: validateField(key, key === 'confirmPassword' ? confirmPassword : value),
+    }));
+  };
+
+
+
+  /*  const handleEmergencyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+     const { name, value } = e.target;
+     setForm(prev => ({ ...prev, emergencyContact: { ...prev.emergencyContact, [name]: value } }));
+   }; */
 
   const addAllergy = () => {
     const v = allergyInput.trim();
@@ -79,11 +236,68 @@ export const PatientRegister = () => {
     e.preventDefault();
     setSuccessMessage('');
     if (!acceptedTerms) return; // basic terms enforcement
-    const res = await register(form as unknown as any);
+
+    const isValid = validateForm();
+    if (!isValid) {
+      // Mark all as touched so errors are visible
+      setTouched({
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        dateOfBirth: true,
+        gender: true,
+        bloodGroup: true,
+        password: true,
+        confirmPassword: true,
+        address: true,
+      });
+      return;
+    }
+
+    // Build payload (trim some fields)
+    const payload: PatientRegisterData = {
+      ...form,
+      email: form.email.trim(),
+      firstName: form.firstName.trim(),
+      lastName: form.lastName.trim(),
+      address: form.address.trim(),
+      // If API supports address, include it here.
+      // address,
+    };
+
+    const res = await register(payload as unknown as any);
     if (res.success) {
       setSuccessMessage('Registration successful. Please login.');
     }
   };
+
+  // Button enablement
+  const requiredFilled =
+    form.firstName.trim().length > 0 &&
+    form.lastName.trim().length > 0 &&
+    form.email.trim().length > 0 &&
+    form.phone.trim().length > 0 &&
+    form.dateOfBirth.length > 0 &&
+    form.gender.length > 0 &&
+    form.bloodGroup.length > 0 &&
+    form.password.length >= 1 &&
+    form.address.length >= 1 &&
+    confirmPassword.length >= 1;
+
+  const hasErrors = Boolean(
+    errors.firstName ||
+    errors.lastName ||
+    errors.email ||
+    errors.phone ||
+    errors.dateOfBirth ||
+    errors.gender ||
+    errors.bloodGroup ||
+    errors.password ||
+    errors.confirmPassword ||
+    errors.address
+  );
+  const canSubmit = !authState.isLoading && acceptedTerms && requiredFilled && !hasErrors;
 
   return (
     <div className="pr pr--offset">
@@ -101,7 +315,7 @@ export const PatientRegister = () => {
           <p className="pr-header__subtitle">Create Your Account</p>
         </section>
 
-        
+
         {/* Card/Form */}
         <section className="pr-card" aria-label="Patient Registration Form">
           {/* Hidden section headers for a11y - reflect JSON */}
@@ -118,8 +332,13 @@ export const PatientRegister = () => {
                       <path d="M5.5 21a7.5 7.5 0 0 1 13 0" />
                     </svg>
                   </span>
-                  <input id="firstName" name="firstName" className="pr-input" placeholder="Enter your first name" value={form.firstName} onChange={handleChange} required />
+                  <input id="firstName" name="firstName" className="pr-input" placeholder="Enter your first name" value={form.firstName} onChange={handleChange} onBlur={handleBlur}
+                    aria-invalid={Boolean(touched.firstName && errors.firstName)}
+                    aria-describedby={touched.firstName && errors.firstName ? 'firstName-error' : undefined} />
                 </div>
+                {touched.firstName && errors.firstName && (
+                  <p className="pr-input-error" id="firstName-error" role="alert">{errors.firstName}</p>
+                )}
               </div>
 
               {/* Last Name */}
@@ -132,8 +351,13 @@ export const PatientRegister = () => {
                       <path d="M5.5 21a7.5 7.5 0 0 1 13 0" />
                     </svg>
                   </span>
-                  <input id="lastName" name="lastName" className="pr-input" placeholder="Enter your last name" value={form.lastName} onChange={handleChange} required />
+                  <input id="lastName" name="lastName" className="pr-input" placeholder="Enter your last name" value={form.lastName} onChange={handleChange} onBlur={handleBlur}
+                    aria-invalid={Boolean(touched.lastName && errors.lastName)}
+                    aria-describedby={touched.lastName && errors.lastName ? 'lastName-error' : undefined} />
                 </div>
+                {touched.lastName && errors.lastName && (
+                  <p className="pr-input-error" id="lastName-error" role="alert">{errors.lastName}</p>
+                )}
               </div>
 
               {/* Email */}
@@ -146,8 +370,15 @@ export const PatientRegister = () => {
                       <polyline points="3,7 12,13 21,7"></polyline>
                     </svg>
                   </span>
-                  <input id="email" name="email" type="email" className="pr-input" placeholder="Enter your email" value={form.email} onChange={handleChange} required />
+                  <input id="email" name="email" type="email" className="pr-input" placeholder="Enter your email" value={form.email} onChange={handleChange} onBlur={handleBlur}
+                    autoComplete="email"
+                    inputMode="email"
+                    aria-invalid={Boolean(touched.email && errors.email)}
+                    aria-describedby={touched.email && errors.email ? 'email-error' : undefined} />
                 </div>
+                {touched.email && errors.email && (
+                  <p className="pr-input-error" id="email-error" role="alert">{errors.email}</p>
+                )}
               </div>
 
               {/* Phone */}
@@ -159,8 +390,15 @@ export const PatientRegister = () => {
                       <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.09 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.77.62 2.61a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.47-1.22a2 2 0 0 1 2.11-.45c.84.29 1.71.5 2.61.62A2 2 0 0 1 22 16.92z" />
                     </svg>
                   </span>
-                  <input id="phone" name="phone" className="pr-input" placeholder="Enter your phone number" value={form.phone} onChange={handleChange} required />
+                  <input id="phone" name="phone" className="pr-input" placeholder="Enter your phone number" value={form.phone} onChange={handleChange}
+                    onBlur={handleBlur}
+                    inputMode="tel"
+                    aria-invalid={Boolean(touched.phone && errors.phone)}
+                    aria-describedby={touched.phone && errors.phone ? 'phone-error' : undefined} />
                 </div>
+                {touched.phone && errors.phone && (
+                  <p className="pr-input-error" id="phone-error" role="alert">{errors.phone}</p>
+                )}
               </div>
 
               {/* DOB */}
@@ -172,21 +410,65 @@ export const PatientRegister = () => {
                       <path d="M7 2v3M17 2v3M4 10h16M5 6h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" />
                     </svg>
                   </span>
-                  <input id="dateOfBirth" name="dateOfBirth" type="date" className="pr-input" placeholder="dd / mm / yyyy" value={form.dateOfBirth} onChange={handleChange} required max={new Date().toISOString().split('T')[0]} />
+                  <input id="dateOfBirth" name="dateOfBirth" type="date" className="pr-input" placeholder="dd / mm / yyyy" value={form.dateOfBirth} onChange={handleChange}
+                    onBlur={handleBlur}
+                    max={new Date().toISOString().split('T')[0]}
+                    aria-invalid={Boolean(touched.dateOfBirth && errors.dateOfBirth)}
+                    aria-describedby={touched.dateOfBirth && errors.dateOfBirth ? 'dob-error' : undefined} />
                 </div>
+                {touched.dateOfBirth && errors.dateOfBirth && (
+                  <p className="pr-input-error" id="dob-error" role="alert">{errors.dateOfBirth}</p>
+                )}
               </div>
 
               {/* Gender */}
               <div className="pr-field">
                 <label htmlFor="gender">Gender *</label>
                 <div className="pr-input-wrap">
-                  <select id="gender" name="gender" className="pr-select" defaultValue="">
+                  <select id="gender" name="gender" className="pr-select" value={form.gender}
+                    onBlur={handleBlur}
+                    onChange={handleChange}
+                    aria-invalid={Boolean(touched.gender && errors.gender)}
+                    aria-describedby={touched.gender && errors.gender ? 'gender-error' : undefined}>
                     <option value="" disabled>Select gender</option>
                     <option value="male">Male</option>
                     <option value="female">Female</option>
                     <option value="other">Other</option>
                   </select>
                 </div>
+                {touched.gender && errors.gender && (
+                  <p className="pr-input-error" id="gender-error" role="alert">{errors.gender}</p>
+                )}
+              </div>
+
+              {/* Blood Group */}
+              <div className="pr-field">
+                <label htmlFor="bloodGroup">Blood Group *</label>
+                <div className="pr-input-wrap">
+                  <select
+                    id="bloodGroup"
+                    name="bloodGroup"
+                    className="pr-select"
+                    value={form.bloodGroup}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    aria-invalid={Boolean(touched.bloodGroup && errors.bloodGroup)}
+                    aria-describedby={touched.bloodGroup && errors.bloodGroup ? 'bloodGroup-error' : undefined}
+                  >
+                    <option value="" disabled>Select blood group</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                  </select>
+                </div>
+                {touched.bloodGroup && errors.bloodGroup && (
+                  <p className="pr-input-error" id="bloodGroup-error" role="alert">{errors.bloodGroup}</p>
+                )}
               </div>
 
               {/* Password */}
@@ -199,7 +481,12 @@ export const PatientRegister = () => {
                       <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                     </svg>
                   </span>
-                  <input id="password" name="password" className="pr-input pr-input--password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" value={form.password} onChange={handleChange} required />
+                  <input id="password" name="password" className="pr-input pr-input--password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" value={form.password} onChange={handleChange} onBlur={handleBlur}
+                    minLength={8}
+                    autoComplete="new-password"
+                    aria-invalid={Boolean(touched.password && errors.password)}
+                    aria-describedby={touched.password && errors.password ? 'password-error' : undefined} />
+
                   <button type="button" className="pr-input-action" aria-label="Toggle password visibility" onClick={() => setShowPassword(s => !s)}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12Z" />
@@ -207,6 +494,9 @@ export const PatientRegister = () => {
                     </svg>
                   </button>
                 </div>
+                {touched.password && errors.password && (
+                  <p className="pr-input-error" id="password-error" role="alert">{errors.password}</p>
+                )}
               </div>
 
               {/* Confirm Password */}
@@ -219,21 +509,38 @@ export const PatientRegister = () => {
                       <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                     </svg>
                   </span>
-                  <input id="confirmPassword" name="confirmPassword" className="pr-input" type="password" placeholder="Confirm your password" />
+                  <input id="confirmPassword" name="confirmPassword" className="pr-input" type="password" placeholder="Confirm your password" value={confirmPassword}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    autoComplete="new-password"
+                    aria-invalid={Boolean(touched.confirmPassword && errors.confirmPassword)}
+                    aria-describedby={touched.confirmPassword && errors.confirmPassword ? 'confirmPassword-error' : undefined} />
                 </div>
+                {touched.confirmPassword && errors.confirmPassword && (
+                  <p className="pr-input-error" id="confirmPassword-error" role="alert">{errors.confirmPassword}</p>
+                )}
               </div>
 
               {/* Address (full width) */}
               <div className="pr-field" style={{ gridColumn: '1 / -1' }}>
-                <h2 className="pr-section-title">Address</h2>
+                <label>Address</label>
                 <div className="pr-input-wrap">
-                  <textarea id="address" name="address" className="pr-textarea" placeholder="Enter your address" />
+                  <textarea id="address" name="address" className="pr-textarea" placeholder="Enter your address" value={form.address}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    aria-label="Address"
+                    aria-invalid={Boolean(touched.address && errors.address)}
+                    aria-describedby={touched.address && errors.address ? 'address-error' : undefined}
+                  />
                 </div>
+                {touched.address && errors.address && (
+                  <p className="pr-input-error" id="address-error" role="alert">{errors.address}</p>
+                )}
               </div>
 
               {/* Allergies (full width - chip list) */}
               <div className="pr-field" style={{ gridColumn: '1 / -1' }}>
-                <label>Allergies</label>
+                <label>Allergies (optional)</label>
                 <div className="pr-input-wrap" style={{ display: 'flex', gap: '8px' }}>
                   <input className="pr-input" style={{ paddingLeft: 12 }} value={allergyInput} onChange={e => setAllergyInput(e.target.value)} placeholder="Add an allergy" />
                   <button type="button" className="pr-role__btn" onClick={addAllergy}>Add</button>
@@ -250,7 +557,7 @@ export const PatientRegister = () => {
 
               {/* Chronic Diseases (full width - chip list) */}
               <div className="pr-field" style={{ gridColumn: '1 / -1' }}>
-                <label>Chronic Diseases</label>
+                <label>Chronic Diseases (optional)</label>
                 <div className="pr-input-wrap" style={{ display: 'flex', gap: '8px' }}>
                   <input className="pr-input" style={{ paddingLeft: 12 }} value={diseaseInput} onChange={e => setDiseaseInput(e.target.value)} placeholder="Add a disease" />
                   <button type="button" className="pr-role__btn" onClick={addDisease}>Add</button>
@@ -335,10 +642,6 @@ function SiteHeader() {
           <a href="#about">About Us</a>
           <a href="#contact">Contact</a>
         </nav>
-        <div className="hc-header__actions">
-          <Link to="/patient/login" className="hc-btn hc-btn--text">Log In</Link>
-          <Link to="/patient/register" className="hc-btn hc-btn--primary">Sign Up</Link>
-        </div>
       </div>
     </header>
   );

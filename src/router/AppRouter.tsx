@@ -4,6 +4,7 @@ import { Register } from '../features/authentication/Register';
 import { Home } from '../pages/Home';
 import { Dashboard } from '../pages/Dashboard';
 import { ProtectedRoute } from './ProtectedRoute';
+import { PatientProfile } from '@/features/patient/profile/PatientProfile';
 
 const router = createBrowserRouter([
   {
@@ -28,6 +29,10 @@ const router = createBrowserRouter([
       {
         path: '/dashboard',
         element: <Dashboard />,
+      },
+      {
+        path: '/patient/profile',
+        element: <PatientProfile />,
       },
     ],
   },

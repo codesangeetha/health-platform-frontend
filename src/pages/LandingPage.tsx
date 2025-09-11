@@ -1,7 +1,13 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import '../styles/landing-page.css';
-
+import docImg from '../assets/doctor.jpg';
+import docProImg1 from '../assets/drProfile-1.jpg';
+import docProImg2 from '../assets/drProfile2.avif';
+import docProImg3 from '../assets/fm-dr-profile1.avif';
+import patientPro1 from '../assets/patientProfile1.jpeg';
+import patientPro2 from '../assets/patientProfile2.webp';
+import patientPro3 from '../assets/patientProfile3.jpg';
 export const LandingPage = () => {
   const [scrolled, setScrolled] = useState(false);
 
@@ -27,10 +33,6 @@ export const LandingPage = () => {
             <a href="#about">About Us</a>
             <a href="#contact">Contact</a>
           </nav>
-          <div className="hc-header__actions">
-            <Link to="/patient/login" className="hc-btn hc-btn--text">Log In</Link>
-            <Link to="/patient/register" className="hc-btn hc-btn--primary">Sign Up</Link>
-          </div>
         </div>
       </header>
 
@@ -45,13 +47,16 @@ export const LandingPage = () => {
             <div>
               <Link to="/patient/login" className="hc-btn hc-btn--primary" aria-label="Book Appointment">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                  <path d="M7 2v3M17 2v3M4 10h16M5 6h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M7 2v3M17 2v3M4 10h16M5 6h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                 </svg>
                 Book Appointment
               </Link>
             </div>
           </div>
-          <div className="hc-hero__image" role="img" aria-label="Illustration of doctors" />
+          <div className="hc-hero__image" role="img" aria-label="Illustration of doctors">
+             <img src={docImg} alt="dr img" />
+          </div>
+        
         </div>
       </section>
 
@@ -137,9 +142,11 @@ export const LandingPage = () => {
           <div className="hc-card-grid">
             <article className="hc-card">
               <div className="hc-card__row">
-                <div className="hc-profile" role="img" aria-label="Profile picture of a doctor" />
+                <div className="hc-profile" role="img" aria-label="Profile picture of a doctor">
+                  <img src={docProImg1} alt="drProfile1" />
+                </div>
                 <div>
-                  <h3>Dr. Placeholder</h3>
+                  <h3>Dr. Antony</h3>
                   <p className="hc-muted">Specialist</p>
                 </div>
               </div>
@@ -149,7 +156,9 @@ export const LandingPage = () => {
             </article>
             <article className="hc-card">
               <div className="hc-card__row">
-                <div className="hc-profile" role="img" aria-label="Profile picture of a doctor" />
+                <div className="hc-profile" role="img" aria-label="Profile picture of a doctor">
+                   <img src={docProImg2} alt="drProfile2" />
+                  </div> 
                 <div>
                   <h3>Dr. Alex Morgan</h3>
                   <p className="hc-muted">Cardiologist</p>
@@ -161,7 +170,9 @@ export const LandingPage = () => {
             </article>
             <article className="hc-card">
               <div className="hc-card__row">
-                <div className="hc-profile" role="img" aria-label="Profile picture of a doctor" />
+                <div className="hc-profile" role="img" aria-label="Profile picture of a doctor">
+                  <img src={docProImg3} alt="drProfile2" />
+                  </div> 
                 <div>
                   <h3>Dr. Priya Singh</h3>
                   <p className="hc-muted">Neurologist</p>
@@ -236,16 +247,20 @@ export const LandingPage = () => {
           <div className="hc-card-grid">
             <article className="hc-card">
               <div className="hc-card__row">
-                <div className="hc-profile" role="img" aria-label="Profile picture of a patient" />
+                <div className="hc-profile" role="img" aria-label="Profile picture of a patient">
+                  <img src={patientPro1} alt="patient1-pro" />
+                  </div> 
                 <div>
-                  <h3>Patient Name</h3>
+                  <h3>Sophia</h3>
                 </div>
               </div>
               <p className="hc-quote">"A brief, two to three line quote about their experience."</p>
             </article>
             <article className="hc-card">
               <div className="hc-card__row">
-                <div className="hc-profile" role="img" aria-label="Profile picture of a patient" />
+                <div className="hc-profile" role="img" aria-label="Profile picture of a patient">
+                   <img src={patientPro2} alt="patient1-pro" />
+                </div>
                 <div>
                   <h3>Rahul Mehta</h3>
                 </div>
@@ -254,9 +269,11 @@ export const LandingPage = () => {
             </article>
             <article className="hc-card">
               <div className="hc-card__row">
-                <div className="hc-profile" role="img" aria-label="Profile picture of a patient" />
+                <div className="hc-profile" role="img" aria-label="Profile picture of a patient" >
+                   <img src={patientPro3} alt="patient1-pro" />
+                </div>
                 <div>
-                  <h3>Sophia Lee</h3>
+                  <h3> James</h3>
                 </div>
               </div>
               <p className="hc-quote">"Loved the telemedicine feature. Quick consultation without travel."</p>

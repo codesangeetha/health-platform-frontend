@@ -10,6 +10,8 @@ import { DoctorDashboard } from './features/doctor/dashboard/DoctorDashboard';
 import { PatientRegister } from './features/auth/PatientRegister';
 import { ForgotPassword } from './features/auth/ForgotPassword';
 import { ResetPassword } from './features/auth/ResetPassword';
+import { PatientProfile } from './features/patient/profile/PatientProfile';
+import { PatientProfileEdit } from './features/patient/profile/PatientProfileEdit';
 
 const router = createBrowserRouter([
   {
@@ -37,26 +39,35 @@ const router = createBrowserRouter([
     element: <ResetPassword />,
   },
   {
-  path: '/patient',
-  element: <ProtectedRoute />,
-  children: [
+    path: '/patient',
+    element: <ProtectedRoute />,
+    children: [
+      {
+        path: 'dashboard',
+        element: <PatientDashboard />,
+      },
+      {
+        path: 'profile',
+        element: <PatientProfile />,
+      },
+      {
+        path: 'profile/edit',
+        element: <PatientProfileEdit />,
+      },
+
+    ],
+  },
   {
-  path: 'dashboard',
-  element: <PatientDashboard />,
+    path: '/doctor',
+    element: <ProtectedRoute />,
+    children: [
+      {
+        path: 'dashboard',
+        element: <DoctorDashboard />,
+      },
+    ],
   },
-  ],
-  },
-  {
-  path: '/doctor',
-  element: <ProtectedRoute />,
-  children: [
-  {
-  path: 'dashboard',
-  element: <DoctorDashboard />,
-  },
-  ],
-  },
-  ]);
+]);
 
 function App() {
   return (

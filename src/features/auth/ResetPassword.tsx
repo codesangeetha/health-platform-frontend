@@ -16,12 +16,79 @@ export const ResetPassword = () => {
   const [submitting, setSubmitting] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
+  // Touched state
+  const [newPasswordTouched, setNewPasswordTouched] = useState(false);
+  const [confirmPasswordTouched, setConfirmPasswordTouched] = useState(false);
+
+  // Field errors
+  const [newPasswordError, setNewPasswordError] = useState<string | null>(null);
+  const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  // Password validation 
+  const validateNewPassword = (value: string): string | null => {
+    const v = value || '';
+    if (!v.trim()) return 'New password is required.';
+    // At least 8 chars, 1 upper, 1 lower, 1 number, 1 special
+    const lengthOk = v.length >= 8;
+    /* const upperOk = /[A-Z]/.test(v);
+    const lowerOk = /[a-z]/.test(v);
+    const numberOk = /\d/.test(v);
+    const specialOk = /[^A-Za-z0-9]/.test(v); */
+    if (!lengthOk /* || !upperOk || !lowerOk || !numberOk || !specialOk */) {
+      return 'Password must be 8 characters ';
+    }
+    return null;
+  };
+
+  const validateConfirmPassword = (value: string, base: string): string | null => {
+    const v = value || '';
+    if (!v.trim()) return 'Please confirm your new password.';
+    if (v !== base) return 'Passwords do not match.';
+    return null;
+  };
+
+  const handleNewPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const next = e.target.value;
+    setNewPassword(next);
+    setLocalError('');
+    setSuccessMessage('');
+
+    if (newPasswordTouched) {
+      setNewPasswordError(validateNewPassword(next));
+    }
+    // Re-validate confirm field live because it depends on newPassword
+    if (confirmPasswordTouched) {
+      setConfirmPasswordError(validateConfirmPassword(confirmPassword, next));
+    }
+  };
+
+  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const next = e.target.value;
+    setConfirmPassword(next);
+    setLocalError('');
+    setSuccessMessage('');
+
+    if (confirmPasswordTouched) {
+      setConfirmPasswordError(validateConfirmPassword(next, newPassword));
+    }
+  };
+
+  const handleNewPasswordBlur = () => {
+    if (!newPasswordTouched) setNewPasswordTouched(true);
+    setNewPasswordError(validateNewPassword(newPassword));
+  };
+
+  const handleConfirmPasswordBlur = () => {
+    if (!confirmPasswordTouched) setConfirmPasswordTouched(true);
+    setConfirmPasswordError(validateConfirmPassword(confirmPassword, newPassword));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,14 +99,23 @@ export const ResetPassword = () => {
       setLocalError('Invalid or missing reset token');
       return;
     }
-    if (!newPassword || !confirmPassword) {
-      setLocalError('Please enter and confirm your new password');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setLocalError('Passwords do not match');
-      return;
-    }
+    /*  if (!newPassword || !confirmPassword) {
+       setLocalError('Please enter and confirm your new password');
+       return;
+     }
+     if (newPassword !== confirmPassword) {
+       setLocalError('Passwords do not match');
+       return;
+     }
+  */
+    // Validate fields before submit
+    const pwErr = validateNewPassword(newPassword);
+    const confErr = validateConfirmPassword(confirmPassword, newPassword);
+    setNewPasswordTouched(true);
+    setConfirmPasswordTouched(true);
+    setNewPasswordError(pwErr);
+    setConfirmPasswordError(confErr);
+    if (pwErr || confErr) return;
 
     try {
       setSubmitting(true);
@@ -51,10 +127,14 @@ export const ResetPassword = () => {
       setSubmitting(false);
     }
   };
+  /*  const isFormValid =
+     !!token &&
+     !validateNewPassword(newPassword) &&
+     !validateConfirmPassword(confirmPassword, newPassword); */
 
   return (
     <div>
-      {/* Header: same structure/styles as Landing Page */}
+
       <header className={`hc-header ${scrolled ? 'scrolled' : ''}`}>
         <div className="hc-container hc-header__inner">
           <Link to="/" className="hc-logo" aria-label="HealthCare+ Home">
@@ -67,10 +147,6 @@ export const ResetPassword = () => {
             <a href="#about">About Us</a>
             <a href="#contact">Contact</a>
           </nav>
-          <div className="hc-header__actions">
-            <Link to="/patient/login" className="hc-btn hc-btn--text">Log In</Link>
-            <Link to="/patient/register" className="hc-btn hc-btn--primary">Sign Up</Link>
-          </div>
         </div>
       </header>
 
@@ -98,12 +174,19 @@ export const ResetPassword = () => {
                     type="password"
                     id="newPassword"
                     value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
+                    onChange={handleNewPasswordChange}
+                    onBlur={handleNewPasswordBlur}
                     placeholder="Enter new password"
-                    required
                     autoComplete="new-password"
+                    aria-invalid={newPasswordTouched && !!newPasswordError}
+                    aria-describedby={newPasswordError ? 'newPassword-error' : undefined}
                   />
                 </div>
+                {newPasswordTouched && newPasswordError && (
+                  <div id="newPassword-error" className="error-message" style={{ color: '#dc2626' }}>
+                    {newPasswordError}
+                  </div>
+                )}
               </div>
 
               <div className="pl-form-group">
@@ -121,12 +204,19 @@ export const ResetPassword = () => {
                     type="password"
                     id="confirmPassword"
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onChange={handleConfirmPasswordChange}
+                    onBlur={handleConfirmPasswordBlur}
                     placeholder="Confirm new password"
-                    required
                     autoComplete="new-password"
+                    aria-invalid={confirmPasswordTouched && !!confirmPasswordError}
+                    aria-describedby={confirmPasswordError ? 'confirmPassword-error' : undefined}
                   />
                 </div>
+                {confirmPasswordTouched && confirmPasswordError && (
+                  <div id="confirmPassword-error" className="error-message" style={{ color: '#dc2626' }}>
+                    {confirmPasswordError}
+                  </div>
+                )}
               </div>
 
               {localError && (

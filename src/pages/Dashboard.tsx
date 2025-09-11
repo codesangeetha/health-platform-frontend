@@ -1,6 +1,7 @@
 import { useContext } from 'react';
 import { AuthContext } from '@/context/AuthContext';
 import { AuthService } from '@/services/auth/auth.service';
+import { PatientDashboard } from '@/features/patient/dashboard/PatientDashboard';
 import '@/styles/components/dashboard.styles.css';
 
 export const Dashboard = () => {
@@ -21,6 +22,10 @@ export const Dashboard = () => {
     return null;
   }
 
+  if (authState.user.userType === 'patient') {
+    return <PatientDashboard />;
+  }
+
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
@@ -36,13 +41,7 @@ export const Dashboard = () => {
         </button>
       </div>
       <div className="dashboard-content">
-        {/* Add your dashboard content here based on user type */}
-        {authState.user.userType === 'patient' && (
-          <div className="patient-dashboard">
-            <h2>Patient Dashboard</h2>
-            {/* Add patient specific content */}
-          </div>
-        )}
+        {/* Add non-patient dashboard content here */}
       </div>
     </div>
   );

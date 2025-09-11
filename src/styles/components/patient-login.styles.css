@@ -55,6 +55,9 @@
 /* Form */
 .pl-form { display: flex; flex-direction: column; gap: var(--hc-space-md); }
 
+.pl-form-error{
+  color: #ef4444;
+}
 .pl-form-group label {
   display: block;
   margin-bottom: 0.35rem;
@@ -68,6 +71,7 @@
   color: var(--hc-icon);
   display: inline-flex; align-items: center; justify-content: center;
 }
+
 .pl-input-icon svg { width: 18px; height: 18px; }
 
 .pl-input {
@@ -81,10 +85,47 @@
   font-size: 1rem;
   transition: box-shadow 0.15s ease, border-color 0.15s ease;
 }
+
 .pl-input:focus {
   outline: none;
   border-color: var(--hc-color-primary);
   box-shadow: 0 0 0 4px rgba(59,130,246,0.15);
+}
+
+/* === Validation: invalid input state === */
+.pl-input--invalid {
+  border-color: #ef4444; /* red-500 */
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+}
+
+.pl-input--invalid:focus {
+  border-color: #dc2626; /* red-600 */
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.18);
+}
+
+/* Inline field error text */
+.pl-input-error {
+  margin-top: 0.375rem; /* 6px */
+  color: #dc2626; /* red-600 */
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.4;
+}
+
+/* === Global alert (e.g., invalid credentials) === */
+.pl-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-weight: 600;
+}
+
+.pl-alert--error {
+  background: #fef2f2;   /* red-50 */
+  color: #991b1b;         /* red-800 */
+  border-color: #fecaca;  /* red-200 */
 }
 
 .pl-form-row { display: flex; align-items: center; justify-content: space-between; margin-top: -4px; }

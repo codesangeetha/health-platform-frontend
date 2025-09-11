@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
@@ -11,6 +12,9 @@ export const ForgotPassword = () => {
   const [submitting, setSubmitting] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
     onScroll();
@@ -18,22 +22,58 @@ export const ForgotPassword = () => {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  const validateEmail = (value: string): string | null => {
+    const trimmed = value.trim();
+    if (!trimmed) return 'Email is required.';
+    // Basic RFC 5322-ish email check; aligns with typical frontend validation.
+    const emailRegex =
+      /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+    if (!emailRegex.test(trimmed)) return 'Enter a valid email address.';
+    return null;
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const next = e.target.value;
+    setEmail(next);
+    setSuccessMessage('');
+    // Live-validate after first blur to reduce noise while typing.
+    if (emailTouched) {
+      setEmailError(validateEmail(next));
+    }
+  };
+
+  const handleEmailBlur = () => {
+    if (!emailTouched) setEmailTouched(true);
+    setEmailError(validateEmail(email));
+  };
+
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSuccessMessage('');
+
+    //validate before submit
+    const err = validateEmail(email);
+    setEmailTouched(true);
+    setEmailError(err);
+    if (err) return;
+
     try {
       setSubmitting(true);
       const res = await forgotPassword(email);
       if (res.success) {
         setSuccessMessage(
           res.message ||
-            'If your email address is in our database, you will receive a password reset link shortly.'
+          'If your email address is in our database, you will receive a password reset link shortly.'
         );
       }
     } finally {
       setSubmitting(false);
     }
   };
+
+  const isFormValid = !validateEmail(email);
 
   return (
     <div>
@@ -50,10 +90,7 @@ export const ForgotPassword = () => {
             <a href="#about">About Us</a>
             <a href="#contact">Contact</a>
           </nav>
-          <div className="hc-header__actions">
-            <Link to="/patient/login" className="hc-btn hc-btn--text">Log In</Link>
-            <Link to="/patient/register" className="hc-btn hc-btn--primary">Sign Up</Link>
-          </div>
+
         </div>
       </header>
 
@@ -81,13 +118,20 @@ export const ForgotPassword = () => {
                     type="email"
                     id="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={handleEmailChange}
+                    onBlur={handleEmailBlur}
                     placeholder="Enter your email"
-                    required
                     autoComplete="username"
+                    aria-invalid={emailTouched && !!emailError}
+                    aria-describedby={emailError ? 'email-error' : undefined}
                   />
                 </div>
+                {emailTouched && emailError && (
+                  <div id="email-error" className="error-message" style={{ color: '#dc2626' }}>
+                    {emailError}
               </div>
+                )}
+                </div>
 
               {authState.error && (
                 <div className="error-message" style={{ color: '#dc2626' }}>{authState.error}</div>

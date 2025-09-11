@@ -102,3 +102,10 @@
 .pr-help { position: fixed; right: 24px; bottom: 24px; width: 56px; height: 56px; border-radius: 50%; background: var(--primary-blue); color: #fff; border: none; box-shadow: var(--shadow); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
 .pr-help:hover { filter: brightness(0.95); }
 .pr-help svg { width: 24px; height: 24px; }
+
+ .pr-input-error {
+    margin-top: 6px;
+    color: red;
+    font-size: 0.85rem;
+  }
+
