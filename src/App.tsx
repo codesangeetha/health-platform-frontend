@@ -12,6 +12,8 @@ import { ForgotPassword } from './features/auth/ForgotPassword';
 import { ResetPassword } from './features/auth/ResetPassword';
 import { PatientProfile } from './features/patient/profile/PatientProfile';
 import { PatientProfileEdit } from './features/patient/profile/PatientProfileEdit';
+import { DoctorProfile } from './features/doctor/profile/DoctorProfile';
+import { DoctorProfileEdit } from './features/doctor/profile/DoctorProfileEdit';
 
 const router = createBrowserRouter([
   {
@@ -64,6 +66,14 @@ const router = createBrowserRouter([
       {
         path: 'dashboard',
         element: <DoctorDashboard />,
+      },
+      {
+        path: 'profile',
+        element: <DoctorProfile />,
+      },
+      {
+        path: 'profile/edit',
+        element: <DoctorProfileEdit />,
       },
     ],
   },

@@ -170,12 +170,12 @@ export const DoctorLogin = () => {
     }
   }, [authState.isAuthenticated, authState.isLoading, navigate]);
 
-  const canSubmit =
+ /*  const canSubmit =
     !submitting &&
     !errors.email &&
     !errors.password &&
     email.trim().length > 0 &&
-    password.length > 0;
+    password.length > 0; */
 
   return (
     <div>

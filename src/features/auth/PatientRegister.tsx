@@ -272,7 +272,7 @@ export const PatientRegister = () => {
     }
   };
 
-  // Button enablement
+  /* // Button enablement
   const requiredFilled =
     form.firstName.trim().length > 0 &&
     form.lastName.trim().length > 0 &&
@@ -296,8 +296,8 @@ export const PatientRegister = () => {
     errors.password ||
     errors.confirmPassword ||
     errors.address
-  );
-  const canSubmit = !authState.isLoading && acceptedTerms && requiredFilled && !hasErrors;
+  ); */
+  //const canSubmit = !authState.isLoading && acceptedTerms && requiredFilled && !hasErrors;
 
   return (
     <div className="pr pr--offset">

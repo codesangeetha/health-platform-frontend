@@ -11,17 +11,11 @@ type FieldErrors = {
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-type AuthResult =
-  | { success: true }
-  | { success: false; error?: { code?: string; message?: string } }
-  | undefined
-  | null;
-
 export const PatientLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const { login, authState } = useContext(AuthContext);
+  const { login, authState, setAuthState } = useContext(AuthContext);
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -41,6 +35,11 @@ export const PatientLogin = () => {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  // Clear any lingering auth error on page load (so it vanishes on reload)
+  useEffect(() => {
+    setAuthState(prev => ({ ...prev, error: null }));
+  }, [setAuthState]);
 
   // Validation helpers
   const validateEmail = (value: string): string | undefined => {
@@ -132,6 +131,8 @@ export const PatientLogin = () => {
     }
     // Clear form-level error if user starts editing again
     if (formError) setFormError(null);
+    // Clear any global auth error once user edits
+    if (authState?.error) setAuthState(prev => ({ ...prev, error: null }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

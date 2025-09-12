@@ -73,8 +73,7 @@ export const ForgotPassword = () => {
     }
   };
 
-  const isFormValid = !validateEmail(email);
-
+ 
   return (
     <div>
       {/* Header: same structure/styles as Landing Page */}
