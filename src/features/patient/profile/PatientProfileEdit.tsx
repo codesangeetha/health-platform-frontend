@@ -14,6 +14,7 @@ interface ProfileForm {
   firstName: string;
   lastName: string;
   phone: string;
+  whatsapp: string;
   bloodGroup: string;
   allergies: string; // comma-separated
   chronicDiseases: string; // comma-separated
@@ -38,6 +39,7 @@ type FieldKey =
   | 'firstName'
   | 'lastName'
   | 'phone'
+  | 'whatsapp'
   | 'bloodGroup'
   | 'ec.name'
   | 'ec.relationship'
@@ -57,6 +59,7 @@ export const PatientProfileEdit = () => {
     firstName: '',
     lastName: '',
     phone: '',
+    whatsapp: '',
     bloodGroup: '',
     allergies: '',
     chronicDiseases: '',
@@ -68,6 +71,7 @@ export const PatientProfileEdit = () => {
     firstName: false,
     lastName: false,
     phone: false,
+    whatsapp: false,
     bloodGroup: false,
     'ec.name': false,
     'ec.relationship': false,
@@ -78,6 +82,7 @@ export const PatientProfileEdit = () => {
     firstName: null,
     lastName: null,
     phone: null,
+    whatsapp: null,
     bloodGroup: null,
     'ec.name': null,
     'ec.relationship': null,
@@ -99,6 +104,7 @@ export const PatientProfileEdit = () => {
         firstName: data.firstName || '',
         lastName: data.lastName || '',
         phone: data.phone || '',
+        whatsapp: data.whatsapp || '',
         bloodGroup: data.bloodGroup || '',
         allergies,
         chronicDiseases: chronic,
@@ -113,6 +119,7 @@ export const PatientProfileEdit = () => {
         firstName: false,
         lastName: false,
         phone: false,
+        whatsapp: false,
         bloodGroup: false,
         'ec.name': false,
         'ec.relationship': false,
@@ -122,6 +129,7 @@ export const PatientProfileEdit = () => {
         firstName: null,
         lastName: null,
         phone: null,
+        whatsapp: null,
         bloodGroup: null,
         'ec.name': null,
         'ec.relationship': null,
@@ -186,6 +194,9 @@ export const PatientProfileEdit = () => {
     if (field === 'phone' && touched.phone) {
       setFieldErrors(prev => ({ ...prev, phone: validateField('phone', { ...form, [field]: value }) }));
     }
+    if (field === 'whatsapp' && touched.whatsapp) {
+      setFieldErrors(prev => ({ ...prev, whatsapp: validateField('whatsapp', { ...form, [field]: value }) }));
+    }
     if (field === 'bloodGroup' && touched.bloodGroup) {
       setFieldErrors(prev => ({ ...prev, bloodGroup: validateField('bloodGroup', { ...form, [field]: value }) }));
     }
@@ -215,6 +226,7 @@ export const PatientProfileEdit = () => {
     const firstName = trim(currentForm.firstName);
     const lastName = trim(currentForm.lastName);
     const phone = trim(currentForm.phone);
+    const whatsapp = trim(currentForm.whatsapp);
     const bloodGroup = trim(currentForm.bloodGroup);
 
     const ecName = trim(currentForm.emergencyContact.name);
@@ -224,6 +236,7 @@ export const PatientProfileEdit = () => {
 
     const nameOk = (v: string) => /^[A-Za-z][A-Za-z' -]{1,49}$/.test(v); // 2-50 chars, letters plus - and '
     const phoneDigits = onlyDigits(phone);
+    const whatsappDigits = onlyDigits(whatsapp);
     const ecPhoneDigits = onlyDigits(ecPhone);
     const phoneOk = (d: string) => d.length == 10 ; // basic length check
 
@@ -241,6 +254,10 @@ export const PatientProfileEdit = () => {
       case 'phone':
         if (!phone) return 'Phone is required.';
         if (!phoneOk(phoneDigits)) return 'Enter a valid phone number (10 digits).';
+        return null;
+      case 'whatsapp':
+        if (!whatsapp) return 'WhatsApp is required.';
+        if (!phoneOk(whatsappDigits)) return 'Enter a valid WhatsApp number (10 digits).';
         return null;
       case 'bloodGroup':
         if (!bloodGroup) return 'Blood group is required'; // optional
@@ -273,6 +290,7 @@ export const PatientProfileEdit = () => {
       firstName: validateField('firstName', currentForm),
       lastName: validateField('lastName', currentForm),
       phone: validateField('phone', currentForm),
+      whatsapp: validateField('whatsapp', currentForm),
       bloodGroup: validateField('bloodGroup', currentForm),
       'ec.name': validateField('ec.name', currentForm),
       'ec.relationship': validateField('ec.relationship', currentForm),
@@ -286,6 +304,7 @@ export const PatientProfileEdit = () => {
       firstName: true,
       lastName: true,
       phone: true,
+      whatsapp: true,
       bloodGroup: true,
       'ec.name': true,
       'ec.relationship': true,
@@ -324,6 +343,7 @@ export const PatientProfileEdit = () => {
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         phone: form.phone.trim(),
+        whatsapp: form.whatsapp.trim(),
         bloodGroup: form.bloodGroup.trim(),
         allergies: form.allergies.split(',').map(s => s.trim()).filter(Boolean),
         chronicDiseases: form.chronicDiseases.split(',').map(s => s.trim()).filter(Boolean),
@@ -475,6 +495,30 @@ export const PatientProfileEdit = () => {
                     </div>
                   ) : (
                     <div id="phone-hint" style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>
+                      Use 10 digits.
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="pd-stat-label" htmlFor="whatsapp">WhatsApp</label>
+                  <input
+                    id="whatsapp"
+                    type="tel"
+                    value={form.whatsapp}
+                    onChange={e => onChange('whatsapp', e.target.value)}
+                    onBlur={() => handleBlur('whatsapp')}
+                    style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('whatsapp') }}
+                    required
+                    aria-invalid={touched.whatsapp && !!fieldErrors.whatsapp}
+                    aria-describedby={fieldErrors.whatsapp ? 'whatsapp-error' : 'whatsapp-hint'}
+                  />
+                  {touched.whatsapp && fieldErrors.whatsapp ? (
+                    <div id="whatsapp-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>
+                      {fieldErrors.whatsapp}
+                    </div>
+                  ) : (
+                    <div id="whatsapp-hint" style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>
                       Use 10 digits.
                     </div>
                   )}

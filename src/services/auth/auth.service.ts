@@ -1,6 +1,46 @@
 import type { LoginResponse, AuthResponseData } from '@/types/auth/auth.types';
+import { BASE_URL } from '../../config/constants';
 
-const API_URL = 'http://localhost:3000/api/v1'; // Replace with your actual API URL
+const API_URL = `${BASE_URL}/api/v1`;
+
+export const getAuthToken = (): string | null => {
+  return localStorage.getItem('token');
+};
+
+export const setAuthToken = (token: string): void => {
+  localStorage.setItem('token', token);
+};
+
+export const removeAuthToken = (): void => {
+  localStorage.removeItem('token');
+};
+
+export class ApiError extends Error {
+  status?: number;
+  errors?: any[];
+
+  constructor(message: string, status?: number, errors?: any[]) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.errors = errors;
+  }
+}
+
+export const handleApiError = async (response: Response): Promise<never> => {
+  let errorMessage = 'Something went wrong';
+  let errors = [];
+
+  try {
+    const errorData = await response.json();
+    errorMessage = errorData.message || errorMessage;
+    errors = errorData.errors || [];
+  } catch (e) {
+    errorMessage = response.statusText;
+  }
+
+  throw new ApiError(errorMessage, response.status, errors);
+};
 
 interface RegisterDataBase {
   email: string;
@@ -12,6 +52,7 @@ interface RegisterDataBase {
 interface PatientRegisterData extends RegisterDataBase {
   userType: 'patient';
   phone: string;
+  whatsapp: string;
   dateOfBirth: string;
   bloodGroup?: string;
   allergies?: string[];

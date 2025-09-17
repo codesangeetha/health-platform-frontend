@@ -17,6 +17,7 @@ interface PatientProfileData {
   firstName?: string;
   lastName?: string;
   phone?: string;
+  whatsapp?: string;
   dateOfBirth?: string; // ISO
   bloodGroup?: string;
   allergies?: string[];
@@ -197,6 +198,10 @@ export const PatientProfile = () => {
                   <div>
                     <div className="pd-stat-label">Phone</div>
                     <div style={{ color: 'var(--color-text-dark)' }}>{profile?.phone || '—'}</div>
+                  </div>
+                  <div>
+                    <div className="pd-stat-label">WhatsApp</div>
+                    <div style={{ color: 'var(--color-text-dark)' }}>{profile?.whatsapp || '—'}</div>
                   </div>
                   <div>
                     <div className="pd-stat-label">Date of Birth</div>

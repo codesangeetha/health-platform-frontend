@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import '../../styles/components/patient-registration.styles.css';
 import '../../styles/landing-page.css';
@@ -11,6 +11,7 @@ interface PatientRegisterData {
   firstName: string;
   lastName: string;
   phone: string;
+  whatsapp: string;
   dateOfBirth: string; // ISO date YYYY-MM-DD
   gender: string;
   bloodGroup: string;
@@ -30,6 +31,7 @@ type FieldKey =
   | 'lastName'
   | 'email'
   | 'phone'
+  | 'whatsapp'
   | 'dateOfBirth'
   | 'gender'
   | 'bloodGroup'
@@ -42,7 +44,7 @@ type FieldErrors = Partial<Record<FieldKey, string>>;
 type Touched = Partial<Record<FieldKey, boolean>>;
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const nameRegex = /^[A-Za-z][A-Za-z\s'.-]{1,}$/;
+const nameRegex = /^[A-Za-z\s'.-]+$/;
 //const phoneRegex = /^[0-9()+\-\s]{7,20}$/;
 const phoneRegex = /^\d{10}$/;
 
@@ -53,9 +55,11 @@ const bloodGroups = new Set(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']);
 
 export const PatientRegister = () => {
   const { register, authState } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [successMessage, setSuccessMessage] = useState<string>('');
   const [showPassword, setShowPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const [form, setForm] = useState<PatientRegisterData>({
     userType: 'patient',
@@ -64,6 +68,7 @@ export const PatientRegister = () => {
     firstName: '',
     lastName: '',
     phone: '',
+    whatsapp: '',
     dateOfBirth: '',
     bloodGroup: '',
     confirmPassword: '',
@@ -87,13 +92,13 @@ export const PatientRegister = () => {
   const validateFirstName = (v: string) => {
     const s = v.trim();
     if (!s) return 'First name is required.';
-    if (!nameRegex.test(s)) return 'Enter a valid first name.';
+    if (!nameRegex.test(s)) return 'First name should contain only characters, no numbers allowed.';
     return undefined;
   };
   const validateLastName = (v: string) => {
     const s = v.trim();
     if (!s) return 'Last name is required.';
-    if (!nameRegex.test(s)) return 'Enter a valid last name.';
+    if (!nameRegex.test(s)) return 'Last name should contain only characters, no numbers allowed.';
     return undefined;
   };
   const validateEmail = (v: string) => {
@@ -106,6 +111,12 @@ export const PatientRegister = () => {
     const s = v.trim();
     if (!s) return 'Phone number is required.';
     if (!phoneRegex.test(s)) return 'Enter a valid phone number.';
+    return undefined;
+  };
+  const validateWhatsapp = (v: string) => {
+    const s = v.trim();
+    if (!s) return 'WhatsApp number is required.';
+    if (!phoneRegex.test(s)) return 'Enter a valid WhatsApp number.';
     return undefined;
   };
   const validateDOB = (v: string) => {
@@ -146,6 +157,7 @@ export const PatientRegister = () => {
       case 'lastName': return validateLastName(value);
       case 'email': return validateEmail(value);
       case 'phone': return validatePhone(value);
+      case 'whatsapp': return validateWhatsapp(value);
       case 'dateOfBirth': return validateDOB(value);
       case 'gender': return validateGender(value);
       case 'bloodGroup': return validateBloodGroup(value);
@@ -162,6 +174,7 @@ export const PatientRegister = () => {
       lastName: validateLastName(form.lastName),
       email: validateEmail(form.email),
       phone: validatePhone(form.phone),
+      whatsapp: validateWhatsapp(form.whatsapp),
       dateOfBirth: validateDOB(form.dateOfBirth),
       gender: validateGender(form.gender),
       bloodGroup: validateBloodGroup(form.bloodGroup),
@@ -245,6 +258,7 @@ export const PatientRegister = () => {
         lastName: true,
         email: true,
         phone: true,
+        whatsapp: true,
         dateOfBirth: true,
         gender: true,
         bloodGroup: true,
@@ -268,7 +282,8 @@ export const PatientRegister = () => {
 
     const res = await register(payload as unknown as any);
     if (res.success) {
-      setSuccessMessage('Registration successful. Please login.');
+      // Show success modal
+      setShowSuccessModal(true);
     }
   };
 
@@ -398,6 +413,35 @@ export const PatientRegister = () => {
                 </div>
                 {touched.phone && errors.phone && (
                   <p className="pr-input-error" id="phone-error" role="alert">{errors.phone}</p>
+                )}
+              </div>
+
+              {/* WhatsApp */}
+              <div className="pr-field">
+                <label htmlFor="whatsapp">WhatsApp Number *</label>
+                <div className="pr-input-wrap">
+                  <span className="pr-input-icon" aria-hidden>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                      <path d="M16 8h.01" />
+                      <path d="M12 8h.01" />
+                      <path d="M8 8h.01" />
+                      <path d="M16 12h.01" />
+                      <path d="M12 12h.01" />
+                      <path d="M8 12h.01" />
+                      <path d="M16 16h.01" />
+                      <path d="M12 16h.01" />
+                      <path d="M8 16h.01" />
+                    </svg>
+                  </span>
+                  <input id="whatsapp" name="whatsapp" className="pr-input" placeholder="Enter your WhatsApp number" value={form.whatsapp} onChange={handleChange}
+                    onBlur={handleBlur}
+                    inputMode="tel"
+                    aria-invalid={Boolean(touched.whatsapp && errors.whatsapp)}
+                    aria-describedby={touched.whatsapp && errors.whatsapp ? 'whatsapp-error' : undefined} />
+                </div>
+                {touched.whatsapp && errors.whatsapp && (
+                  <p className="pr-input-error" id="whatsapp-error" role="alert">{errors.whatsapp}</p>
                 )}
               </div>
 
@@ -585,17 +629,37 @@ export const PatientRegister = () => {
             {authState.error && <div style={{ color: '#dc2626', marginTop: 8, fontSize: '0.9rem' }}>{authState.error}</div>}
             {successMessage && <div style={{ color: '#065f46', marginTop: 8, fontSize: '0.9rem' }}>{successMessage}</div>}
 
+            {/* Success Modal */}
+            {showSuccessModal && (
+              <div className="pr-modal-overlay">
+                <div className="pr-modal">
+                  <div className="pr-modal-header">
+                    <h2>Registration Successful!</h2>
+                  </div>
+                  <div className="pr-modal-body">
+                    <p>Your account has been created successfully. Please login to continue.</p>
+                  </div>
+                  <div className="pr-modal-footer">
+                    <button
+                      className="pr-button pr-button--primary"
+                      onClick={() => {
+                        setShowSuccessModal(false);
+                        navigate('/patient/login');
+                      }}
+                    >
+                      Go to Login
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Submit */}
             <button type="submit" className="pr-submit" disabled={authState.isLoading || !acceptedTerms}>
               {authState.isLoading ? 'Registering…' : 'Register as Patient'}
             </button>
           </form>
         </section>
-
-        {/* Login prompt */}
-        <div className="pr-login">
-          Already have an account? <Link to="/patient/login">Login here</Link>
-        </div>
 
         {/* Footer navigation */}
         <footer className="pr-footer">
@@ -618,6 +682,85 @@ export const PatientRegister = () => {
       </button>
     </div>
   );
+}
+
+// Modal styles
+const modalStyles = `
+  .pr-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+
+  .pr-modal {
+    background: white;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+  }
+
+  .pr-modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: center;
+  }
+
+  .pr-modal-header h2 {
+    margin: 0;
+    color: #10b981;
+    font-size: 1.5rem;
+  }
+
+  .pr-modal-body {
+    padding: 20px;
+    text-align: center;
+  }
+
+  .pr-modal-body p {
+    margin: 0;
+    color: #374151;
+    line-height: 1.5;
+  }
+
+  .pr-modal-footer {
+    padding: 20px;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+  }
+
+  .pr-button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .pr-button--primary {
+    background-color: #3b82f6;
+    color: white;
+  }
+
+  .pr-button--primary:hover {
+    background-color: #2563eb;
+  }
+`;
+
+// Add styles to the document
+if (typeof document !== 'undefined') {
+  const styleElement = document.createElement('style');
+  styleElement.innerHTML = modalStyles;
+  document.head.appendChild(styleElement);
 }
 
 function SiteHeader() {

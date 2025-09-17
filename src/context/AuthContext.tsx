@@ -32,6 +32,7 @@ interface RegisterDataBase {
 interface PatientRegisterData extends RegisterDataBase {
   userType: 'patient';
   phone: string;
+  whatsapp: string;
   dateOfBirth: string;
   bloodGroup?: string;
   allergies?: string[];
@@ -49,7 +50,7 @@ const defaultAuthState: AuthState = {
   user: null,
   token: null,
   isAuthenticated: false,
-  isLoading: true,
+  isLoading: false,
   error: null
 };
 
@@ -87,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
       const data = await AuthService.login(email, password);
-      
+      console.log("data",data);
       setAuthState({
         user: data.user,
         token: data.token,
@@ -96,6 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error: null,
       });
     } catch (error) {
+      console.log("error",error);
       setAuthState(prev => ({
         ...prev,
         isLoading: false,
