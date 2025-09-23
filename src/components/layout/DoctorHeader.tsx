@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import '../../styles/components/patient-dashboard.styles.css';
+import '../../styles/components/doctor-dashboard.styles.css';
 
 interface DoctorHeaderProps {
   pageTitle?: string;
@@ -31,18 +31,42 @@ export const DoctorHeader = () => {
     { path: '/doctor/settings', label: 'Settings' }
   ];
 
+  // Get user initials for avatar fallback
+  const getUserInitials = () => {
+    if (authState.user) {
+      // Try to extract initials from email if no name available
+      const email = authState.user.email;
+      const emailPrefix = email.split('@')[0];
+      const parts = emailPrefix.split(/[._-]/);
+      if (parts.length >= 2) {
+        return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+      } else {
+        return email.charAt(0).toUpperCase();
+      }
+    }
+    return 'U';
+  };
+
+  // Get user display name
+  const getUserDisplayName = () => {
+    if (authState.user) {
+      return authState.user.email;
+    }
+    return 'User';
+  };
+
   return (
     <>
       {/* Top Navigation */}
-      <header className="pd-top-nav">
-        <div className="pd-top-nav-inner">
-          <div className="pd-brand">
+      <header className="dd-header">
+        <div className="dd-header-bar">
+          <div className="dd-brand">
             <Link to="/doctor/dashboard" className="hc-logo" aria-label="HealthCare+ Home">
               <span className="hc-logo__mark">+</span>
               <span>HealthCare+</span>
             </Link>
           </div>
-          <nav className="pd-nav-links" aria-label="Primary">
+          <nav className="dd-nav" aria-label="Primary">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
@@ -53,10 +77,19 @@ export const DoctorHeader = () => {
               </Link>
             ))}
           </nav>
-          <div className="pd-nav-right">
-            <div className="pd-bell" title="Notifications" aria-label="Notifications">🔔</div>
-            <div className="pd-avatar" aria-label="Profile" />
-            <button className="pd-logout-link" onClick={handleLogout}>Logout</button>
+          <div className="dd-user">
+            <div className="dd-user-profile">
+              <div className="dd-avatar" aria-label="Profile" title={getUserDisplayName()}>
+                {getUserInitials()}
+              </div>
+              <div className="dd-user-info">
+                <span className="dd-user-name">{getUserDisplayName()}</span>
+              </div>
+            </div>
+            <button className="dd-logout-btn" onClick={handleLogout}>
+              <span className="dd-logout-icon">🚪</span>
+              <span className="dd-logout-text">Logout</span>
+            </button>
           </div>
         </div>
       </header>

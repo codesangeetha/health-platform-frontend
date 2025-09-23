@@ -213,7 +213,15 @@ export const PatientList = () => {
         page,
         limit: pagination.limit
       });
-      setPatients(response.data.users);
+
+      // Sort patients by creation date (newest first)
+      const sortedPatients = response.data.users.sort((a, b) => {
+        const dateA = new Date(a.createdAt).getTime();
+        const dateB = new Date(b.createdAt).getTime();
+        return dateB - dateA; // Descending order (newest first)
+      });
+
+      setPatients(sortedPatients);
       setPagination(response.data.pagination);
       setError(null);
     } catch (err) {
@@ -259,13 +267,14 @@ export const PatientList = () => {
               <Th>Name</Th>
               <Th>Blood Group</Th>
               <Th>Contact</Th>
+              <Th>Created</Th>
               <Th>Actions</Th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={4}>
+                <td colSpan={5}>
                   <LoadingOverlay>
                     <LoadingSpinner />
                     Loading patients...
@@ -284,6 +293,9 @@ export const PatientList = () => {
                   <Td>
                     {patient.email}<br />
                     {patient.phone}
+                  </Td>
+                  <Td>
+                    {patient.createdAt ? new Date(patient.createdAt).toLocaleDateString() : '-'}
                   </Td>
                   <Td>
                     <ActionButton onClick={() => handleViewDetails(patient)}>

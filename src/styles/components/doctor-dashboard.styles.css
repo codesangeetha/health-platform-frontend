@@ -55,7 +55,7 @@
   box-shadow: var(--ds-shadow);
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   padding: var(--ds-space-l);
   position: sticky;
   top: 0;
@@ -81,7 +81,10 @@
 .dd-header-bar {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--ds-space-xl);
+  max-width: 1200px;
+  width: 100%;
 }
 .dd-nav {
   display: flex;
@@ -382,6 +385,109 @@
   gap: var(--ds-space-m);
   flex-wrap: wrap;
   padding: var(--ds-space-l);
+}
+
+/* Doctor Header Profile Styles (shared with patient styles) */
+.dd-user-profile {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-m);
+  position: relative;
+}
+
+.dd-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--ds-primary);
+  border: 1px solid var(--ds-border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dd-avatar:hover {
+  background: #3a7bc8;
+  transform: scale(1.05);
+}
+
+.dd-user-info {
+  display: none;
+}
+
+.dd-user-name {
+  font-size: var(--ds-caption-size);
+  color: var(--ds-text-dark);
+  font-weight: 500;
+}
+
+/* Doctor Logout Button */
+.dd-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-s);
+  padding: 8px 12px;
+  border-radius: var(--ds-radius);
+  border: 1px solid var(--ds-border-color);
+  background: var(--ds-surface);
+  color: var(--ds-text-muted);
+  font-size: var(--ds-caption-size);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.dd-logout-btn:hover {
+  background: #f8f9fa;
+  border-color: #dc3545;
+  color: #dc3545;
+  transform: translateY(-1px);
+}
+
+.dd-logout-icon {
+  font-size: 14px;
+}
+
+.dd-logout-text {
+  font-weight: 500;
+}
+
+/* Responsive styles for doctor header */
+@media (min-width: 1200px) {
+  .dd-user-info { display: block; }
+  .dd-user-profile {
+    gap: var(--ds-space-l);
+  }
+  .dd-header-bar {
+    gap: var(--ds-space-xl);
+  }
+}
+
+@media (max-width: 899px) {
+  .dd-logout-text { display: none; }
+  .dd-logout-btn {
+    padding: 8px;
+    min-width: 40px;
+    justify-content: center;
+  }
+  .dd-header-bar {
+    gap: var(--ds-space-m);
+    padding: 0 var(--ds-space-m);
+  }
+}
+
+@media (max-width: 600px) {
+  .dd-header-bar {
+    gap: var(--ds-space-s);
+  }
+  .dd-nav {
+    display: none;
+  }
 }
 
 /* Utilities */

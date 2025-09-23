@@ -215,7 +215,15 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
         page,
         limit: pagination.limit
       });
-      setDoctors(response.data.users);
+
+      // Sort doctors by creation date (newest first)
+      const sortedDoctors = response.data.users.sort((a, b) => {
+        const dateA = new Date(a.createdAt).getTime();
+        const dateB = new Date(b.createdAt).getTime();
+        return dateB - dateA; // Descending order (newest first)
+      });
+
+      setDoctors(sortedDoctors);
       setPagination(response.data.pagination);
       setError(null);
     } catch (err) {
@@ -297,6 +305,7 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                 <Th>Specialization</Th>
                 <Th>Experience</Th>
                 <Th>Contact</Th>
+                <Th>Created</Th>
                 <Th>Status</Th>
                 <Th>Actions</Th>
               </tr>
@@ -304,7 +313,7 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6}>
+                  <td colSpan={7}>
                     <LoadingOverlay>
                       <LoadingSpinner />
                       Loading doctors...
@@ -324,6 +333,9 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                     <Td>
                       {doctor.email}<br />
                       {doctor.phone}
+                    </Td>
+                    <Td>
+                      {doctor.createdAt ? new Date(doctor.createdAt).toLocaleDateString() : '-'}
                     </Td>
                     <Td>
                       <StatusBadge isVerified={doctor.isVerified}>

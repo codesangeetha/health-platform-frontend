@@ -117,17 +117,74 @@
   background: var(--color-primary-blue);
   border-radius: 50%;
 }
+/* User Profile Section */
+.pd-user-profile {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  position: relative;
+}
+
 .pd-avatar {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: var(--color-secondary-blue);
+  background: var(--color-primary-blue);
   border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
-.pd-logout-link {
-  color: var(--color-text-light);
-  text-decoration: none;
+
+.pd-avatar:hover {
+  background: #0056b3;
+  transform: scale(1.05);
+}
+
+.pd-user-info {
+  display: none;
+}
+
+.pd-user-name {
   font-size: var(--body-sm-size);
+  color: var(--color-text-dark);
+  font-weight: 500;
+}
+
+/* Logout Button */
+.pd-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background: #fff;
+  color: var(--color-text-light);
+  font-size: var(--body-sm-size);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.pd-logout-btn:hover {
+  background: #f8f9fa;
+  border-color: #dc3545;
+  color: #dc3545;
+  transform: translateY(-1px);
+}
+
+.pd-logout-icon {
+  font-size: 14px;
+}
+
+.pd-logout-text {
+  font-weight: 500;
 }
 
 /* Welcome Banner */
@@ -382,10 +439,24 @@
 /* Responsive */
 @media (min-width: 900px) {
   .pd-nav-links { display: flex; }
+  .pd-user-info { display: block; }
 }
+
+@media (min-width: 1200px) {
+  .pd-user-profile {
+    gap: var(--space-2);
+  }
+}
+
 @media (max-width: 899px) {
   .pd-grid { grid-template-columns: 1fr; }
   .pd-col-8, .pd-col-4, .pd-col-12 { grid-column: auto; }
+  .pd-logout-text { display: none; }
+  .pd-logout-btn {
+    padding: 8px;
+    min-width: 36px;
+    justify-content: center;
+  }
 }
 
 /* Doctor Directory Styles */

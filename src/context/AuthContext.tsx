@@ -50,7 +50,7 @@ const defaultAuthState: AuthState = {
   user: null,
   token: null,
   isAuthenticated: false,
-  isLoading: false,
+  isLoading: true,
   error: null
 };
 

@@ -7,7 +7,18 @@ export function ProtectedRoute() {
 
   // If still loading, show loading state
   if (authState.isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        fontSize: '18px',
+        color: '#666'
+      }}>
+        Loading...
+      </div>
+    );
   }
 
   // Check if user is authenticated

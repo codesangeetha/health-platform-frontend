@@ -11,7 +11,7 @@ interface PatientHeaderProps {
 export const PatientHeader = () => {
   const { authState, logout } = useContext(AuthContext);
   const location = useLocation();
-  
+
   const handleLogout = () => {
     logout();
     window.location.href = '/patient/login';
@@ -19,7 +19,7 @@ export const PatientHeader = () => {
 
   // Get current path to determine active link
   const currentPath = location.pathname;
-  
+
   // Navigation links configuration
   const navLinks = [
     { path: '/patient/dashboard', label: 'Dashboard' },
@@ -28,6 +28,30 @@ export const PatientHeader = () => {
     { path: '/patient/profile', label: 'Profile' },
     { path: '/patient/settings', label: 'Settings' }
   ];
+
+  // Get user initials for avatar fallback
+  const getUserInitials = () => {
+    if (authState.user) {
+      // Try to extract initials from email if no name available
+      const email = authState.user.email;
+      const emailPrefix = email.split('@')[0];
+      const parts = emailPrefix.split(/[._-]/);
+      if (parts.length >= 2) {
+        return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+      } else {
+        return email.charAt(0).toUpperCase();
+      }
+    }
+    return 'U';
+  };
+
+  // Get user display name
+  const getUserDisplayName = () => {
+    if (authState.user) {
+      return authState.user.email;
+    }
+    return 'User';
+  };
 
   return (
     <>
@@ -53,8 +77,18 @@ export const PatientHeader = () => {
           </nav>
           <div className="pd-nav-right">
             <div className="pd-bell" title="Notifications" aria-label="Notifications">🔔</div>
-            <div className="pd-avatar" aria-label="Profile" />
-            <button className="pd-logout-link" onClick={handleLogout}>Logout</button>
+            <div className="pd-user-profile">
+              <div className="pd-avatar" aria-label="Profile" title={getUserDisplayName()}>
+                {getUserInitials()}
+              </div>
+              <div className="pd-user-info">
+                <span className="pd-user-name">{getUserDisplayName()}</span>
+              </div>
+            </div>
+            <button className="pd-logout-btn" onClick={handleLogout}>
+              <span className="pd-logout-icon">🚪</span>
+              <span className="pd-logout-text">Logout</span>
+            </button>
           </div>
         </div>
       </header>
