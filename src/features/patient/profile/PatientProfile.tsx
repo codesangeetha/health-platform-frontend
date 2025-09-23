@@ -1,7 +1,8 @@
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { AuthContext } from '@/context/AuthContext';
 import { AuthService } from '@/services/auth/auth.service';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { PatientLayout } from '@/components/layout/PatientLayout';
 import '@/styles/components/patient-dashboard.styles.css';
 
 // Minimal shape based on patient registration fields; server may return more
@@ -120,38 +121,7 @@ export const PatientProfile = () => {
   const listOrDash = (list?: string[]) => (list && list.length ? list : ['—']);
 
   return (
-    <>
-      {/* Top Navigation */}
-      <header className="pd-top-nav">
-        <div className="pd-top-nav-inner">
-          <div className="pd-brand">
-            <Link to="/patient/dashboard" className="hc-logo" aria-label="HealthCare+ Home">
-              <span className="hc-logo__mark">+</span>
-              <span>HealthCare+</span>
-            </Link>
-          </div>
-          <nav className="pd-nav-links" aria-label="Primary">
-            <a href="/patient/dashboard">Dashboard</a>
-            <a href="#">Doctor Directory</a>
-            <a href="#">Appointment Schedule</a>
-            <a href="/patient/profile" className="active">Profile</a>
-            <a href="#">Settings</a>
-          </nav>
-          <div className="pd-nav-right">
-            <div className="pd-bell" title="Notifications" aria-label="Notifications">🔔</div>
-            <div className="pd-avatar" aria-label="Profile" />
-            <button className="pd-logout-link" onClick={handleLogout}>Logout</button>
-          </div>
-        </div>
-      </header>
-
-      {/* Container */}
-      <main className="pd-container">
-        {/* Welcome banner */}
-        <section className="pd-banner">
-          <h5>Profile, {displayName}!</h5>
-          <div className="pd-banner-avatar" aria-hidden="true" />
-        </section>
+    <PatientLayout pageTitle={`Profile, ${displayName}!`}>
 
         {/* Content Grid */}
         <section className="pd-grid">
@@ -280,51 +250,6 @@ export const PatientProfile = () => {
             </div>
           </aside>
         </section>
-      </main>
-
-      {/* Footer */}
-      <footer className="pd-footer">
-        <div className="pd-footer-inner">
-          <div className="pd-footer-grid">
-            <div className="pd-footer-section">
-              <div className="pd-footer-brand">
-                <span className="pd-footer-logo" aria-hidden="true" />
-                <div>
-                  <strong>Doctor Appointment Booker</strong>
-                  <div style={{ fontSize: '0.875rem', color: 'var(--color-text-light)' }}>Accessible healthcare for everyone.</div>
-                </div>
-              </div>
-            </div>
-            <div className="pd-footer-section">
-              <h6>Quick Links</h6>
-              <ul className="pd-footer-links">
-                <li>Find Doctors</li>
-                <li>Book Appointment</li>
-                <li>Health Records</li>
-              </ul>
-            </div>
-            <div className="pd-footer-section">
-              <h6>Support</h6>
-              <ul className="pd-footer-links">
-                <li>Help Center</li>
-                <li>Contact Us</li>
-                <li>FAQ</li>
-              </ul>
-            </div>
-            <div className="pd-footer-section">
-              <h6>Contact</h6>
-              <ul className="pd-footer-info">
-                <li>support@example.com</li>
-                <li>+1 (555) 123-4567</li>
-              </ul>
-            </div>
-          </div>
-          <div className="pd-footer-copy">© 2025 Placeholder. All rights reserved.</div>
-        </div>
-      </footer>
-
-      {/* Floating help icon */}
-      <div className="pd-help-fab" title="Help" aria-label="Help">?</div>
-    </>
-  );
-}
+      </PatientLayout>
+    );
+  }

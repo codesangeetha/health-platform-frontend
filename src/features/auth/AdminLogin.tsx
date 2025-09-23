@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import '../../styles/landing-page.css';
 import '../../styles/components/patient-login.styles.css';
@@ -16,6 +16,7 @@ const AdminLogin = () => {
     const [password, setPassword] = useState('');
     const { login, authState } = useContext(AuthContext);
     const navigate = useNavigate();
+    const location = useLocation();
     const [submitting, setSubmitting] = useState(false);
     const [scrolled, setScrolled] = useState(false);
 
@@ -129,9 +130,11 @@ const AdminLogin = () => {
 
     useEffect(() => {
         if (authState.isAuthenticated && !authState.isLoading) {
-            navigate('/admin/dashboard');
+            // Get the redirect location from state or default to admin dashboard
+            const from = location.state?.from?.pathname || '/admin/dashboard';
+            navigate(from, { replace: true });
         }
-    }, [authState.isAuthenticated, authState.isLoading, navigate]);
+    }, [authState.isAuthenticated, authState.isLoading, navigate, location]);
 
     return (
         <div>

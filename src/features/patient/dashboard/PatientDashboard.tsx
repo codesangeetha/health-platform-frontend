@@ -1,53 +1,14 @@
 import { useContext } from 'react';
 import { AuthContext } from '../../../context/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { PatientLayout } from '../../../components/layout/PatientLayout';
 import '../../../styles/components/patient-dashboard.styles.css';
 
 export const PatientDashboard = () => {
-  const { authState, logout } = useContext(AuthContext);
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/', { replace: true });
-  };
-
+  const { authState } = useContext(AuthContext);
   const displayName = authState.user?.email?.split('@')[0] || 'Patient';
 
   return (
-    <>
-      {/* Top Navigation */}
-      <header className="pd-top-nav">
-        <div className="pd-top-nav-inner">
-          <div className="pd-brand">
-            
-           <Link to="/patient/dashboard" className="hc-logo" aria-label="HealthCare+ Home">
-            <span className="hc-logo__mark">+</span>
-            <span>HealthCare+</span>
-          </Link>
-          </div>
-          <nav className="pd-nav-links" aria-label="Primary">
-            <Link to="/patient/dashboard" className="active">Dashboard</Link>
-            <a href="#">Doctor Directory</a>
-            <a href="#">Appointment Schedule</a>
-            <Link to="/patient/profile">Profile</Link>
-            <a href="#">Settings</a>
-          </nav>
-          <div className="pd-nav-right">
-            <div className="pd-bell" title="Notifications" aria-label="Notifications">🔔</div>
-            <div className="pd-avatar" aria-label="Profile" />
-            <button className="pd-logout-link" onClick={handleLogout}>Logout</button>
-          </div>
-        </div>
-      </header>
-
-      {/* Container */}
-      <main className="pd-container">
-        {/* Welcome banner */}
-        <section className="pd-banner">
-          <h5>Welcome back, {displayName}!</h5>
-          <div className="pd-banner-avatar" aria-hidden="true" />
-        </section>
+    <PatientLayout pageTitle={`Welcome back, ${displayName}!`}>
 
         {/* Main grid */}
         <section className="pd-grid">
@@ -163,51 +124,6 @@ export const PatientDashboard = () => {
             </div>
           </aside>
         </section>
-      </main>
-
-      {/* Footer */}
-      <footer className="pd-footer">
-        <div className="pd-footer-inner">
-          <div className="pd-footer-grid">
-            <div className="pd-footer-section">
-              <div className="pd-footer-brand">
-                <span className="pd-footer-logo" aria-hidden="true" />
-                <div>
-                  <strong>Doctor Appointment Booker</strong>
-                  <div style={{ fontSize: '0.875rem', color: 'var(--color-text-light)' }}>Accessible healthcare for everyone.</div>
-                </div>
-              </div>
-            </div>
-            <div className="pd-footer-section">
-              <h6>Quick Links</h6>
-              <ul className="pd-footer-links">
-                <li>Find Doctors</li>
-                <li>Book Appointment</li>
-                <li>Health Records</li>
-              </ul>
-            </div>
-            <div className="pd-footer-section">
-              <h6>Support</h6>
-              <ul className="pd-footer-links">
-                <li>Help Center</li>
-                <li>Contact Us</li>
-                <li>FAQ</li>
-              </ul>
-            </div>
-            <div className="pd-footer-section">
-              <h6>Contact</h6>
-              <ul className="pd-footer-info">
-                <li>support@example.com</li>
-                <li>+1 (555) 123-4567</li>
-              </ul>
-            </div>
-          </div>
-          <div className="pd-footer-copy">© 2025 Placeholder. All rights reserved.</div>
-        </div>
-      </footer>
-
-      {/* Floating help icon */}
-      <div className="pd-help-fab" title="Help" aria-label="Help">?</div>
-    </>
-  );
+      </PatientLayout>
+    );
 };

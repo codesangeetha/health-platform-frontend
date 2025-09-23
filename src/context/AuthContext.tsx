@@ -81,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     };
 
+    // Initialize auth state
     initializeAuth();
   }, []);
 

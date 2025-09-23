@@ -1,7 +1,8 @@
 import { useContext, useEffect, useMemo, useState } from 'react';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../context/AuthContext';
 import { AuthService } from '../../../services/auth/auth.service';
+import { DoctorLayout } from '../../../components/layout/DoctorLayout';
 import '../../../styles/components/patient-dashboard.styles.css';
 
 interface DoctorProfileData {
@@ -497,319 +498,291 @@ export const DoctorProfileEdit = () => {
       : { border: '1px solid var(--color-border)' };
 
   return (
-    <>
-      {/* Header (match patient header style) */}
-      <header className="pd-top-nav">
-        <div className="pd-top-nav-inner">
-          <div className="pd-brand">
-            <NavLink to="/doctor/dashboard" className="hc-logo" aria-label="HealthCare+ Home">
-              <span className="hc-logo__mark">+</span>
-              <span>HealthCare+</span>
-            </NavLink>
-          </div>
-          <nav className="pd-nav-links" aria-label="Primary">
-            <NavLink to="/doctor/dashboard" className={({ isActive }) => (isActive ? 'active' : undefined)}>Dashboard</NavLink>
-            <NavLink to="/doctor/appointments" className={({ isActive }) => (isActive ? 'active' : undefined)}>Appointments</NavLink>
-            <NavLink to="/doctor/patients" className={({ isActive }) => (isActive ? 'active' : undefined)}>Patients</NavLink>
-            <NavLink to="/doctor/schedule" className={({ isActive }) => (isActive ? 'active' : undefined)}>Schedule</NavLink>
-            <NavLink to="/doctor/profile" className={({ isActive }) => (isActive ? 'active' : undefined)}>Profile</NavLink>
-          </nav>
-          <div className="pd-nav-right">
-            <div className="pd-bell" title="Notifications" aria-label="Notifications">🔔</div>
-            <div className="pd-avatar" aria-label="Profile" />
-            <button className="pd-logout-link" onClick={handleLogout}>Logout</button>
-          </div>
-        </div>
-      </header>
+    <DoctorLayout
+      pageTitle="Edit Profile"
+      pageSubtitle=""
+      useDoctorContainer={false}
+    >
+      <section className="pd-grid">
+        <div className="pd-col-8">
+          <form className="pd-card" onSubmit={onSubmit} noValidate>
+            <h6>Personal & Professional Details</h6>
+            {error && <p className="pd-stat-label" style={{ color: '#e63946' }}>{error}</p>}
+            {success && <p className="pd-stat-label" style={{ color: '#2e7d32' }}>{success}</p>}
 
-      {/* Container */}
-      <main className="pd-container">
-        <section className="pd-banner">
-          <h5>Edit Profile</h5>
-          <div className="pd-banner-avatar" aria-hidden="true" />
-        </section>
+            {loading ? (
+              <p className="pd-stat-label">Loading…</p>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div>
+                  <label className="pd-stat-label" htmlFor="firstName">First Name</label>
+                  <input
+                    id="firstName"
+                    name="firstName"
+                    value={form.firstName}
+                    onChange={onChange}
+                    onBlur={() => handleBlur('firstName')}
+                    style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('firstName') }}
+                    required
+                    aria-invalid={touched.firstName && !!fieldErrors.firstName}
+                    aria-describedby={fieldErrors.firstName ? 'firstName-error' : undefined}
+                  />
+                  {touched.firstName && fieldErrors.firstName && (
+                    <div id="firstName-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>{fieldErrors.firstName}</div>
+                  )}
+                </div>
 
-        <section className="pd-grid">
-          <div className="pd-col-8">
-            <form className="pd-card" onSubmit={onSubmit} noValidate>
-              <h6>Personal & Professional Details</h6>
-              {error && <p className="pd-stat-label" style={{ color: '#e63946' }}>{error}</p>}
-              {success && <p className="pd-stat-label" style={{ color: '#2e7d32' }}>{success}</p>}
+                <div>
+                  <label className="pd-stat-label" htmlFor="lastName">Last Name</label>
+                  <input
+                    id="lastName"
+                    name="lastName"
+                    value={form.lastName}
+                    onChange={onChange}
+                    onBlur={() => handleBlur('lastName')}
+                    style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('lastName') }}
+                    required
+                    aria-invalid={touched.lastName && !!fieldErrors.lastName}
+                    aria-describedby={fieldErrors.lastName ? 'lastName-error' : undefined}
+                  />
+                  {touched.lastName && fieldErrors.lastName && (
+                    <div id="lastName-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>{fieldErrors.lastName}</div>
+                  )}
+                </div>
 
-              {loading ? (
-                <p className="pd-stat-label">Loading…</p>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+               {/*  <div>
+                  <label className="pd-stat-label" htmlFor="email">Email</label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={form.email}
+                    onChange={onChange}
+                    style={{ width: '90%', padding: 10, borderRadius: 6, border: '1px solid var(--color-border)' }}
+                    disabled
+                  />
+                </div> */}
+
+                <div>
+                  <label className="pd-stat-label" htmlFor="phone">Phone</label>
+                  <input
+                    id="phone"
+                    name="phone"
+                    value={form.phone}
+                    onChange={onChange}
+                    onBlur={() => handleBlur('phone')}
+                    style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('phone') }}
+                    required
+                    aria-invalid={touched.phone && !!fieldErrors.phone}
+                    aria-describedby={fieldErrors.phone ? 'phone-error' : 'phone-hint'}
+                  />
+                  {touched.phone && fieldErrors.phone ? (
+                    <div id="phone-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>{fieldErrors.phone}</div>
+                  ) : (
+                    <div id="phone-hint" style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>Use 10 digits.</div>
+                  )}
+                </div>
+
+                <div style={{ gridColumn: 'span 2' }}>
+                  <label className="pd-stat-label" htmlFor="specialization">Specialization (comma separated)</label>
+                  <input
+                    id="specialization"
+                    name="specialization"
+                    value={form.specialization}
+                    onChange={onChange}
+                    onBlur={() => handleBlur('specialization')}
+                    style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('specialization') }}
+                    placeholder="Cardiologist,general"
+                    aria-invalid={touched.specialization && !!fieldErrors.specialization}
+                    aria-describedby={fieldErrors.specialization ? 'specialization-error' : 'specialization-hint'}
+                  />
+                  {touched.specialization && fieldErrors.specialization ? (
+                    <div id="specialization-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>{fieldErrors.specialization}</div>
+                  ) : (
+                    <div id="specialization-hint" style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>Separate with commas, e.g., Cardiologist,general</div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="pd-stat-label" htmlFor="licenseNumber">License Number</label>
+                  <input
+                    id="licenseNumber"
+                    name="licenseNumber"
+                    value={form.licenseNumber}
+                    onChange={onChange}
+                    onBlur={() => handleBlur('licenseNumber')}
+                    style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('licenseNumber') }}
+                    aria-invalid={touched.licenseNumber && !!fieldErrors.licenseNumber}
+                    aria-describedby={fieldErrors.licenseNumber ? 'licenseNumber-error' : 'licenseNumber-hint'}
+                  />
+                  {touched.licenseNumber && fieldErrors.licenseNumber ? (
+                    <div id="licenseNumber-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>{fieldErrors.licenseNumber}</div>
+                  ) : (
+                    <div id="licenseNumber-hint" style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>4–20 chars: letters, numbers, hyphen.</div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="pd-stat-label" htmlFor="experience">Experience (years)</label>
+                  <input
+                    id="experience"
+                    name="experience"
+                    value={String(form.experience ?? '')}
+                    onChange={onChange}
+                    onBlur={() => handleBlur('experience')}
+                    style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('experience') }}
+                    inputMode="numeric"
+                    aria-invalid={touched.experience && !!fieldErrors.experience}
+                    aria-describedby={fieldErrors.experience ? 'experience-error' : undefined}
+                  />
+                  {touched.experience && fieldErrors.experience && (
+                    <div id="experience-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>{fieldErrors.experience}</div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="pd-stat-label" htmlFor="consultationFee">Consultation Fee</label>
+                  <input
+                    id="consultationFee"
+                    name="consultationFee"
+                    value={String(form.consultationFee ?? '')}
+                    onChange={onChangeNumber}
+                    onBlur={() => handleBlur('consultationFee')}
+                    style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('consultationFee') }}
+                    inputMode="numeric"
+                    aria-invalid={touched.consultationFee && !!fieldErrors.consultationFee}
+                    aria-describedby={fieldErrors.consultationFee ? 'fee-error' : undefined}
+                  />
+                  {touched.consultationFee && fieldErrors.consultationFee && (
+                    <div id="fee-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>{fieldErrors.consultationFee}</div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="pd-stat-label" htmlFor="qualification">Qualification</label>
+                  <input
+                    id="qualification"
+                    name="qualification"
+                    value={form.qualification}
+                    onChange={onChange}
+                    onBlur={() => handleBlur('qualification')}
+                    style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('qualification') }}
+                    aria-invalid={touched.qualification && !!fieldErrors.qualification}
+                    aria-describedby={fieldErrors.qualification ? 'qualification-error' : 'qualification-hint'}
+                  />
+                  {touched.qualification && fieldErrors.qualification ? (
+                    <div id="qualification-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>{fieldErrors.qualification}</div>
+                  ) : (
+                    <div id="qualification-hint" style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>Use letters, commas, and periods; 2–100 characters.</div>
+                  )}
+                </div>
+
+                <div style={{ gridColumn: 'span 2' }}>
+                  <label className="pd-stat-label" htmlFor="hospital">Hospital / Clinic</label>
+                  <input
+                    id="hospital"
+                    name="hospital"
+                    value={form.hospital}
+                    onChange={onChange}
+                    onBlur={() => handleBlur('hospital')}
+                    style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('hospital') }}
+                    aria-invalid={touched.hospital && !!fieldErrors.hospital}
+                    aria-describedby={fieldErrors.hospital ? 'hospital-error' : undefined}
+                  />
+                  {touched.hospital && fieldErrors.hospital && (
+                    <div id="hospital-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>{fieldErrors.hospital}</div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {!loading && (
+              <>
+                <div style={{ marginTop: 16 }}>
+                  <div className="pd-stat-label" style={{ marginBottom: 8 }}>Available Days</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                    {WEEK_DAYS.map((d) => (
+                      <label key={d} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <input
+                          type="checkbox"
+                          checked={!!form.availableDays?.includes(d)}
+                          onChange={() => onToggleDay(d)}
+                        />
+                        <span>{d}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {touched.availableDays && fieldErrors.availableDays && (
+                    <div style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>{fieldErrors.availableDays}</div>
+                  )}
+                </div>
+
+                <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div>
-                    <label className="pd-stat-label" htmlFor="firstName">First Name</label>
+                    <label className="pd-stat-label" htmlFor="availableStart">Available Time (Start)</label>
                     <input
-                      id="firstName"
-                      name="firstName"
-                      value={form.firstName}
-                      onChange={onChange}
-                      onBlur={() => handleBlur('firstName')}
-                      style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('firstName') }}
-                      required
-                      aria-invalid={touched.firstName && !!fieldErrors.firstName}
-                      aria-describedby={fieldErrors.firstName ? 'firstName-error' : undefined}
+                      id="availableStart"
+                      type="time"
+                      name="availableStart"
+                      value={form.availableTime?.start || ''}
+                      onChange={onTimeChange}
+                      onBlur={() => handleBlur('availableStart')}
+                      style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('availableStart') }}
+                      aria-invalid={touched.availableStart && !!fieldErrors.availableStart}
+                      aria-describedby={fieldErrors.availableStart ? 'availableStart-error' : undefined}
                     />
-                    {touched.firstName && fieldErrors.firstName && (
-                      <div id="firstName-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>{fieldErrors.firstName}</div>
+                    {touched.availableStart && fieldErrors.availableStart && (
+                      <div id="availableStart-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>{fieldErrors.availableStart}</div>
                     )}
                   </div>
-
                   <div>
-                    <label className="pd-stat-label" htmlFor="lastName">Last Name</label>
+                    <label className="pd-stat-label" htmlFor="availableEnd">Available Time (End)</label>
                     <input
-                      id="lastName"
-                      name="lastName"
-                      value={form.lastName}
-                      onChange={onChange}
-                      onBlur={() => handleBlur('lastName')}
-                      style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('lastName') }}
-                      required
-                      aria-invalid={touched.lastName && !!fieldErrors.lastName}
-                      aria-describedby={fieldErrors.lastName ? 'lastName-error' : undefined}
+                      id="availableEnd"
+                      type="time"
+                      name="availableEnd"
+                      value={form.availableTime?.end || ''}
+                      onChange={onTimeChange}
+                      onBlur={() => handleBlur('availableEnd')}
+                      style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('availableEnd') }}
+                      aria-invalid={touched.availableEnd && !!fieldErrors.availableEnd}
+                      aria-describedby={fieldErrors.availableEnd ? 'availableEnd-error' : undefined}
                     />
-                    {touched.lastName && fieldErrors.lastName && (
-                      <div id="lastName-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>{fieldErrors.lastName}</div>
-                    )}
-                  </div>
-
-                 {/*  <div>
-                    <label className="pd-stat-label" htmlFor="email">Email</label>
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={form.email}
-                      onChange={onChange}
-                      style={{ width: '90%', padding: 10, borderRadius: 6, border: '1px solid var(--color-border)' }}
-                      disabled
-                    />
-                  </div> */}
-
-                  <div>
-                    <label className="pd-stat-label" htmlFor="phone">Phone</label>
-                    <input
-                      id="phone"
-                      name="phone"
-                      value={form.phone}
-                      onChange={onChange}
-                      onBlur={() => handleBlur('phone')}
-                      style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('phone') }}
-                      required
-                      aria-invalid={touched.phone && !!fieldErrors.phone}
-                      aria-describedby={fieldErrors.phone ? 'phone-error' : 'phone-hint'}
-                    />
-                    {touched.phone && fieldErrors.phone ? (
-                      <div id="phone-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>{fieldErrors.phone}</div>
+                    {touched.availableEnd && fieldErrors.availableEnd ? (
+                      <div id="availableEnd-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>{fieldErrors.availableEnd}</div>
                     ) : (
-                      <div id="phone-hint" style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>Use 10 digits.</div>
-                    )}
-                  </div>
-
-                  <div style={{ gridColumn: 'span 2' }}>
-                    <label className="pd-stat-label" htmlFor="specialization">Specialization (comma separated)</label>
-                    <input
-                      id="specialization"
-                      name="specialization"
-                      value={form.specialization}
-                      onChange={onChange}
-                      onBlur={() => handleBlur('specialization')}
-                      style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('specialization') }}
-                      placeholder="Cardiologist,general"
-                      aria-invalid={touched.specialization && !!fieldErrors.specialization}
-                      aria-describedby={fieldErrors.specialization ? 'specialization-error' : 'specialization-hint'}
-                    />
-                    {touched.specialization && fieldErrors.specialization ? (
-                      <div id="specialization-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>{fieldErrors.specialization}</div>
-                    ) : (
-                      <div id="specialization-hint" style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>Separate with commas, e.g., Cardiologist,general</div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="pd-stat-label" htmlFor="licenseNumber">License Number</label>
-                    <input
-                      id="licenseNumber"
-                      name="licenseNumber"
-                      value={form.licenseNumber}
-                      onChange={onChange}
-                      onBlur={() => handleBlur('licenseNumber')}
-                      style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('licenseNumber') }}
-                      aria-invalid={touched.licenseNumber && !!fieldErrors.licenseNumber}
-                      aria-describedby={fieldErrors.licenseNumber ? 'licenseNumber-error' : 'licenseNumber-hint'}
-                    />
-                    {touched.licenseNumber && fieldErrors.licenseNumber ? (
-                      <div id="licenseNumber-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>{fieldErrors.licenseNumber}</div>
-                    ) : (
-                      <div id="licenseNumber-hint" style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>4–20 chars: letters, numbers, hyphen.</div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="pd-stat-label" htmlFor="experience">Experience (years)</label>
-                    <input
-                      id="experience"
-                      name="experience"
-                      value={String(form.experience ?? '')}
-                      onChange={onChange}
-                      onBlur={() => handleBlur('experience')}
-                      style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('experience') }}
-                      inputMode="numeric"
-                      aria-invalid={touched.experience && !!fieldErrors.experience}
-                      aria-describedby={fieldErrors.experience ? 'experience-error' : undefined}
-                    />
-                    {touched.experience && fieldErrors.experience && (
-                      <div id="experience-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>{fieldErrors.experience}</div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="pd-stat-label" htmlFor="consultationFee">Consultation Fee</label>
-                    <input
-                      id="consultationFee"
-                      name="consultationFee"
-                      value={String(form.consultationFee ?? '')}
-                      onChange={onChangeNumber}
-                      onBlur={() => handleBlur('consultationFee')}
-                      style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('consultationFee') }}
-                      inputMode="numeric"
-                      aria-invalid={touched.consultationFee && !!fieldErrors.consultationFee}
-                      aria-describedby={fieldErrors.consultationFee ? 'fee-error' : undefined}
-                    />
-                    {touched.consultationFee && fieldErrors.consultationFee && (
-                      <div id="fee-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>{fieldErrors.consultationFee}</div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="pd-stat-label" htmlFor="qualification">Qualification</label>
-                    <input
-                      id="qualification"
-                      name="qualification"
-                      value={form.qualification}
-                      onChange={onChange}
-                      onBlur={() => handleBlur('qualification')}
-                      style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('qualification') }}
-                      aria-invalid={touched.qualification && !!fieldErrors.qualification}
-                      aria-describedby={fieldErrors.qualification ? 'qualification-error' : 'qualification-hint'}
-                    />
-                    {touched.qualification && fieldErrors.qualification ? (
-                      <div id="qualification-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>{fieldErrors.qualification}</div>
-                    ) : (
-                      <div id="qualification-hint" style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>Use letters, commas, and periods; 2–100 characters.</div>
-                    )}
-                  </div>
-
-                  <div style={{ gridColumn: 'span 2' }}>
-                    <label className="pd-stat-label" htmlFor="hospital">Hospital / Clinic</label>
-                    <input
-                      id="hospital"
-                      name="hospital"
-                      value={form.hospital}
-                      onChange={onChange}
-                      onBlur={() => handleBlur('hospital')}
-                      style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('hospital') }}
-                      aria-invalid={touched.hospital && !!fieldErrors.hospital}
-                      aria-describedby={fieldErrors.hospital ? 'hospital-error' : undefined}
-                    />
-                    {touched.hospital && fieldErrors.hospital && (
-                      <div id="hospital-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>{fieldErrors.hospital}</div>
+                      <div style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>End time must be after start time.</div>
                     )}
                   </div>
                 </div>
-              )}
 
-              {!loading && (
-                <>
-                  <div style={{ marginTop: 16 }}>
-                    <div className="pd-stat-label" style={{ marginBottom: 8 }}>Available Days</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-                      {WEEK_DAYS.map((d) => (
-                        <label key={d} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <input
-                            type="checkbox"
-                            checked={!!form.availableDays?.includes(d)}
-                            onChange={() => onToggleDay(d)}
-                          />
-                          <span>{d}</span>
-                        </label>
-                      ))}
-                    </div>
-                    {touched.availableDays && fieldErrors.availableDays && (
-                      <div style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>{fieldErrors.availableDays}</div>
-                    )}
-                  </div>
+                <div style={{ marginTop: 24, display: 'flex', gap: 12 }}>
+                  <button type="submit" className="pd-btn pd-btn-primary-light" disabled={saving || loading || !isFormValid()}>
+                    {saving ? 'Saving…' : 'Save Changes'}
+                  </button>
+                  <button type="button" className="pd-btn pd-btn-outlined" onClick={() => navigate('/doctor/profile')} disabled={saving}>
+                    Cancel
+                  </button>
+                </div>
+              </>
+            )}
+          </form>
+        </div>
 
-                  <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                    <div>
-                      <label className="pd-stat-label" htmlFor="availableStart">Available Time (Start)</label>
-                      <input
-                        id="availableStart"
-                        type="time"
-                        name="availableStart"
-                        value={form.availableTime?.start || ''}
-                        onChange={onTimeChange}
-                        onBlur={() => handleBlur('availableStart')}
-                        style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('availableStart') }}
-                        aria-invalid={touched.availableStart && !!fieldErrors.availableStart}
-                        aria-describedby={fieldErrors.availableStart ? 'availableStart-error' : undefined}
-                      />
-                      {touched.availableStart && fieldErrors.availableStart && (
-                        <div id="availableStart-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>{fieldErrors.availableStart}</div>
-                      )}
-                    </div>
-                    <div>
-                      <label className="pd-stat-label" htmlFor="availableEnd">Available Time (End)</label>
-                      <input
-                        id="availableEnd"
-                        type="time"
-                        name="availableEnd"
-                        value={form.availableTime?.end || ''}
-                        onChange={onTimeChange}
-                        onBlur={() => handleBlur('availableEnd')}
-                        style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('availableEnd') }}
-                        aria-invalid={touched.availableEnd && !!fieldErrors.availableEnd}
-                        aria-describedby={fieldErrors.availableEnd ? 'availableEnd-error' : undefined}
-                      />
-                      {touched.availableEnd && fieldErrors.availableEnd ? (
-                        <div id="availableEnd-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>{fieldErrors.availableEnd}</div>
-                      ) : (
-                        <div style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>End time must be after start time.</div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div style={{ marginTop: 24, display: 'flex', gap: 12 }}>
-                    <button type="submit" className="pd-btn pd-btn-primary-light" disabled={saving || loading || !isFormValid()}>
-                      {saving ? 'Saving…' : 'Save Changes'}
-                    </button>
-                    <button type="button" className="pd-btn pd-btn-outlined" onClick={() => navigate('/doctor/profile')} disabled={saving}>
-                      Cancel
-                    </button>
-                  </div>
-                </>
-              )}
-            </form>
-          </div>
-
-          <aside className="pd-col-4">
-            <div className="pd-card">
-              <h6>Tips</h6>
-              <div className="pd-tip-item">
-                <p className="pd-tip-title">Keep your practice info updated</p>
-                <p className="pd-tip-desc">Accurate details help patients find you and book appointments.</p>
-              </div>
-              <div className="pd-tip-item">
-                <p className="pd-tip-title">Set availability</p>
-                <p className="pd-tip-desc">Make sure your available days and time range reflect your current schedule.</p>
-              </div>
+        <aside className="pd-col-4">
+          <div className="pd-card">
+            <h6>Tips</h6>
+            <div className="pd-tip-item">
+              <p className="pd-tip-title">Keep your practice info updated</p>
+              <p className="pd-tip-desc">Accurate details help patients find you and book appointments.</p>
             </div>
-          </aside>
-        </section>
-      </main>
-    </>
+            <div className="pd-tip-item">
+              <p className="pd-tip-title">Set availability</p>
+              <p className="pd-tip-desc">Make sure your available days and time range reflect your current schedule.</p>
+            </div>
+          </div>
+        </aside>
+      </section>
+    </DoctorLayout>
   );
 };

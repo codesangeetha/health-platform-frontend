@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import '../../styles/landing-page.css';
 import '../../styles/components/patient-login.styles.css';
@@ -17,6 +17,7 @@ export const DoctorLogin = () => {
   const [password, setPassword] = useState('');
   const { login, authState } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
   const [submitting, setSubmitting] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -166,9 +167,11 @@ export const DoctorLogin = () => {
 
   useEffect(() => {
     if (authState.isAuthenticated && !authState.isLoading) {
-      navigate('/doctor/dashboard');
+      // Get the redirect location from state or default to doctor dashboard
+      const from = location.state?.from?.pathname || '/doctor/dashboard';
+      navigate(from, { replace: true });
     }
-  }, [authState.isAuthenticated, authState.isLoading, navigate]);
+  }, [authState.isAuthenticated, authState.isLoading, navigate, location]);
 
  /*  const canSubmit =
     !submitting &&
