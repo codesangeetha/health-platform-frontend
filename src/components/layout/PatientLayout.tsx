@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { PatientHeader } from './PatientHeader';
+import '../../styles/components/patient-dashboard.styles.css';
 
 interface PatientLayoutProps {
   children: ReactNode;
@@ -62,7 +63,7 @@ export const PatientLayout = ({ children, pageTitle, pageSubtitle }: PatientLayo
           <div className="pd-footer-copy">© 2025 Placeholder. All rights reserved.</div>
         </div>
       </footer>
-      <div className="pd-help-fab" title="Help" aria-label="Help">?</div>
+      {/* Help icon removed */}
     </>
   );
 };

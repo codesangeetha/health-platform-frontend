@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { AppointmentService } from '../../../services/appointment/appointment.service';
 import { DoctorService } from '../../../services/doctor/doctor.service';
 import type { Appointment } from '../../../types/appointment/appointment.types';
-import { PatientLayout } from '../../../components/layout/PatientLayout';
 import '../../../styles/components/patient-dashboard.styles.css';
 
 // Design system constants
@@ -302,7 +301,7 @@ export const MyAppointments = () => {
   };
 
   return (
-    <PatientLayout pageTitle="My Appointments" pageSubtitle="View and manage your upcoming and past appointments">
+    <>
       <div style={{ 
         backgroundColor: DESIGN_SYSTEM.colors.background_light, 
         minHeight: '100vh',
@@ -697,6 +696,6 @@ export const MyAppointments = () => {
           )}
         </div>
       </div>
-    </PatientLayout>
+    </>
   );
 };

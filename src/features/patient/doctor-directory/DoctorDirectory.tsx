@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { DoctorService } from '@/services/doctor/doctor.service';
 import type { Doctor, DoctorFilters } from '@/types/doctor/doctor.types';
-import { PatientLayout } from '@/components/layout/PatientLayout';
 import '@/styles/components/patient-dashboard.styles.css';
 import './DoctorDirectory.styles.css';
 
@@ -70,7 +69,7 @@ export const DoctorDirectory = () => {
   };
 
   return (
-    <PatientLayout pageTitle="Doctor Directory" pageSubtitle="Find and book appointments with healthcare professionals">
+    <>
       {/* Search and Filters Section */}
       <div className="search-bar">
         <div className="search-input-container">
@@ -206,6 +205,6 @@ export const DoctorDirectory = () => {
           </>
         )}
       </div>
-    </PatientLayout>
+    </>
   );
 };

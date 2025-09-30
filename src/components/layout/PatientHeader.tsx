@@ -25,8 +25,9 @@ export const PatientHeader = () => {
     { path: '/patient/dashboard', label: 'Dashboard' },
     { path: '/patient/doctor-directory', label: 'Doctor Directory' },
     { path: '/patient/my-appointments', label: 'My Appointments' },
-    { path: '/patient/profile', label: 'Profile' },
-    { path: '/patient/settings', label: 'Settings' }
+    { path: '/patient/order-medicines', label: 'Order Medicines' },
+    { path: '/patient/my-orders', label: 'My Orders' },
+    { path: '/patient/profile', label: 'Profile' }
   ];
 
   // Get user initials for avatar fallback
@@ -76,7 +77,6 @@ export const PatientHeader = () => {
             ))}
           </nav>
           <div className="pd-nav-right">
-            <div className="pd-bell" title="Notifications" aria-label="Notifications">🔔</div>
             <div className="pd-user-profile">
               <div className="pd-avatar" aria-label="Profile" title={getUserDisplayName()}>
                 {getUserInitials()}

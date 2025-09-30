@@ -682,8 +682,7 @@ export const CancelAppointment = () => {
         </div>
       </footer>
 
-      {/* Floating help icon */}
-      <div className="pd-help-fab" title="Help" aria-label="Help">?</div>
+      {/* Help icon removed */}
     </>
   );
 };

@@ -1,6 +1,5 @@
 import { useContext } from 'react';
 import { AuthContext } from '../../../context/AuthContext';
-import { PatientLayout } from '../../../components/layout/PatientLayout';
 import '../../../styles/components/patient-dashboard.styles.css';
 
 export const PatientDashboard = () => {
@@ -8,7 +7,7 @@ export const PatientDashboard = () => {
   const displayName = authState.user?.email?.split('@')[0] || 'Patient';
 
   return (
-    <PatientLayout pageTitle={`Welcome back, ${displayName}!`}>
+    <>
 
         {/* Main grid */}
         <section className="pd-grid">
@@ -124,6 +123,6 @@ export const PatientDashboard = () => {
             </div>
           </aside>
         </section>
-      </PatientLayout>
-    );
+    </>
+  );
 };

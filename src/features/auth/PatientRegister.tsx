@@ -672,14 +672,7 @@ export const PatientRegister = () => {
         </footer>
       </div>
 
-      {/* Help floating icon */}
-      <button className="pr-help" aria-label="Help">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M12 19v-2" />
-          <path d="M8 7a4 4 0 1 1 8 0c0 2-2 3-3 4" />
-          <circle cx="12" cy="12" r="10" />
-        </svg>
-      </button>
+      {/* Help icon removed */}
     </div>
   );
 }

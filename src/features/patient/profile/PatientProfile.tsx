@@ -2,7 +2,6 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 import { AuthContext } from '@/context/AuthContext';
 import { AuthService } from '@/services/auth/auth.service';
 import { useNavigate } from 'react-router-dom';
-import { PatientLayout } from '@/components/layout/PatientLayout';
 import '@/styles/components/patient-dashboard.styles.css';
 
 // Minimal shape based on patient registration fields; server may return more
@@ -121,7 +120,7 @@ export const PatientProfile = () => {
   const listOrDash = (list?: string[]) => (list && list.length ? list : ['—']);
 
   return (
-    <PatientLayout pageTitle={`Profile, ${displayName}!`}>
+    <>
 
         {/* Content Grid */}
         <section className="pd-grid">
@@ -250,6 +249,6 @@ export const PatientProfile = () => {
             </div>
           </aside>
         </section>
-      </PatientLayout>
-    );
-  }
+    </>
+  );
+}

@@ -1,12 +1,17 @@
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
+import { useAuth } from '../context/AuthContext';
 import { PatientProfile } from '../features/patient/profile/PatientProfile';
 import { DoctorDirectory } from '../features/patient/doctor-directory/DoctorDirectory';
 import { BookAppointment } from '../features/patient/book-appointment/BookAppointment';
 import { MyAppointments } from '../features/patient/my-appointments/MyAppointments';
 import { RescheduleAppointment } from '../features/patient/reschedule-appointment/RescheduleAppointment';
 import { CancelAppointment } from '../features/patient/cancel-appointment/CancelAppointment';
+import { OrderMedicines } from '../features/patient/order-medicines/OrderMedicines';
+import { PatientOrders } from '../features/patient/patient-orders/PatientOrders';
 import DoctorsPage from '../features/admin/doctors/DoctorsPage';
+import { CategoriesPage } from '../features/admin/categories';
+import { MedicinesPage } from '../features/admin/medicines';
 import AdminLogin from '../features/auth/AdminLogin';
 import { AdminDashboard } from '../features/admin/dashboard/AdminDashboard';
 import PatientsPage from '../features/admin/patients/PatientsPage';
@@ -20,9 +25,44 @@ import { LandingPage } from '../pages/LandingPage';
 import { PatientDashboard } from '../features/patient/dashboard/PatientDashboard';
 import { PatientProfileEdit } from '../features/patient/profile/PatientProfileEdit';
 import { DoctorDashboard } from '../features/doctor/dashboard/DoctorDashboard';
+import { PatientLayout } from '../components/layout/PatientLayout';
 import { DoctorAppointments } from '../features/doctor/appointments/DoctorAppointments';
 import { DoctorProfile } from '../features/doctor/profile/DoctorProfile';
 import { DoctorProfileEdit } from '../features/doctor/profile/DoctorProfileEdit';
+
+// Component to combine ProtectedRoute with PatientLayout
+const ProtectedPatientLayout = () => {
+  const { authState } = useAuth();
+  const location = useLocation();
+
+  // If still loading, show loading state
+  if (authState.isLoading) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        fontSize: '18px',
+        color: '#666'
+      }}>
+        Loading...
+      </div>
+    );
+  }
+
+  // Check if user is authenticated
+  if (!authState.isAuthenticated || !authState.token) {
+    // Save the current location to redirect back after login
+    return <Navigate to="/" state={{ from: location }} replace />;
+  }
+
+  return (
+    <PatientLayout>
+      <Outlet />
+    </PatientLayout>
+  );
+};
 
 const router = createBrowserRouter([
   {
@@ -63,7 +103,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'patient',
-        element: <ProtectedRoute />,
+        element: <ProtectedPatientLayout />,
         children: [
           {
             path: 'dashboard',
@@ -76,10 +116,6 @@ const router = createBrowserRouter([
           {
             path: 'doctor/:doctorId/book-appointment',
             element: <BookAppointment />,
-          },
-          {
-            path: 'my-appointments',
-            element: <MyAppointments />,
           },
           {
             path: 'reschedule-appointment/:appointmentId',
@@ -96,6 +132,18 @@ const router = createBrowserRouter([
           {
             path: 'profile/edit',
             element: <PatientProfileEdit />,
+          },
+          {
+            path: 'my-appointments',
+            element: <MyAppointments />,
+          },
+          {
+            path: 'order-medicines',
+            element: <OrderMedicines />,
+          },
+          {
+            path: 'my-orders',
+            element: <PatientOrders />,
           }
         ]
       },
@@ -136,6 +184,14 @@ const router = createBrowserRouter([
           {
             path: 'patients',
             element: <PatientsPage />,
+          },
+          {
+            path: 'categories',
+            element: <CategoriesPage />,
+          },
+          {
+            path: 'medicines',
+            element: <MedicinesPage />,
           }
         ]
       }

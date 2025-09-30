@@ -77,6 +77,8 @@ const Sidebar = () => {
       { label: 'Dashboard', icon: '📊', path: '/admin/dashboard' },
       { label: 'Doctors', icon: '👨‍⚕️', path: '/admin/doctors' },
       { label: 'Patients', icon: '🏥', path: '/admin/patients' },
+      { label: 'Categories', icon: '🏷️', path: '/admin/categories' },
+      { label: 'Medicines', icon: '💊', path: '/admin/medicines' },
       { label: 'Appointments', icon: '📅', path: '/admin/appointments' },
     ],
     management: [

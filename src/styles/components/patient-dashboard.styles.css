@@ -77,8 +77,9 @@
   color: var(--color-text-dark);
 }
 .pd-nav-links {
-  display: none;
+  display: flex;
   gap: var(--space-2);
+  flex-wrap: wrap;
 }
 .pd-nav-links a {
   color: var(--color-text-light);
@@ -418,7 +419,14 @@
 .pd-footer-links li, .pd-footer-info li { margin: 6px 0; color: var(--color-text-light); font-size: var(--body-sm-size); }
 .pd-footer-brand { display: flex; gap: var(--space-1); align-items: center; }
 .pd-footer-logo { width: 28px; height: 28px; border-radius: 50%; background: var(--color-primary-blue); }
-.pd-footer-copy { margin-top: var(--space-3); color: var(--color-text-light); font-size: var(--body-sm-size); border-top: 1px solid var(--color-divider); padding-top: var(--space-2); }
+.pd-footer-copy {
+  margin-top: var(--space-3);
+  color: var(--color-text-light);
+  font-size: var(--body-sm-size);
+  border-top: 1px solid var(--color-divider);
+  padding-top: var(--space-2);
+  text-align: center;
+}
 
 /* Help Floating Icon */
 .pd-help-fab {
@@ -438,7 +446,6 @@
 
 /* Responsive */
 @media (min-width: 900px) {
-  .pd-nav-links { display: flex; }
   .pd-user-info { display: block; }
 }
 
@@ -456,6 +463,13 @@
     padding: 8px;
     min-width: 36px;
     justify-content: center;
+  }
+  .pd-nav-links {
+    gap: var(--space-1);
+    font-size: 0.8rem;
+  }
+  .pd-nav-links a {
+    padding: 4px 6px;
   }
 }
 
