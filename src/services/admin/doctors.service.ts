@@ -45,6 +45,8 @@ interface GetDoctorsParams {
   limit?: number;
   specialization?: string;
   verified?: boolean;
+  firstName?: string;
+  lastName?: string;
 }
 
 interface ApiResponse<T> {
@@ -98,13 +100,15 @@ export const verifyDoctor = async (doctorId: string): Promise<VerifyDoctorRespon
 
 export const getDoctors = async (params: GetDoctorsParams = {}): Promise<DoctorsResponse> => {
   try {
-    const { page = 1, limit = 5, specialization, verified } = params;
+    const { page = 1, limit = 5, specialization, verified, firstName, lastName } = params;
     const queryParams = new URLSearchParams({
       userType: 'doctor',
       page: page.toString(),
       limit: limit.toString(),
       ...(specialization && { specialization }),
-      ...(verified !== undefined && { verified: verified.toString() })
+      ...(verified !== undefined && { verified: verified.toString() }),
+      ...(firstName && { firstName }),
+      ...(lastName && { lastName })
     });
 
     const token = getAuthToken();
@@ -143,6 +147,7 @@ export interface CreateDoctorPayload {
   firstName: string;
   lastName: string;
   phone: string;
+  whatsapp?: string;
   dateOfBirth: string; // YYYY-MM-DD
   specialization: string;
   qualification?: string;

@@ -177,6 +177,76 @@ const ErrorMessage = styled.div`
   border: 1px solid #FFCDD2;
 `;
 
+const SearchContainer = styled.div`
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  align-items: end;
+  flex-wrap: wrap;
+`;
+
+const SearchField = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 300px;
+`;
+
+const SearchLabel = styled.label`
+  font-size: 14px;
+  font-weight: 500;
+  color: #333333;
+`;
+
+const SearchInput = styled.input`
+  padding: 8px 12px;
+  border: 1px solid #E0E0E0;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333333;
+
+  &:focus {
+    outline: none;
+    border-color: #4A90E2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+  }
+`;
+
+const SearchButton = styled.button`
+  padding: 8px 16px;
+  background-color: #4A90E2;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+
+  &:hover {
+    background-color: #357ABD;
+  }
+
+  &:disabled {
+    background-color: #CCCCCC;
+    cursor: not-allowed;
+  }
+`;
+
+const ResetButton = styled.button`
+  padding: 8px 16px;
+  background-color: transparent;
+  color: #666666;
+  border: 1px solid #E0E0E0;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+
+  &:hover {
+    background-color: #F8F9FA;
+    color: #333333;
+  }
+`;
+
 const ActionButton = styled.button`
   padding: 6px 12px;
   border-radius: 4px;
@@ -205,13 +275,15 @@ export const PatientList = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchPatientsList = useCallback(async (page: number = 1) => {
     try {
       setLoading(true);
       const response = await getPatients({
         page,
-        limit: pagination.limit
+        limit: pagination.limit,
+        firstName: searchTerm || undefined
       });
 
       // Sort patients by creation date (newest first)
@@ -234,7 +306,22 @@ export const PatientList = () => {
     } finally {
       setLoading(false);
     }
-  }, [pagination.limit]);
+  }, [pagination.limit, searchTerm]);
+
+  const handleSearch = () => {
+    setPagination(prev => ({ ...prev, page: 1 }));
+    fetchPatientsList(1);
+  };
+
+  const handleReset = () => {
+    setSearchTerm('');
+    setPagination(prev => ({ ...prev, page: 1 }));
+    fetchPatientsList(1);
+  };
+
+  const handleSearchInputChange = (value: string) => {
+    setSearchTerm(value);
+  };
 
   useEffect(() => {
     fetchPatientsList(pagination.page);
@@ -259,7 +346,29 @@ export const PatientList = () => {
   }
 
   return (
-    <TableContainer>
+    <div>
+      <SearchContainer>
+        <SearchField>
+          <SearchLabel htmlFor="search">Search Patients</SearchLabel>
+          <SearchInput
+            id="search"
+            type="text"
+            placeholder="Search by name..."
+            value={searchTerm}
+            onChange={(e) => handleSearchInputChange(e.target.value)}
+          />
+        </SearchField>
+
+        <SearchButton onClick={handleSearch}>
+          Search
+        </SearchButton>
+
+        <ResetButton onClick={handleReset}>
+          Reset
+        </ResetButton>
+      </SearchContainer>
+
+      <TableContainer>
       <ScrollContainer>
         <Table>
           <thead>
@@ -430,6 +539,7 @@ export const PatientList = () => {
           </ModalContent>
         </ModalOverlay>
       )}
-    </TableContainer>
+      </TableContainer>
+    </div>
   );
 };

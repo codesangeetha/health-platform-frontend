@@ -128,6 +128,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     AuthService.logout();
     setAuthState(defaultAuthState);
+
+    // Clear browser history to prevent back button from showing authenticated pages
+    // Use replaceState to clear the current history entry and redirect to home
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', '/');
+    }
   };
 
   const forgotPassword = async (email: string) => {

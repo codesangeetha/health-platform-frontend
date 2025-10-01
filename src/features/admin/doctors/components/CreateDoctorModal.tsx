@@ -122,6 +122,20 @@ const ErrorText = styled.div`
   font-size: 12px;
 `;
 
+const SuccessBox = styled.div`
+  background: #e8f5e8;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+`;
+
+const SuccessText = styled.div`
+  color: #2e7d32;
+  font-size: 12px;
+`;
+
 const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
   padding: 10px 16px;
   border-radius: 6px;
@@ -146,9 +160,11 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
   const [form, setForm] = useState<CreateDoctorPayload & { confirmPassword?: string }>({
     email: '',
     password: '',
+    confirmPassword: '',
     firstName: '',
     lastName: '',
     phone: '',
+    whatsapp: '',
     dateOfBirth: '',
     specialization: '',
     qualification: '',
@@ -159,6 +175,7 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const todayStr = new Date().toISOString().slice(0, 10);
@@ -170,6 +187,10 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
         const { [key as string]: _omit, ...rest } = prev;
         return rest;
       });
+    }
+    // Clear success message when user starts editing
+    if (success) {
+      setSuccess(null);
     }
   };
 
@@ -185,6 +206,12 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
   const validatePassword = (v: string) => {
     if (!v) return 'Password is required.';
     if (v.length < 8) return 'Password must be at least 8 characters.';
+    return undefined;
+  };
+
+  const validateConfirmPassword = (v: string, password: string) => {
+    if (!v) return 'Please confirm your password.';
+    if (v !== password) return 'Passwords do not match.';
     return undefined;
   };
 
@@ -207,6 +234,14 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
     if (!s) return 'Phone number is required.';
     const phoneRe = /^\d{10}$/;
     if (!phoneRe.test(s)) return 'Enter a valid 10-digit phone number.';
+    return undefined;
+  };
+
+  const validateWhatsapp = (v: string) => {
+    const s = v.trim();
+    if (!s) return 'WhatsApp number is required.';
+    const whatsappRe = /^\d{10}$/;
+    if (!whatsappRe.test(s)) return 'Enter a valid 10-digit WhatsApp number.';
     return undefined;
   };
 
@@ -261,9 +296,11 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
     switch (name) {
       case 'email': return validateEmail(value);
       case 'password': return validatePassword(value);
+      case 'confirmPassword': return validateConfirmPassword(value, form.password);
       case 'firstName': return validateFirstName(value);
       case 'lastName': return validateLastName(value);
       case 'phone': return validatePhone(value);
+      case 'whatsapp': return validateWhatsapp(value);
       case 'dateOfBirth': return validateDOB(value);
       case 'specialization': return validateSpecialization(value);
       case 'qualification': return validateQualification(value);
@@ -279,9 +316,11 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
     const errors: Record<string, string> = {
       email: validateEmail(form.email) || '',
       password: validatePassword(form.password) || '',
+      confirmPassword: validateConfirmPassword(form.confirmPassword || '', form.password) || '',
       firstName: validateFirstName(form.firstName) || '',
       lastName: validateLastName(form.lastName) || '',
       phone: validatePhone(form.phone) || '',
+      whatsapp: validateWhatsapp(form.whatsapp || '') || '',
       dateOfBirth: validateDOB(form.dateOfBirth) || '',
       specialization: validateSpecialization(form.specialization) || '',
       qualification: validateQualification(form.qualification || '') || '',
@@ -330,6 +369,11 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
     if (touched[key]) {
       setFieldErrors((prev) => ({ ...prev, [key]: validateField(key, value) || '' }));
     }
+
+    // Clear success message when user starts editing
+    if (success) {
+      setSuccess(null);
+    }
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -345,6 +389,7 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
 
     const isValid = validateForm();
     if (!isValid) {
@@ -352,9 +397,11 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
       setTouched({
         email: true,
         password: true,
+        confirmPassword: true,
         firstName: true,
         lastName: true,
         phone: true,
+        whatsapp: true,
         dateOfBirth: true,
         specialization: true,
         qualification: true,
@@ -375,6 +422,7 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         phone: form.phone.trim(),
+        whatsapp: form.whatsapp?.trim() || undefined,
         dateOfBirth: form.dateOfBirth, // YYYY-MM-DD
         specialization: form.specialization.trim(),
         qualification: form.qualification?.trim() || undefined,
@@ -385,7 +433,19 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
       };
 
       await createDoctor(payload);
-      onCreated();
+
+      // Clear form on successful submission
+      setForm({
+        email: '', password: '', confirmPassword: '', firstName: '', lastName: '', phone: '', whatsapp: '', dateOfBirth: '', specialization: '', qualification: '', hospital: '', licenseNumber: '', experience: '', consultationFee: undefined,
+      });
+      setFieldErrors({});
+      setTouched({});
+      setSuccess('Doctor created successfully!');
+
+      // Keep modal open for 2 seconds to show success message, then close
+      setTimeout(() => {
+        onCreated();
+      }, 2000);
     } catch (err: any) {
       if (err instanceof ApiError) {
         setError(err.message);
@@ -399,9 +459,12 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
 
   const resetAndClose = () => {
     setForm({
-      email: '', password: '', firstName: '', lastName: '', phone: '', dateOfBirth: '', specialization: '', qualification: '', hospital: '', licenseNumber: '', experience: '', consultationFee: undefined,
+      email: '', password: '', confirmPassword: '', firstName: '', lastName: '', phone: '', whatsapp: '', dateOfBirth: '', specialization: '', qualification: '', hospital: '', licenseNumber: '', experience: '', consultationFee: undefined,
     });
     setError(null);
+    setSuccess(null);
+    setFieldErrors({});
+    setTouched({});
     onClose();
   };
 
@@ -416,7 +479,6 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
               <Label>
                 First Name*
                 <Input
-                  required
                   aria-invalid={!!fieldErrors.firstName}
                   value={form.firstName}
                   onChange={handleChange}
@@ -428,7 +490,6 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
               <Label>
                 Last Name*
                 <Input
-                  required
                   aria-invalid={!!fieldErrors.lastName}
                   value={form.lastName}
                   onChange={handleChange}
@@ -444,7 +505,6 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
                 Email*
                 <Input
                   type="email"
-                  required
                   aria-invalid={!!fieldErrors.email}
                   value={form.email}
                   onChange={handleChange}
@@ -458,7 +518,6 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
                 Password*
                 <Input
                   type="password"
-                  required
                   aria-invalid={!!fieldErrors.password}
                   value={form.password}
                   onChange={handleChange}
@@ -472,9 +531,24 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
 
             <InputRow>
               <Label>
+                Confirm Password*
+                <Input
+                  type="password"
+                  aria-invalid={!!fieldErrors.confirmPassword}
+                  value={form.confirmPassword}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  name="confirmPassword"
+                  placeholder="••••••••"
+                />
+                {fieldErrors.confirmPassword && <ErrorText>{fieldErrors.confirmPassword}</ErrorText>}
+              </Label>
+            </InputRow>
+
+            <InputRow>
+              <Label>
                 Phone*
                 <Input
-                  required
                   aria-invalid={!!fieldErrors.phone}
                   value={form.phone}
                   onChange={handleChange}
@@ -486,10 +560,26 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
                 {fieldErrors.phone && <ErrorText>{fieldErrors.phone}</ErrorText>}
               </Label>
               <Label>
+                WhatsApp*
+                <Input
+                  aria-invalid={!!fieldErrors.whatsapp}
+                  value={form.whatsapp}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  name="whatsapp"
+                  pattern="^\d{10}$"
+                  title="Enter a valid 10-digit WhatsApp number"
+                  placeholder="Enter WhatsApp number"
+                />
+                {fieldErrors.whatsapp && <ErrorText>{fieldErrors.whatsapp}</ErrorText>}
+              </Label>
+            </InputRow>
+
+            <InputRow>
+              <Label>
                 Date of Birth* (YYYY-MM-DD)
                 <Input
                   type="date"
-                  required
                   aria-invalid={!!fieldErrors.dateOfBirth}
                   value={form.dateOfBirth}
                   onChange={handleChange}
@@ -505,7 +595,6 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
               <Label>
                 Specialization*
                 <Input
-                  required
                   aria-invalid={!!fieldErrors.specialization}
                   value={form.specialization}
                   onChange={handleChange}
@@ -518,7 +607,6 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
               <Label>
                 Qualification*
                 <Input
-                  required
                   aria-invalid={!!fieldErrors.qualification}
                   value={form.qualification}
                   onChange={handleChange}
@@ -534,7 +622,6 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
               <Label>
                 Hospital*
                 <Input
-                  required
                   aria-invalid={!!fieldErrors.hospital}
                   value={form.hospital}
                   onChange={handleChange}
@@ -547,7 +634,6 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
               <Label>
                 License Number*
                 <Input
-                  required
                   aria-invalid={!!fieldErrors.licenseNumber}
                   value={form.licenseNumber}
                   onChange={handleChange}
@@ -566,7 +652,6 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
                   type="number"
                   min={0}
                   step={1}
-                  required
                   aria-invalid={!!fieldErrors.experience}
                   value={form.experience}
                   onChange={handleChange}
@@ -581,7 +666,6 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
                   type="number"
                   min={0}
                   step={1}
-                  required
                   aria-invalid={!!fieldErrors.consultationFee}
                   value={form.consultationFee ?? ''}
                   onChange={handleChange}
@@ -593,6 +677,7 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
             </InputRow>
           </Content>
           <Actions>
+            {success && <SuccessBox>{success}</SuccessBox>}
             <Button type="button" variant="secondary" onClick={resetAndClose} disabled={submitting}>Cancel</Button>
             <Button type="submit" disabled={submitting}>{submitting ? 'Creating...' : 'Create Doctor'}</Button>
           </Actions>

@@ -50,6 +50,7 @@ export const DoctorProfileEdit = () => {
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [showSuccessMessage, setShowSuccessMessage] = useState<boolean>(false);
 
   const [form, setForm] = useState<DoctorProfileData>({
     firstName: '',
@@ -478,7 +479,14 @@ export const DoctorProfileEdit = () => {
       }
 
       setSuccess(body?.message || 'Profile updated successfully');
-      navigate('/doctor/profile', { replace: true, state: { updated: true, message: body?.message } });
+      setShowSuccessMessage(true);
+
+      // Hide success message after 3 seconds and then navigate
+      setTimeout(() => {
+        setShowSuccessMessage(false);
+        setSuccess(null);
+        navigate('/doctor/profile', { replace: true, state: { updated: true, message: body?.message } });
+      }, 3000);
     } catch (e: any) {
       setError(e?.message || 'Failed to update profile');
     } finally {
@@ -508,7 +516,6 @@ export const DoctorProfileEdit = () => {
           <form className="pd-card" onSubmit={onSubmit} noValidate>
             <h6>Personal & Professional Details</h6>
             {error && <p className="pd-stat-label" style={{ color: '#e63946' }}>{error}</p>}
-            {success && <p className="pd-stat-label" style={{ color: '#2e7d32' }}>{success}</p>}
 
             {loading ? (
               <p className="pd-stat-label">Loading…</p>
@@ -756,13 +763,31 @@ export const DoctorProfileEdit = () => {
                   </div>
                 </div>
 
-                <div style={{ marginTop: 24, display: 'flex', gap: 12 }}>
-                  <button type="submit" className="pd-btn pd-btn-primary-light" disabled={saving || loading || !isFormValid()}>
-                    {saving ? 'Saving…' : 'Save Changes'}
-                  </button>
-                  <button type="button" className="pd-btn pd-btn-outlined" onClick={() => navigate('/doctor/profile')} disabled={saving}>
-                    Cancel
-                  </button>
+                <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <button type="submit" className="pd-btn pd-btn-primary-light" disabled={saving || loading || !isFormValid()}>
+                      {saving ? 'Saving…' : 'Save Changes'}
+                    </button>
+                    <button type="button" className="pd-btn pd-btn-outlined" onClick={() => navigate('/doctor/profile')} disabled={saving}>
+                      Cancel
+                    </button>
+                  </div>
+                  {showSuccessMessage && success && (
+                    <div style={{
+                      color: '#2e7d32',
+                      fontSize: '14px',
+                      padding: '8px 12px',
+                      backgroundColor: '#e8f5e8',
+                      borderRadius: '6px',
+                      border: '1px solid #4caf50',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <span>✓</span>
+                      <span>{success}</span>
+                    </div>
+                  )}
                 </div>
               </>
             )}

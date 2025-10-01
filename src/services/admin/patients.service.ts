@@ -39,6 +39,7 @@ interface GetPatientsParams {
   page?: number;
   limit?: number;
   verified?: boolean;
+  firstName?: string;
 }
 
 interface ApiResponse<T> {
@@ -55,12 +56,13 @@ export type PatientsResponse = ApiResponse<{
 
 export const getPatients = async (params: GetPatientsParams = {}): Promise<PatientsResponse> => {
   try {
-    const { page = 1, limit = 5, verified } = params;
+    const { page = 1, limit = 5, verified, firstName } = params;
     const queryParams = new URLSearchParams({
       userType: 'patient',
       page: page.toString(),
       limit: limit.toString(),
-      ...(verified !== undefined && { verified: verified.toString() }) as any
+      ...(verified !== undefined && { verified: verified.toString() }),
+      ...(firstName && { firstName })
     });
 
     const token = getAuthToken();

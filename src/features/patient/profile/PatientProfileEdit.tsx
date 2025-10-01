@@ -2,6 +2,7 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 import { AuthContext } from '@/context/AuthContext';
 import { AuthService } from '@/services/auth/auth.service';
 import { Link, useNavigate } from 'react-router-dom';
+import { PatientLayout } from '@/components/layout/PatientLayout';
 import '@/styles/components/patient-dashboard.styles.css';
 
 interface EmergencyContactForm {
@@ -13,6 +14,7 @@ interface EmergencyContactForm {
 interface ProfileForm {
   firstName: string;
   lastName: string;
+  email: string;
   phone: string;
   whatsapp: string;
   bloodGroup: string;
@@ -38,6 +40,7 @@ interface PatientProfileResponse {
 type FieldKey =
   | 'firstName'
   | 'lastName'
+  | 'email'
   | 'phone'
   | 'whatsapp'
   | 'bloodGroup'
@@ -58,6 +61,7 @@ export const PatientProfileEdit = () => {
   const [form, setForm] = useState<ProfileForm>({
     firstName: '',
     lastName: '',
+    email: '',
     phone: '',
     whatsapp: '',
     bloodGroup: '',
@@ -70,6 +74,7 @@ export const PatientProfileEdit = () => {
   const [touched, setTouched] = useState<Record<FieldKey, boolean>>({
     firstName: false,
     lastName: false,
+    email: false,
     phone: false,
     whatsapp: false,
     bloodGroup: false,
@@ -81,6 +86,7 @@ export const PatientProfileEdit = () => {
   const [fieldErrors, setFieldErrors] = useState<Record<FieldKey, string | null>>({
     firstName: null,
     lastName: null,
+    email: null,
     phone: null,
     whatsapp: null,
     bloodGroup: null,
@@ -103,6 +109,7 @@ export const PatientProfileEdit = () => {
       setForm({
         firstName: data.firstName || '',
         lastName: data.lastName || '',
+        email: data.email || '',
         phone: data.phone || '',
         whatsapp: data.whatsapp || '',
         bloodGroup: data.bloodGroup || '',
@@ -118,6 +125,7 @@ export const PatientProfileEdit = () => {
       setTouched({
         firstName: false,
         lastName: false,
+        email: false,
         phone: false,
         whatsapp: false,
         bloodGroup: false,
@@ -128,6 +136,7 @@ export const PatientProfileEdit = () => {
       setFieldErrors({
         firstName: null,
         lastName: null,
+        email: null,
         phone: null,
         whatsapp: null,
         bloodGroup: null,
@@ -191,6 +200,9 @@ export const PatientProfileEdit = () => {
     if (field === 'lastName' && touched.lastName) {
       setFieldErrors(prev => ({ ...prev, lastName: validateField('lastName', { ...form, [field]: value }) }));
     }
+    if (field === 'email' && touched.email) {
+      setFieldErrors(prev => ({ ...prev, email: validateField('email', { ...form, [field]: value }) }));
+    }
     if (field === 'phone' && touched.phone) {
       setFieldErrors(prev => ({ ...prev, phone: validateField('phone', { ...form, [field]: value }) }));
     }
@@ -225,6 +237,7 @@ export const PatientProfileEdit = () => {
   const validateField = (key: FieldKey, currentForm: ProfileForm = form): string | null => {
     const firstName = trim(currentForm.firstName);
     const lastName = trim(currentForm.lastName);
+    const email = trim(currentForm.email);
     const phone = trim(currentForm.phone);
     const whatsapp = trim(currentForm.whatsapp);
     const bloodGroup = trim(currentForm.bloodGroup);
@@ -238,7 +251,7 @@ export const PatientProfileEdit = () => {
     const phoneDigits = onlyDigits(phone);
     const whatsappDigits = onlyDigits(whatsapp);
     const ecPhoneDigits = onlyDigits(ecPhone);
-    const phoneOk = (d: string) => d.length == 10 ; // basic length check
+    const phoneOk = (d: string) => d.length == 10; // basic length check
 
     const validBloodGroups = new Set(['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-']);
 
@@ -250,6 +263,11 @@ export const PatientProfileEdit = () => {
       case 'lastName':
         if (!lastName) return 'Last name is required.';
         if (!nameOk(lastName)) return 'Enter a valid last name.';
+        return null;
+      case 'email':
+        if (!email) return 'Email is required.';
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) return 'Enter a valid email address.';
         return null;
       case 'phone':
         if (!phone) return 'Phone is required.';
@@ -289,6 +307,7 @@ export const PatientProfileEdit = () => {
     const nextErrors: Record<FieldKey, string | null> = {
       firstName: validateField('firstName', currentForm),
       lastName: validateField('lastName', currentForm),
+      email: validateField('email', currentForm),
       phone: validateField('phone', currentForm),
       whatsapp: validateField('whatsapp', currentForm),
       bloodGroup: validateField('bloodGroup', currentForm),
@@ -303,6 +322,7 @@ export const PatientProfileEdit = () => {
     setTouched({
       firstName: true,
       lastName: true,
+      email: true,
       phone: true,
       whatsapp: true,
       bloodGroup: true,
@@ -342,6 +362,7 @@ export const PatientProfileEdit = () => {
       const payload = {
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
+        email: form.email.trim(),
         phone: form.phone.trim(),
         whatsapp: form.whatsapp.trim(),
         bloodGroup: form.bloodGroup.trim(),
@@ -369,9 +390,12 @@ export const PatientProfileEdit = () => {
         throw new Error(msg);
       }
 
-      setSuccess('Profile updated successfully');
-      // Optionally navigate back to profile view after a short delay
-      setTimeout(() => navigate('/patient/profile'), 800);
+      setSuccess('Profile updated successfully!');
+
+      // Show success message for 3 seconds before redirecting
+      setTimeout(() => {
+        navigate('/patient/profile');
+      }, 3000);
     } catch (e: any) {
       setError(e?.message || 'Failed to update profile');
     } finally {
@@ -396,325 +420,282 @@ export const PatientProfileEdit = () => {
       : { border: '1px solid var(--color-border)' };
 
   return (
-    <>
-      {/* Top Navigation */}
-      <header className="pd-top-nav">
-        <div className="pd-top-nav-inner">
-          <div className="pd-brand">
-            <Link to="/patient/dashboard" className="hc-logo" aria-label="HealthCare+ Home">
-              <span className="hc-logo__mark">+</span>
-              <span>HealthCare+</span>
+
+    <section className="pd-grid">
+      <div className="pd-col-8">
+        <form className="pd-card" onSubmit={handleSubmit} noValidate>
+          <h6>Personal Information</h6>
+          {error && <div className="pd-stat-label" style={{ color: '#e63946', marginBottom: 8 }}>{error}</div>}
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div>
+              <label className="pd-stat-label" htmlFor="firstName">First Name</label>
+              <input
+                id="firstName"
+                type="text"
+                value={form.firstName}
+                onChange={e => onChange('firstName', e.target.value)}
+                onBlur={() => handleBlur('firstName')}
+                style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('firstName') }}
+                required
+                aria-invalid={touched.firstName && !!fieldErrors.firstName}
+                aria-describedby={fieldErrors.firstName ? 'firstName-error' : undefined}
+              />
+              {touched.firstName && fieldErrors.firstName && (
+                <div id="firstName-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>
+                  {fieldErrors.firstName}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="pd-stat-label" htmlFor="lastName">Last Name</label>
+              <input
+                id="lastName"
+                type="text"
+                value={form.lastName}
+                onChange={e => onChange('lastName', e.target.value)}
+                onBlur={() => handleBlur('lastName')}
+                style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('lastName') }}
+                required
+                aria-invalid={touched.lastName && !!fieldErrors.lastName}
+                aria-describedby={fieldErrors.lastName ? 'lastName-error' : undefined}
+              />
+              {touched.lastName && fieldErrors.lastName && (
+                <div id="lastName-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>
+                  {fieldErrors.lastName}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="pd-stat-label" htmlFor="email">Email</label>
+              <input
+                id="email"
+                type="email"
+                value={form.email}
+                onChange={e => onChange('email', e.target.value)}
+                onBlur={() => handleBlur('email')}
+                style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('email') }}
+                required
+                aria-invalid={touched.email && !!fieldErrors.email}
+                aria-describedby={fieldErrors.email ? 'email-error' : 'email-hint'}
+              />
+              {touched.email && fieldErrors.email ? (
+                <div id="email-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>
+                  {fieldErrors.email}
+                </div>
+              ) : (
+                <div id="email-hint" style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>
+                  Enter a valid email address.
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="pd-stat-label" htmlFor="phone">Phone</label>
+              <input
+                id="phone"
+                type="tel"
+                value={form.phone}
+                onChange={e => onChange('phone', e.target.value)}
+                onBlur={() => handleBlur('phone')}
+                style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('phone') }}
+                required
+                aria-invalid={touched.phone && !!fieldErrors.phone}
+                aria-describedby={fieldErrors.phone ? 'phone-error' : 'phone-hint'}
+              />
+              {touched.phone && fieldErrors.phone ? (
+                <div id="phone-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>
+                  {fieldErrors.phone}
+                </div>
+              ) : (
+                <div id="phone-hint" style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>
+                  Use 10 digits.
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="pd-stat-label" htmlFor="whatsapp">WhatsApp</label>
+              <input
+                id="whatsapp"
+                type="tel"
+                value={form.whatsapp}
+                onChange={e => onChange('whatsapp', e.target.value)}
+                onBlur={() => handleBlur('whatsapp')}
+                style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('whatsapp') }}
+                required
+                aria-invalid={touched.whatsapp && !!fieldErrors.whatsapp}
+                aria-describedby={fieldErrors.whatsapp ? 'whatsapp-error' : 'whatsapp-hint'}
+              />
+              {touched.whatsapp && fieldErrors.whatsapp ? (
+                <div id="whatsapp-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>
+                  {fieldErrors.whatsapp}
+                </div>
+              ) : (
+                <div id="whatsapp-hint" style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>
+                  Use 10 digits.
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="pd-stat-label" htmlFor="bloodGroup">Blood Group</label>
+              <input
+                id="bloodGroup"
+                type="text"
+                placeholder="e.g., O-, A+, B+"
+                value={form.bloodGroup}
+                onChange={e => onChange('bloodGroup', e.target.value)}
+                onBlur={() => handleBlur('bloodGroup')}
+                style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('bloodGroup') }}
+                aria-invalid={touched.bloodGroup && !!fieldErrors.bloodGroup}
+                aria-describedby={fieldErrors.bloodGroup ? 'bloodGroup-error' : 'bloodGroup-hint'}
+              />
+              {touched.bloodGroup && fieldErrors.bloodGroup ? (
+                <div id="bloodGroup-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>
+                  {fieldErrors.bloodGroup}
+                </div>
+              ) : (
+                <div id="bloodGroup-hint" style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>
+                  Allowed values: O+, O-, A+, A-, B+, B-, AB+, AB-.
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div style={{ marginTop: 16 }}>
+            <label className="pd-stat-label" htmlFor="allergies">Allergies (optional)</label>
+            <input
+              id="allergies"
+              type="text"
+              placeholder="Dust mites, Pollen"
+              value={form.allergies}
+              onChange={e => onChange('allergies', e.target.value)}
+              style={{ width: '90%', padding: 10, borderRadius: 6, border: '1px solid var(--color-border)' }}
+            />
+            <div id="allergies-hint" style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>
+              Comma separated.
+            </div>
+          </div>
+
+          <div style={{ marginTop: 16 }}>
+            <label className="pd-stat-label" htmlFor="chronicDiseases">Chronic Diseases (optional)</label>
+            <input
+              id="chronicDiseases"
+              type="text"
+              placeholder="Hypertension, Diabetes"
+              value={form.chronicDiseases}
+              onChange={e => onChange('chronicDiseases', e.target.value)}
+              style={{ width: '90%', padding: 10, borderRadius: 6, border: '1px solid var(--color-border)' }}
+            />
+            <div id="chronicDiseases-hint" style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>
+              Comma separated.
+            </div>
+          </div>
+
+          <h6 style={{ marginTop: 24 }}>Emergency Contact</h6>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div>
+              <label className="pd-stat-label" htmlFor="ec-name">Name</label>
+              <input
+                id="ec-name"
+                type="text"
+                value={form.emergencyContact.name}
+                onChange={e => onECChange('name', e.target.value)}
+                onBlur={() => handleBlur('ec.name')}
+                style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('ec.name') }}
+                aria-invalid={touched['ec.name'] && !!fieldErrors['ec.name']}
+                aria-describedby={fieldErrors['ec.name'] ? 'ec-name-error' : undefined}
+              />
+              {touched['ec.name'] && fieldErrors['ec.name'] && (
+                <div id="ec-name-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>
+                  {fieldErrors['ec.name']}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="pd-stat-label" htmlFor="ec-relationship">Relationship</label>
+              <input
+                id="ec-relationship"
+                type="text"
+                value={form.emergencyContact.relationship}
+                onChange={e => onECChange('relationship', e.target.value)}
+                onBlur={() => handleBlur('ec.relationship')}
+                style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('ec.relationship') }}
+                aria-invalid={touched['ec.relationship'] && !!fieldErrors['ec.relationship']}
+                aria-describedby={fieldErrors['ec.relationship'] ? 'ec-relationship-error' : undefined}
+              />
+              {touched['ec.relationship'] && fieldErrors['ec.relationship'] && (
+                <div id="ec-relationship-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>
+                  {fieldErrors['ec.relationship']}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="pd-stat-label" htmlFor="ec-phone">Phone</label>
+              <input
+                id="ec-phone"
+                type="tel"
+                value={form.emergencyContact.phone}
+                onChange={e => onECChange('phone', e.target.value)}
+                onBlur={() => handleBlur('ec.phone')}
+                style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('ec.phone') }}
+                aria-invalid={touched['ec.phone'] && !!fieldErrors['ec.phone']}
+                aria-describedby={fieldErrors['ec.phone'] ? 'ec-phone-error' : 'ec-phone-hint'}
+              />
+              {touched['ec.phone'] && fieldErrors['ec.phone'] ? (
+                <div id="ec-phone-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>
+                  {fieldErrors['ec.phone']}
+                </div>
+              ) : (
+                <div id="ec-phone-hint" style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>
+                  Use 10 digits.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {success && (
+            <div style={{ marginTop: 16, marginBottom: 8 }}>
+              <div className="pd-stat-label" style={{ color: '#2e7d32', textAlign: 'center', fontSize: '14px', fontWeight: 'bold' }}>
+                {success}
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+            <button
+              type="submit"
+              className="pd-btn pd-btn-primary-light"
+              disabled={saving || loading || !isFormValid()}
+            >
+              {saving ? 'Saving…' : 'Save Changes'}
+            </button>
+            <Link to="/patient/profile" className="pd-btn pd-btn-outlined" style={{ textAlign: 'center' }}>
+              Cancel
             </Link>
           </div>
-          <nav className="pd-nav-links" aria-label="Primary">
-            <a href="/patient/dashboard">Dashboard</a>
-            <a href="#">Doctor Directory</a>
-            <a href="#">Appointment Schedule</a>
-            <Link to="/patient/profile">Profile</Link>
-            <Link to="/patient/profile/edit" className="active">Settings</Link>
-          </nav>
-          <div className="pd-nav-right">
-            <div className="pd-bell" title="Notifications" aria-label="Notifications">🔔</div>
-            <div className="pd-avatar" aria-label="Profile" />
-            <button className="pd-logout-link" onClick={handleLogout}>Logout</button>
+        </form>
+      </div>
+
+      <aside className="pd-col-4">
+        <div className="pd-card">
+          <h6>Tips</h6>
+          <div className="pd-tip-item">
+            <p className="pd-tip-title">Keep your info updated</p>
+            <p className="pd-tip-desc">Accurate information helps doctors provide better care.</p>
+          </div>
+          <div className="pd-tip-item">
+            <p className="pd-tip-title">Emergency contact</p>
+            <p className="pd-tip-desc">Ensure your emergency contact can be reached anytime.</p>
           </div>
         </div>
-      </header>
+      </aside>
+    </section>
 
-      {/* Container */}
-      <main className="pd-container">
-        <section className="pd-banner">
-          <h5>Edit Profile, {displayName}</h5>
-          <div className="pd-banner-avatar" aria-hidden="true" />
-        </section>
-
-        <section className="pd-grid">
-          <div className="pd-col-8">
-            <form className="pd-card" onSubmit={handleSubmit} noValidate>
-              <h6>Personal Information</h6>
-              {error && <div className="pd-stat-label" style={{ color: '#e63946', marginBottom: 8 }}>{error}</div>}
-              {success && <div className="pd-stat-label" style={{ color: '#2e7d32', marginBottom: 8 }}>{success}</div>}
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                <div>
-                  <label className="pd-stat-label" htmlFor="firstName">First Name</label>
-                  <input
-                    id="firstName"
-                    type="text"
-                    value={form.firstName}
-                    onChange={e => onChange('firstName', e.target.value)}
-                    onBlur={() => handleBlur('firstName')}
-                    style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('firstName') }}
-                    required
-                    aria-invalid={touched.firstName && !!fieldErrors.firstName}
-                    aria-describedby={fieldErrors.firstName ? 'firstName-error' : undefined}
-                  />
-                  {touched.firstName && fieldErrors.firstName && (
-                    <div id="firstName-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>
-                      {fieldErrors.firstName}
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <label className="pd-stat-label" htmlFor="lastName">Last Name</label>
-                  <input
-                    id="lastName"
-                    type="text"
-                    value={form.lastName}
-                    onChange={e => onChange('lastName', e.target.value)}
-                    onBlur={() => handleBlur('lastName')}
-                    style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('lastName') }}
-                    required
-                    aria-invalid={touched.lastName && !!fieldErrors.lastName}
-                    aria-describedby={fieldErrors.lastName ? 'lastName-error' : undefined}
-                  />
-                  {touched.lastName && fieldErrors.lastName && (
-                    <div id="lastName-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>
-                      {fieldErrors.lastName}
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <label className="pd-stat-label" htmlFor="phone">Phone</label>
-                  <input
-                    id="phone"
-                    type="tel"
-                    value={form.phone}
-                    onChange={e => onChange('phone', e.target.value)}
-                    onBlur={() => handleBlur('phone')}
-                    style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('phone') }}
-                    required
-                    aria-invalid={touched.phone && !!fieldErrors.phone}
-                    aria-describedby={fieldErrors.phone ? 'phone-error' : 'phone-hint'}
-                  />
-                  {touched.phone && fieldErrors.phone ? (
-                    <div id="phone-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>
-                      {fieldErrors.phone}
-                    </div>
-                  ) : (
-                    <div id="phone-hint" style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>
-                      Use 10 digits.
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <label className="pd-stat-label" htmlFor="whatsapp">WhatsApp</label>
-                  <input
-                    id="whatsapp"
-                    type="tel"
-                    value={form.whatsapp}
-                    onChange={e => onChange('whatsapp', e.target.value)}
-                    onBlur={() => handleBlur('whatsapp')}
-                    style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('whatsapp') }}
-                    required
-                    aria-invalid={touched.whatsapp && !!fieldErrors.whatsapp}
-                    aria-describedby={fieldErrors.whatsapp ? 'whatsapp-error' : 'whatsapp-hint'}
-                  />
-                  {touched.whatsapp && fieldErrors.whatsapp ? (
-                    <div id="whatsapp-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>
-                      {fieldErrors.whatsapp}
-                    </div>
-                  ) : (
-                    <div id="whatsapp-hint" style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>
-                      Use 10 digits.
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <label className="pd-stat-label" htmlFor="bloodGroup">Blood Group</label>
-                  <input
-                    id="bloodGroup"
-                    type="text"
-                    placeholder="e.g., O-, A+, B+"
-                    value={form.bloodGroup}
-                    onChange={e => onChange('bloodGroup', e.target.value)}
-                    onBlur={() => handleBlur('bloodGroup')}
-                    style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('bloodGroup') }}
-                    aria-invalid={touched.bloodGroup && !!fieldErrors.bloodGroup}
-                    aria-describedby={fieldErrors.bloodGroup ? 'bloodGroup-error' : 'bloodGroup-hint'}
-                  />
-                  {touched.bloodGroup && fieldErrors.bloodGroup ? (
-                    <div id="bloodGroup-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>
-                      {fieldErrors.bloodGroup}
-                    </div>
-                  ) : (
-                    <div id="bloodGroup-hint" style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>
-                      Allowed values: O+, O-, A+, A-, B+, B-, AB+, AB-.
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div style={{ marginTop: 16 }}>
-                <label className="pd-stat-label" htmlFor="allergies">Allergies (optional)</label>
-                <input
-                  id="allergies"
-                  type="text"
-                  placeholder="Dust mites, Pollen"
-                  value={form.allergies}
-                  onChange={e => onChange('allergies', e.target.value)}
-                  style={{ width: '90%', padding: 10, borderRadius: 6, border: '1px solid var(--color-border)' }}
-                />
-                <div id="ec-phone-hint" style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>
-                      comma seperated.
-                    </div>
-              </div>
-
-              <div style={{ marginTop: 16 }}>
-                <label className="pd-stat-label" htmlFor="chronicDiseases">Chronic Diseases (optional)</label>
-                <input
-                  id="chronicDiseases"
-                  type="text"
-                  placeholder="Hypertension, Diabetes"
-                  value={form.chronicDiseases}
-                  onChange={e => onChange('chronicDiseases', e.target.value)}
-                  style={{ width: '90%', padding: 10, borderRadius: 6, border: '1px solid var(--color-border)' }}
-                />
-                 <div id="ec-phone-hint" style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>
-                      comma seperated.
-                    </div>
-              </div>
-
-              <h6 style={{ marginTop: 24 }}>Emergency Contact</h6>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                <div>
-                  <label className="pd-stat-label" htmlFor="ec-name">Name</label>
-                  <input
-                    id="ec-name"
-                    type="text"
-                    value={form.emergencyContact.name}
-                    onChange={e => onECChange('name', e.target.value)}
-                    onBlur={() => handleBlur('ec.name')}
-                    style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('ec.name') }}
-                    aria-invalid={touched['ec.name'] && !!fieldErrors['ec.name']}
-                    aria-describedby={fieldErrors['ec.name'] ? 'ec-name-error' : undefined}
-                  />
-                  {touched['ec.name'] && fieldErrors['ec.name'] && (
-                    <div id="ec-name-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>
-                      {fieldErrors['ec.name']}
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <label className="pd-stat-label" htmlFor="ec-relationship">Relationship</label>
-                  <input
-                    id="ec-relationship"
-                    type="text"
-                    value={form.emergencyContact.relationship}
-                    onChange={e => onECChange('relationship', e.target.value)}
-                    onBlur={() => handleBlur('ec.relationship')}
-                    style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('ec.relationship') }}
-                    aria-invalid={touched['ec.relationship'] && !!fieldErrors['ec.relationship']}
-                    aria-describedby={fieldErrors['ec.relationship'] ? 'ec-relationship-error' : undefined}
-                  />
-                  {touched['ec.relationship'] && fieldErrors['ec.relationship'] && (
-                    <div id="ec-relationship-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>
-                      {fieldErrors['ec.relationship']}
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <label className="pd-stat-label" htmlFor="ec-phone">Phone</label>
-                  <input
-                    id="ec-phone"
-                    type="tel"
-                    value={form.emergencyContact.phone}
-                    onChange={e => onECChange('phone', e.target.value)}
-                    onBlur={() => handleBlur('ec.phone')}
-                    style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('ec.phone') }}
-                    aria-invalid={touched['ec.phone'] && !!fieldErrors['ec.phone']}
-                    aria-describedby={fieldErrors['ec.phone'] ? 'ec-phone-error' : 'ec-phone-hint'}
-                  />
-                  {touched['ec.phone'] && fieldErrors['ec.phone'] ? (
-                    <div id="ec-phone-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>
-                      {fieldErrors['ec.phone']}
-                    </div>
-                  ) : (
-                    <div id="ec-phone-hint" style={{ color: '#6b7280', fontSize: 12, marginTop: 6 }}>
-                      Use 10 digits.
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-                <button
-                  type="submit"
-                  className="pd-btn pd-btn-primary-light"
-                  disabled={saving || loading || !isFormValid()}
-                >
-                  {saving ? 'Saving…' : 'Save Changes'}
-                </button>
-                <Link to="/patient/profile" className="pd-btn pd-btn-outlined" style={{ textAlign: 'center' }}>
-                  Cancel
-                </Link>
-              </div>
-            </form>
-          </div>
-
-          <aside className="pd-col-4">
-            <div className="pd-card">
-              <h6>Tips</h6>
-              <div className="pd-tip-item">
-                <p className="pd-tip-title">Keep your info updated</p>
-                <p className="pd-tip-desc">Accurate information helps doctors provide better care.</p>
-              </div>
-              <div className="pd-tip-item">
-                <p className="pd-tip-title">Emergency contact</p>
-                <p className="pd-tip-desc">Ensure your emergency contact can be reached anytime.</p>
-              </div>
-            </div>
-          </aside>
-        </section>
-      </main>
-
-      <footer className="pd-footer">
-        <div className="pd-footer-inner">
-          <div className="pd-footer-grid">
-            <div className="pd-footer-section">
-              <div className="pd-footer-brand">
-                <span className="pd-footer-logo" aria-hidden="true" />
-                <div>
-                  <strong>Doctor Appointment Booker</strong>
-                  <div style={{ fontSize: '0.875rem', color: 'var(--color-text-light)' }}>Accessible healthcare for everyone.</div>
-                </div>
-              </div>
-            </div>
-            <div className="pd-footer-section">
-              <h6>Quick Links</h6>
-              <ul className="pd-footer-links">
-                <li>Find Doctors</li>
-                <li>Book Appointment</li>
-                <li>Health Records</li>
-              </ul>
-            </div>
-            <div className="pd-footer-section">
-              <h6>Support</h6>
-              <ul className="pd-footer-links">
-                <li>Help Center</li>
-                <li>Contact Us</li>
-                <li>FAQ</li>
-              </ul>
-            </div>
-            <div className="pd-footer-section">
-              <h6>Contact</h6>
-              <ul className="pd-footer-info">
-                <li>support@example.com</li>
-                <li>+1 (555) 123-4567</li>
-              </ul>
-            </div>
-          </div>
-          <div className="pd-footer-copy">© 2025 Placeholder. All rights reserved.</div>
-        </div>
-      </footer>
-
-      {/* Help icon removed */}
-    </>
   );
 }

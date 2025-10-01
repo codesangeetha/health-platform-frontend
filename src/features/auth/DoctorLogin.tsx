@@ -173,12 +173,12 @@ export const DoctorLogin = () => {
     }
   }, [authState.isAuthenticated, authState.isLoading, navigate, location]);
 
- /*  const canSubmit =
-    !submitting &&
-    !errors.email &&
-    !errors.password &&
-    email.trim().length > 0 &&
-    password.length > 0; */
+  /*  const canSubmit =
+     !submitting &&
+     !errors.email &&
+     !errors.password &&
+     email.trim().length > 0 &&
+     password.length > 0; */
 
   return (
     <div>
@@ -224,7 +224,7 @@ export const DoctorLogin = () => {
                 <label htmlFor="email">Email</label>
                 <div className="pl-input-wrapper">
                   <span className="pl-input-icon" aria-hidden="true">
-                    {/* mail icon */} 
+                    {/* mail icon */}
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="3" y="5" width="18" height="14" rx="2" ry="2"></rect>
                       <polyline points="3,7 12,13 21,7"></polyline>
@@ -244,10 +244,10 @@ export const DoctorLogin = () => {
                     inputMode="email"
                   />
                 </div>
-                 {touched.email && errors.email && (
-                    <p className="pl-input-error" id="email-error" role="alert" >
-                      {errors.email}
-                    </p>
+                {touched.email && errors.email && (
+                  <p className="pl-input-error" id="email-error" role="alert" >
+                    {errors.email}
+                  </p>
                 )}
               </div>
 
@@ -262,7 +262,7 @@ export const DoctorLogin = () => {
                     </svg>
                   </span>
                   <input
-                     className={`pl-input ${touched.password && errors.password ? 'pl-input--invalid' : ''}`}
+                    className={`pl-input ${touched.password && errors.password ? 'pl-input--invalid' : ''}`}
                     type="password"
                     id="password"
                     value={password}
@@ -276,10 +276,10 @@ export const DoctorLogin = () => {
                   />
                 </div>
                 {touched.password && errors.password && (
-                    <p className="pl-input-error" id="password-error" role="alert">
-                      {errors.password}
-                    </p>
-                  )}
+                  <p className="pl-input-error" id="password-error" role="alert">
+                    {errors.password}
+                  </p>
+                )}
               </div>
 
               <div className="pl-form-row">
@@ -294,9 +294,8 @@ export const DoctorLogin = () => {
                 {submitting ? 'Signing in…' : 'Sign In'}
               </button>
 
-              <div className="pl-divider"><span>or</span></div>
 
-                       </form>
+            </form>
           </section>
         </div>
       </main>
