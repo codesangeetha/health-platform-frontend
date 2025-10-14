@@ -3,8 +3,8 @@ import styled from '@emotion/styled';
 import { AppLayout, MainContainer, Footer } from '../../../components/layout/AppLayout';
 import Sidebar from '../dashboard/components/Sidebar';
 import TopBar from '../dashboard/components/TopBar';
-import { CategoryList } from './CategoryList';
-import { CreateCategoryModal } from './components/CreateCategoryModal';
+import { LabTestCategoryList } from './LabTestCategoryList';
+import { CreateLabTestCategoryModal } from './components/CreateLabTestCategoryModal';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useContext } from 'react';
@@ -38,7 +38,7 @@ const CreateButton = styled.button`
   }
 `;
 
-const CategoriesPage = () => {
+const LabTestCategoriesPage = () => {
   const navigate = useNavigate();
   const { logout } = useContext(AuthContext);
   const [open, setOpen] = useState(false);
@@ -60,17 +60,17 @@ const CategoriesPage = () => {
       <Sidebar />
       <MainContainer>
         <TopBar onLogout={handleLogout} />
-        <PageTitle>Manage Medicine Categories</PageTitle>
+        <PageTitle>Manage Lab Test Categories</PageTitle>
         <ActionBar>
           <div />
-          <CreateButton onClick={() => setOpen(true)}>+ Create Medicine Category</CreateButton>
+          <CreateButton onClick={() => setOpen(true)}>+ Create Lab Test Category</CreateButton>
         </ActionBar>
-        <CategoryList refreshKey={refreshToken} />
-        <CreateCategoryModal open={open} onClose={() => setOpen(false)} onCreated={handleCreated} />
+        <LabTestCategoryList refreshKey={refreshToken} />
+        <CreateLabTestCategoryModal open={open} onClose={() => setOpen(false)} onCreated={handleCreated} />
         <Footer />
       </MainContainer>
     </AppLayout>
   );
 };
 
-export default CategoriesPage;
+export default LabTestCategoriesPage;

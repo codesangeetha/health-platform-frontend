@@ -25,7 +25,6 @@ export const PatientHeader = () => {
     { path: '/patient/dashboard', label: 'Dashboard' },
     { path: '/patient/doctor-directory', label: 'Doctor Directory' },
     { path: '/patient/my-appointments', label: 'My Appointments' },
-    { path: '/patient/order-medicines', label: 'Order Medicines' },
     { path: '/patient/my-orders', label: 'My Orders' },
     { path: '/patient/profile', label: 'Profile' }
   ];

@@ -1,9 +1,11 @@
 /** @jsxImportSource @emotion/react */
 import { useEffect, useState, useCallback } from 'react';
 import styled from '@emotion/styled';
-import type { Category } from '../../../types/category/category.types';
-import { getCategories } from '../../../services/admin/pharmacy.service';
+import type { LabTestCategory } from '../../../types/lab-test-category/lab-test-category.types';
+import { getLabTestCategories } from '../../../services/admin/lab-test-categories.service';
 import { ApiError } from '../../../services/auth/auth.service';
+import { EditLabTestCategoryModal } from './components/EditLabTestCategoryModal';
+import { DeleteConfirmDialog } from './components/DeleteConfirmDialog';
 
 const TableContainer = styled.div`
   background: #FFFFFF;
@@ -193,25 +195,31 @@ const ErrorMessage = styled.div`
   border: 1px solid #FFCDD2;
 `;
 
-export const CategoryList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
-  const [categories, setCategories] = useState<Category[]>([]);
+export const LabTestCategoryList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
+  const [categories, setCategories] = useState<LabTestCategory[]>([]);
   const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    total: 0,
-    totalPages: 1
+    currentPage: 1,
+    totalPages: 1,
+    totalCount: 0,
+    hasNextPage: false,
+    hasPreviousPage: false
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<LabTestCategory | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<LabTestCategory | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [deletingCategory, setDeletingCategory] = useState<LabTestCategory | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const fetchCategoriesList = useCallback(async (page: number = 1) => {
     try {
       setLoading(true);
-      const response = await getCategories({
+      const response = await getLabTestCategories({
         page,
-        limit: pagination.limit
+        limit: 10,
+        status: 'active'
       });
 
       // Sort categories by creation date (newest first)
@@ -228,19 +236,19 @@ export const CategoryList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
       if (err instanceof ApiError) {
         setError(err.message);
       } else {
-        setError('Failed to fetch categories list');
+        setError('Failed to fetch lab test categories list');
       }
-      console.error('Error fetching categories:', err);
+      console.error('Error fetching lab test categories:', err);
     } finally {
       setLoading(false);
     }
-  }, [pagination.limit]);
+  }, []);
 
   useEffect(() => {
-    fetchCategoriesList(pagination.page);
-  }, [pagination.page, fetchCategoriesList, refreshKey]);
+    fetchCategoriesList(pagination.currentPage);
+  }, [pagination.currentPage, fetchCategoriesList, refreshKey]);
 
-  const handleViewDetails = (category: Category) => {
+  const handleViewDetails = (category: LabTestCategory) => {
     setSelectedCategory(category);
     setShowModal(true);
   };
@@ -248,6 +256,38 @@ export const CategoryList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
   const closeModal = () => {
     setShowModal(false);
     setSelectedCategory(null);
+  };
+
+  const handleEdit = (category: LabTestCategory) => {
+    setEditingCategory(category);
+    setShowEditModal(true);
+  };
+
+  const handleDelete = (category: LabTestCategory) => {
+    setDeletingCategory(category);
+    setShowDeleteDialog(true);
+  };
+
+  const closeEditModal = () => {
+    setShowEditModal(false);
+    setEditingCategory(null);
+  };
+
+  const closeDeleteDialog = () => {
+    setShowDeleteDialog(false);
+    setDeletingCategory(null);
+  };
+
+  const handleCategoryUpdated = () => {
+    closeEditModal();
+    // Refresh the list
+    fetchCategoriesList(pagination.currentPage);
+  };
+
+  const handleCategoryDeleted = () => {
+    closeDeleteDialog();
+    // Refresh the list
+    fetchCategoriesList(pagination.currentPage);
   };
 
   if (error) {
@@ -278,13 +318,13 @@ export const CategoryList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                   <td colSpan={5}>
                     <LoadingOverlay>
                       <LoadingSpinner />
-                      Loading medicine categories...
+                      Loading lab test categories...
                     </LoadingOverlay>
                   </td>
                 </tr>
               ) : (
                 categories.map(category => (
-                  <tr key={category.id}>
+                  <tr key={category.categoryId}>
                     <Td>{category.name}</Td>
                     <Td title={category.description}>
                       {category.description.length > 50
@@ -303,6 +343,20 @@ export const CategoryList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                       <ActionButton onClick={() => handleViewDetails(category)}>
                         View
                       </ActionButton>
+                      <ActionButton onClick={() => handleEdit(category)} style={{ marginLeft: '4px', marginRight: '4px' }}>
+                        Edit
+                      </ActionButton>
+                      <ActionButton
+                        onClick={() => handleDelete(category)}
+                        style={{
+                          marginLeft: '4px',
+                          backgroundColor: '#dc3545',
+                          borderColor: '#dc3545',
+                          color: '#fff'
+                        }}
+                      >
+                        Delete
+                      </ActionButton>
                     </Td>
                   </tr>
                 ))
@@ -313,18 +367,18 @@ export const CategoryList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
 
         <PaginationContainer>
           <PageInfo>
-            Showing {categories.length} of {pagination.total} medicine categories
+            Showing {categories.length} of {pagination.totalCount} lab test categories
           </PageInfo>
           <div>
             <PaginationButton
-              disabled={loading || pagination.page === 1}
-              onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+              disabled={loading || !pagination.hasPreviousPage}
+              onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage - 1 }))}
             >
               Previous
             </PaginationButton>
             <PaginationButton
-              disabled={loading || pagination.page === pagination.totalPages}
-              onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+              disabled={loading || !pagination.hasNextPage}
+              onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage + 1 }))}
             >
               Next
             </PaginationButton>
@@ -336,7 +390,7 @@ export const CategoryList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
         <ModalOverlay onClick={closeModal}>
           <ModalContent onClick={(e: React.MouseEvent) => e.stopPropagation()}>
             <ModalHeader>
-              <ModalTitle>Medicine Category Details</ModalTitle>
+              <ModalTitle>Lab Test Category Details</ModalTitle>
               <CloseButton onClick={closeModal}>&times;</CloseButton>
             </ModalHeader>
 
@@ -375,6 +429,20 @@ export const CategoryList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
           </ModalContent>
         </ModalOverlay>
       )}
+
+      <EditLabTestCategoryModal
+        open={showEditModal}
+        category={editingCategory}
+        onClose={closeEditModal}
+        onUpdated={handleCategoryUpdated}
+      />
+
+      <DeleteConfirmDialog
+        open={showDeleteDialog}
+        category={deletingCategory}
+        onClose={closeDeleteDialog}
+        onDeleted={handleCategoryDeleted}
+      />
     </div>
   );
 };

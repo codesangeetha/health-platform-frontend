@@ -11,6 +11,8 @@ import { OrderMedicines } from '../features/patient/order-medicines/OrderMedicin
 import { PatientOrders } from '../features/patient/patient-orders/PatientOrders';
 import DoctorsPage from '../features/admin/doctors/DoctorsPage';
 import { CategoriesPage } from '../features/admin/categories';
+import LabTestCategoriesPage from '../features/admin/lab-test-categories/LabTestCategoriesPage';
+import LabTestsPage from '../features/admin/lab-tests/LabTestsPage';
 import { MedicinesPage } from '../features/admin/medicines';
 import AdminLogin from '../features/auth/AdminLogin';
 import { AdminDashboard } from '../features/admin/dashboard/AdminDashboard';
@@ -21,6 +23,7 @@ import { PatientLogin } from '../features/auth/PatientLogin';
 import { DoctorLogin } from '../features/auth/DoctorLogin';
 import { ForgotPassword } from '../features/auth/ForgotPassword';
 import { ResetPassword } from '../features/auth/ResetPassword';
+import GoogleCallback from '../features/auth/GoogleCallback';
 import { LandingPage } from '../pages/LandingPage';
 import { PatientDashboard } from '../features/patient/dashboard/PatientDashboard';
 import { PatientProfileEdit } from '../features/patient/profile/PatientProfileEdit';
@@ -29,6 +32,7 @@ import { PatientLayout } from '../components/layout/PatientLayout';
 import { DoctorAppointments } from '../features/doctor/appointments/DoctorAppointments';
 import { DoctorProfile } from '../features/doctor/profile/DoctorProfile';
 import { DoctorProfileEdit } from '../features/doctor/profile/DoctorProfileEdit';
+import { CreatePrescription } from '../features/doctor/prescription/CreatePrescription';
 
 // Component to combine ProtectedRoute with PatientLayout
 const ProtectedPatientLayout = () => {
@@ -76,6 +80,10 @@ const ProtectedPatientLayout = () => {
 };
 
 const router = createBrowserRouter([
+  {
+    path: '/auth/google/callback',
+    element: <GoogleCallback />,
+  },
   {
     path: '/',
     element: <RootLayout />,
@@ -171,6 +179,10 @@ const router = createBrowserRouter([
             element: <DoctorAppointments />,
           },
           {
+            path: 'prescription/:appointmentId',
+            element: <CreatePrescription />,
+          },
+          {
             path: 'profile',
             element: <DoctorProfile />,
           },
@@ -199,6 +211,14 @@ const router = createBrowserRouter([
           {
             path: 'categories',
             element: <CategoriesPage />,
+          },
+          {
+            path: 'lab-test-categories',
+            element: <LabTestCategoriesPage />,
+          },
+          {
+            path: 'lab-tests',
+            element: <LabTestsPage />,
           },
           {
             path: 'medicines',

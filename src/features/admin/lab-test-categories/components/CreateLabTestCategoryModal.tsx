@@ -1,7 +1,8 @@
 /** @jsxImportSource @emotion/react */
 import { useState } from 'react';
 import styled from '@emotion/styled';
-import { createCategory, type CreateCategoryPayload } from '../../../../services/admin/pharmacy.service';
+import { createLabTestCategory } from '../../../../services/admin/lab-test-categories.service';
+import type { CreateLabTestCategoryPayload } from '../../../../types/lab-test-category/lab-test-category.types';
 import { ApiError } from '../../../../services/auth/auth.service';
 
 const Backdrop = styled.div<{ open: boolean }>`
@@ -160,8 +161,8 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
   }
 `;
 
-export function CreateCategoryModal({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: () => void; }) {
-    const [form, setForm] = useState<CreateCategoryPayload>({
+export function CreateLabTestCategoryModal({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: () => void; }) {
+    const [form, setForm] = useState<CreateLabTestCategoryPayload>({
         name: '',
         description: '',
         status: 'active',
@@ -172,9 +173,9 @@ export function CreateCategoryModal({ open, onClose, onCreated }: { open: boolea
     const [touched, setTouched] = useState<Record<string, boolean>>({});
 
     const setField = (key: keyof typeof form, value: any) => {
-        setForm(prev => ({ ...prev, [key]: value }));
+        setForm((prev: CreateLabTestCategoryPayload) => ({ ...prev, [key]: value }));
         if (fieldErrors[key as string]) {
-            setFieldErrors(prev => {
+            setFieldErrors((prev: Record<string, string>) => {
                 const { [key as string]: _omit, ...rest } = prev;
                 return rest;
             });
@@ -184,15 +185,15 @@ export function CreateCategoryModal({ open, onClose, onCreated }: { open: boolea
     // Validation helpers
     const validateName = (v: string) => {
         const s = v.trim();
-        if (!s) return 'Medicine category name is required.';
-        if (s.length < 2) return 'Medicine category name must be at least 2 characters.';
-        if (s.length > 50) return 'Medicine category name cannot exceed 50 characters.';
+        if (!s) return 'Lab test category name is required.';
+        if (s.length < 2) return 'Lab test category name must be at least 2 characters.';
+        if (s.length > 50) return 'Lab test category name cannot exceed 50 characters.';
         return undefined;
     };
 
     const validateDescription = (v: string) => {
         const s = v.trim();
-        if (!s) return 'Medicine category description is required.';
+        if (!s) return 'Lab test category description is required.';
         if (s.length < 10) return 'Description must be at least 10 characters.';
         if (s.length > 200) return 'Description cannot exceed 200 characters.';
         return undefined;
@@ -218,11 +219,11 @@ export function CreateCategoryModal({ open, onClose, onCreated }: { open: boolea
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setForm(prev => ({ ...prev, [name]: value }));
+        setForm((prev: CreateLabTestCategoryPayload) => ({ ...prev, [name]: value }));
 
         const key = name as keyof typeof form;
-        if (touched[key]) {
-            setFieldErrors((prev) => ({ ...prev, [key]: validateField(key, value) || '' }));
+        if (touched[key as string]) {
+            setFieldErrors((prev: Record<string, string>) => ({ ...prev, [key]: validateField(key, value) || '' }));
         }
     };
 
@@ -254,19 +255,19 @@ export function CreateCategoryModal({ open, onClose, onCreated }: { open: boolea
 
         try {
             setSubmitting(true);
-            const payload: CreateCategoryPayload = {
+            const payload: CreateLabTestCategoryPayload = {
                 name: form.name.trim(),
                 description: form.description.trim(),
                 status: form.status,
             };
 
-            await createCategory(payload);
+            await createLabTestCategory(payload);
             onCreated();
         } catch (err: any) {
             if (err instanceof ApiError) {
                 setError(err.message);
             } else {
-                setError(err?.message || 'Failed to create medicine category');
+                setError(err?.message || 'Failed to create lab test category');
             }
         } finally {
             setSubmitting(false);
@@ -287,21 +288,21 @@ export function CreateCategoryModal({ open, onClose, onCreated }: { open: boolea
 
     return (
         <Backdrop open={open}>
-            <Modal role="dialog" aria-modal="true" aria-label="Create Category">
-                <Header>Create Medicine Category</Header>
+            <Modal role="dialog" aria-modal="true" aria-label="Create Lab Test Category">
+                <Header>Create Lab Test Category</Header>
                 <Form onSubmit={handleSubmit}>
                     <Content>
                         {error && <ErrorBox>{error}</ErrorBox>}
                         <InputRow>
                             <Label>
-                                Medicine Category Name*
+                                Lab Test Category Name*
                                 <Input
                                     aria-invalid={!!fieldErrors.name}
                                     value={form.name}
                                     onChange={handleChange}
                                     onBlur={handleBlur}
                                     name="name"
-                                    placeholder="Antibiotics"
+                                    placeholder="Blood Tests"
                                 />
                                 {fieldErrors.name && <ErrorText>{fieldErrors.name}</ErrorText>}
                             </Label>
@@ -309,14 +310,14 @@ export function CreateCategoryModal({ open, onClose, onCreated }: { open: boolea
 
                         <InputRow>
                             <Label>
-                                Medicine Category Description*
+                                Lab Test Category Description*
                                 <TextArea
                                     aria-invalid={!!fieldErrors.description}
                                     value={form.description}
                                     onChange={handleChange}
                                     onBlur={handleBlur}
                                     name="description"
-                                    placeholder="Medicines used to treat bacterial infections..."
+                                    placeholder="Various blood analysis tests..."
                                 />
                                 {fieldErrors.description && <ErrorText>{fieldErrors.description}</ErrorText>}
                             </Label>
@@ -339,7 +340,7 @@ export function CreateCategoryModal({ open, onClose, onCreated }: { open: boolea
                     </Content>
                     <Actions>
                         <Button type="button" variant="secondary" onClick={resetAndClose} disabled={submitting}>Cancel</Button>
-                        <Button type="submit" disabled={submitting}>{submitting ? 'Creating...' : 'Create Medicine Category'}</Button>
+                        <Button type="submit" disabled={submitting}>{submitting ? 'Creating...' : 'Create Lab Test Category'}</Button>
                     </Actions>
                 </Form>
             </Modal>

@@ -3,12 +3,13 @@ import styled from '@emotion/styled';
 import { AppLayout, MainContainer, Footer } from '../../../components/layout/AppLayout';
 import Sidebar from '../dashboard/components/Sidebar';
 import TopBar from '../dashboard/components/TopBar';
-import { CategoryList } from './CategoryList';
-import { CreateCategoryModal } from './components/CreateCategoryModal';
-import { useState } from 'react';
+import { LabTestList } from './LabTestList';
+import { CreateLabTestModal } from './components/CreateLabTestModal';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useContext } from 'react';
 import { AuthContext } from '../../../context/AuthContext';
+import { getLabTestCategories } from '../../../services/admin/lab-test-categories.service';
 
 const PageTitle = styled.h1`
   font-size: 24px;
@@ -38,11 +39,27 @@ const CreateButton = styled.button`
   }
 `;
 
-const CategoriesPage = () => {
+const LabTestsPage = () => {
   const navigate = useNavigate();
   const { logout } = useContext(AuthContext);
   const [open, setOpen] = useState(false);
   const [refreshToken, setRefreshToken] = useState(0);
+  const [categories, setCategories] = useState<{ categoryId: string; name: string }[]>([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await getLabTestCategories({ status: 'active' });
+        setCategories(response.data.categories);
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+        // Set empty array as fallback to prevent errors in EditLabTestModal
+        setCategories([]);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const handleCreated = () => {
     setOpen(false);
@@ -60,17 +77,22 @@ const CategoriesPage = () => {
       <Sidebar />
       <MainContainer>
         <TopBar onLogout={handleLogout} />
-        <PageTitle>Manage Medicine Categories</PageTitle>
+        <PageTitle>Manage Lab Tests</PageTitle>
         <ActionBar>
           <div />
-          <CreateButton onClick={() => setOpen(true)}>+ Create Medicine Category</CreateButton>
+          <CreateButton onClick={() => setOpen(true)}>+ Create Lab Test</CreateButton>
         </ActionBar>
-        <CategoryList refreshKey={refreshToken} />
-        <CreateCategoryModal open={open} onClose={() => setOpen(false)} onCreated={handleCreated} />
+        <LabTestList refreshKey={refreshToken} categories={categories} />
+        <CreateLabTestModal
+          open={open}
+          onClose={() => setOpen(false)}
+          onCreated={handleCreated}
+          categories={categories}
+        />
         <Footer />
       </MainContainer>
     </AppLayout>
   );
 };
 
-export default CategoriesPage;
+export default LabTestsPage;

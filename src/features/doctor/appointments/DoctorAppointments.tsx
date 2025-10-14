@@ -117,26 +117,13 @@ export const DoctorAppointments = () => {
     setFilters(prev => ({ ...prev, page }));
   };
 
-  const handleMarkAsComplete = async (appointment: DoctorAppointment) => {
+  const handleMarkAsComplete = (appointment: DoctorAppointment) => {
     if (appointment.status === 'cancelled' || appointment.status === 'completed') {
       return; // Don't show button for cancelled or completed appointments
     }
 
-    try {
-      const response = await DoctorService.updateAppointmentStatus(appointment.appointmentId, {
-        status: 'completed',
-        reason: 'completed'
-      });
-
-      if (response.success) {
-        // Refresh the appointments list
-        fetchAppointments();
-      } else {
-        throw new Error(response.message || 'Failed to mark appointment as complete');
-      }
-    } catch (err: any) {
-      setError(err.message || 'Failed to mark appointment as complete');
-    }
+    // Navigate to prescription creation page
+    navigate(`/doctor/prescription/${appointment.appointmentId}`);
   };
 
   const getStatusColor = (status: string) => {
@@ -403,7 +390,7 @@ export const DoctorAppointments = () => {
                                   e.currentTarget.style.color = '#065F46';
                                 }}
                               >
-                                Mark as Complete
+                                Create Prescription
                               </button>
                             )}
                             <div style={{

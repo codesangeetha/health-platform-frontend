@@ -263,7 +263,6 @@ export const BookAppointment = () => {
   }
 
   return (
-    <PatientLayout pageTitle="Book Appointment" pageSubtitle="Schedule an appointment with your selected doctor">
       <div className="booking-container">
         <div className="booking-grid">
           {/* Booking Panel */}
@@ -454,6 +453,5 @@ export const BookAppointment = () => {
           </div>
         </div>
       </div>
-    </PatientLayout>
   );
   };

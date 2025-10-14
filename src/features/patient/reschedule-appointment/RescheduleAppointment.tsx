@@ -276,548 +276,211 @@ export const RescheduleAppointment = () => {
 
   if (loading) {
     return (
-      <>
-        {/* Top Navigation */}
-        <header className="pd-top-nav">
-          <div className="pd-top-nav-inner">
-            <div className="pd-brand">
-              <Link to="/patient/dashboard" className="hc-logo" aria-label="HealthCare+ Home">
-                <span className="hc-logo__mark">+</span>
-                <span>HealthCare+</span>
-              </Link>
-            </div>
-            <nav className="pd-nav-links" aria-label="Primary">
-              <Link to="/patient/dashboard">Dashboard</Link>
-              <Link to="/patient/doctor-directory">Doctor Directory</Link>
-              <Link to="/patient/my-appointments">My Appointments</Link>
-              <Link to="/patient/profile">Profile</Link>
-              <a href="#">Settings</a>
-            </nav>
-            <div className="pd-nav-right">
-              <div className="pd-bell" title="Notifications" aria-label="Notifications">🔔</div>
-              <div className="pd-avatar" aria-label="Profile" />
-              <button
-                className="pd-logout-link"
-                onClick={() => {
-                  localStorage.removeItem('token');
-                  window.location.href = '/patient/login';
-                }}
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </header>
-
-        {/* Container */}
-        <main className="pd-container">
-          <div className="pd-card">
-            <p>Loading appointment details...</p>
-          </div>
-        </main>
-      </>
+      <main className="pd-container">
+        <div className="pd-card">
+          <p>Loading appointment details...</p>
+        </div>
+      </main>
     );
   }
 
   if (error) {
     return (
-      <>
-        {/* Top Navigation */}
-        <header className="pd-top-nav">
-          <div className="pd-top-nav-inner">
-            <div className="pd-brand">
-              <Link to="/patient/dashboard" className="hc-logo" aria-label="HealthCare+ Home">
-                <span className="hc-logo__mark">+</span>
-                <span>HealthCare+</span>
-              </Link>
-            </div>
-            <nav className="pd-nav-links" aria-label="Primary">
-              <Link to="/patient/dashboard">Dashboard</Link>
-              <Link to="/patient/doctor-directory">Doctor Directory</Link>
-              <Link to="/patient/my-appointments">My Appointments</Link>
-              <Link to="/patient/profile">Profile</Link>
-              <a href="#">Settings</a>
-            </nav>
-            <div className="pd-nav-right">
-              <div className="pd-bell" title="Notifications" aria-label="Notifications">🔔</div>
-              <div className="pd-avatar" aria-label="Profile" />
-              <button
-                className="pd-logout-link"
-                onClick={() => {
-                  localStorage.removeItem('token');
-                  window.location.href = '/patient/login';
-                }}
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </header>
-
-        {/* Container */}
-        <main className="pd-container">
-          <div className="pd-card" style={{ color: '#e63946' }}>
-            <p>{error}</p>
-            <button onClick={fetchAppointmentDetails} style={{ marginTop: '12px' }}>
-              Try Again
-            </button>
-          </div>
-        </main>
-      </>
+      <main className="pd-container">
+        <div className="pd-card" style={{ color: '#e63946' }}>
+          <p>{error}</p>
+          <button onClick={fetchAppointmentDetails} style={{ marginTop: '12px' }}>
+            Try Again
+          </button>
+        </div>
+      </main>
     );
   }
 
   if (success) {
     return (
-      <>
-        {/* Top Navigation */}
-        <header className="pd-top-nav">
-          <div className="pd-top-nav-inner">
-            <div className="pd-brand">
-              <Link to="/patient/dashboard" className="hc-logo" aria-label="HealthCare+ Home">
-                <span className="hc-logo__mark">+</span>
-                <span>HealthCare+</span>
-              </Link>
-            </div>
-            <nav className="pd-nav-links" aria-label="Primary">
-              <Link to="/patient/dashboard">Dashboard</Link>
-              <Link to="/patient/doctor-directory">Doctor Directory</Link>
-              <Link to="/patient/my-appointments">My Appointments</Link>
-              <Link to="/patient/profile">Profile</Link>
-              <a href="#">Settings</a>
-            </nav>
-            <div className="pd-nav-right">
-              <div className="pd-bell" title="Notifications" aria-label="Notifications">🔔</div>
-              <div className="pd-avatar" aria-label="Profile" />
-              <button
-                className="pd-logout-link"
-                onClick={() => {
-                  localStorage.removeItem('token');
-                  window.location.href = '/patient/login';
-                }}
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </header>
-
-        {/* Container */}
-        <main className="pd-container">
-          <div className="pd-card" style={{ textAlign: 'center', padding: '40px' }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>✅</div>
-            <h3 style={{ margin: '0 0 16px 0', color: 'var(--color-text-dark)' }}>Appointment Rescheduled Successfully!</h3>
-            <p style={{ margin: '0 0 24px 0', color: 'var(--color-text-light)' }}>
-              Your appointment has been rescheduled. You will be redirected to your appointments page shortly.
-            </p>
-            <button
-              onClick={() => navigate('/patient/my-appointments')}
-              style={{ padding: '10px 20px', background: 'var(--color-primary-blue)', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
-            >
-              Go to My Appointments
-            </button>
-          </div>
-        </main>
-      </>
+      <main className="pd-container">
+        <div className="pd-card" style={{ textAlign: 'center', padding: '40px' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>✅</div>
+          <h3 style={{ margin: '0 0 16px 0', color: 'var(--color-text-dark)' }}>Appointment Rescheduled Successfully!</h3>
+          <p style={{ margin: '0 0 24px 0', color: 'var(--color-text-light)' }}>
+            Your appointment has been rescheduled. You will be redirected to your appointments page shortly.
+          </p>
+          <button
+            onClick={() => navigate('/patient/my-appointments')}
+            style={{ padding: '10px 20px', background: 'var(--color-primary-blue)', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+          >
+            Go to My Appointments
+          </button>
+        </div>
+      </main>
     );
   }
 
   return (
-    <>
-      {/* Top Navigation */}
-      <header className="pd-top-nav">
-        <div className="pd-top-nav-inner">
-          <div className="pd-brand">
-            <Link to="/patient/dashboard" className="hc-logo" aria-label="HealthCare+ Home">
-              <span className="hc-logo__mark">+</span>
-              <span>HealthCare+</span>
-            </Link>
+    <div className="reschedule-container">
+      {/* Back Link */}
+      <div className="back-link" onClick={() => navigate('/patient/my-appointments')}>
+        ← Reschedule Appointment
+      </div>
+
+      {/* Subtitle */}
+      <div className="reschedule-subtitle">
+        Select a new date and time for your appointment
+      </div>
+
+      {/* Form Container */}
+      <div className="reschedule-grid">
+        {/* Current Appointment Card */}
+        <div className="appointment-card">
+          <h2 className="card-title">Current Appointment</h2>
+          {/* Doctor Info */}
+          <div className="doctor-info">
+            <div className="doctor-avatar">👤</div>
+            <div className="doctor-details">
+              <div className="doctor-name">
+                {doctorDetails ?
+                  `Dr. ${doctorDetails.firstName} ${doctorDetails.lastName}` :
+                  `Doctor ID: ${appointment?.doctorId}`}
+              </div>
+              <div className="doctor-specialty">
+                {doctorDetails?.specialization || 'General Practice'}
+              </div>
+            </div>
           </div>
-          <nav className="pd-nav-links" aria-label="Primary">
-            <Link to="/patient/dashboard">Dashboard</Link>
-            <Link to="/patient/doctor-directory">Doctor Directory</Link>
-            <Link to="/patient/my-appointments">My Appointments</Link>
-            <Link to="/patient/profile">Profile</Link>
-            <a href="#">Settings</a>
-          </nav>
-          <div className="pd-nav-right">
-            <div className="pd-bell" title="Notifications" aria-label="Notifications">🔔</div>
-            <div className="pd-avatar" aria-label="Profile" />
+
+          {/* Meta Information */}
+          <div className="appointment-meta">
+            <div className="meta-item">
+              <span className="meta-icon">📅</span>
+              <span className="meta-text">
+                {formatDate(appointment?.date || '')}
+              </span>
+            </div>
+            <div className="meta-item">
+              <span className="meta-icon">🕐</span>
+              <span className="meta-text">
+                {formatTime(appointment?.time || '')}
+              </span>
+            </div>
+            <div className="meta-item">
+              <span className="meta-icon">📍</span>
+              <span className="meta-text">
+                {appointment?.isVideoCall ? 'Telemedicine' : 'In-Person'}
+              </span>
+            </div>
+          </div>
+
+          {/* Reason */}
+          <div className="appointment-reason">
+            <div className="reason-label">Reason:</div>
+            <div className="reason-text">
+              {appointment?.reason && appointment.reason.includes('|')
+                ? appointment.reason.split('|').pop()?.trim()
+                : appointment?.reason || 'No reason provided'}
+            </div>
+          </div>
+        </div>
+
+        {/* Reschedule Form Card */}
+        <div className="form-card">
+          {/* Date Picker */}
+          <div className="form-group">
+            <div className="form-label">Select New Date</div>
+            <input
+              type="date"
+              id="newDate"
+              name="newDate"
+              value={formData.newDate}
+              onChange={handleInputChange}
+              onBlur={handleBlur}
+              min={minDateString}
+              aria-invalid={Boolean(touched.newDate && errors.newDate)}
+              aria-describedby={touched.newDate && errors.newDate ? 'newDate-error' : undefined}
+              className={`form-input ${errors.newDate ? 'error' : ''}`}
+            />
+            {touched.newDate && errors.newDate && (
+              <p className="form-error">
+                {errors.newDate}
+              </p>
+            )}
+          </div>
+
+          {/* Time Slot Selector */}
+          <div className="form-group">
+            <div className="form-label">Select Time Slot</div>
+            <div className="time-slots">
+              {timeSlots.map(time => (
+                <button
+                  key={time}
+                  type="button"
+                  onClick={() => {
+                    setFormData(prev => ({ ...prev, newTime: time }));
+                    if (touched.newTime) {
+                      setErrors(prev => ({ ...prev, newTime: validateTime(time) }));
+                    }
+                  }}
+                  className={`time-slot ${formData.newTime === time ? 'selected' : ''}`}
+                >
+                  {formatTime(time)}
+                </button>
+              ))}
+            </div>
+            {touched.newTime && errors.newTime && (
+              <p className="form-error">
+                {errors.newTime}
+              </p>
+            )}
+          </div>
+
+          {/* Reason Text Area */}
+          <div className="form-group">
+            <label htmlFor="reason" className="form-label">
+              Reason for Rescheduling
+            </label>
+            <textarea
+              id="reason"
+              name="reason"
+              value={formData.reason}
+              onChange={handleInputChange}
+              onBlur={handleBlur}
+              rows={3}
+              placeholder="Please let us know why you need to reschedule..."
+              maxLength={500}
+              aria-invalid={Boolean(touched.reason && errors.reason)}
+              aria-describedby={touched.reason && errors.reason ? 'reason-error' : undefined}
+              className={`form-textarea ${errors.reason ? 'error' : ''}`}
+            />
+            {touched.reason && errors.reason && (
+              <p className="form-error">
+                {errors.reason}
+              </p>
+            )}
+            <div className="char-count">
+              {formData.reason.length}/500 characters
+            </div>
+          </div>
+
+          {/* Form Actions */}
+          <div className="form-actions">
             <button
-              className="pd-logout-link"
-              onClick={() => {
-                localStorage.removeItem('token');
-                window.location.href = '/patient/login';
-              }}
+              type="button"
+              onClick={() => navigate('/patient/my-appointments')}
+              className="btn-secondary"
             >
-              Logout
+              Cancel
+            </button>
+            <button
+              type="submit"
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="btn-primary"
+            >
+              {submitting ? 'Rescheduling...' : 'Confirm Reschedule'}
             </button>
           </div>
         </div>
-      </header>
-
-      {/* Main Content Area */}
-      <main style={{
-        backgroundColor: '#F9FAFB',
-        minHeight: '100vh',
-        padding: '2rem'
-      }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          {/* Back Link */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            fontSize: '1.5rem',
-            fontWeight: '600',
-            marginBottom: '0.5rem',
-            cursor: 'pointer',
-            color: '#1F2937',
-            textDecoration: 'none',
-            width: 'fit-content'
-          }} onClick={() => navigate('/patient/my-appointments')}>
-            ← Reschedule Appointment
-          </div>
-
-          {/* Subtitle */}
-          <div style={{
-            color: '#6B7280',
-            fontSize: '0.875rem',
-            marginBottom: '2rem'
-          }}>
-            Select a new date and time for your appointment
-          </div>
-
-          {/* Form Container */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 2fr',
-            gap: '2rem',
-            flex: 1
-          }}>
-          {/* Current Appointment Card */}
-          <div style={{
-            backgroundColor: 'white',
-            border: '1px solid #E5E7EB',
-            borderRadius: '0.5rem',
-            padding: '1.5rem'
-          }}>
-            <h2 style={{
-              fontSize: '1.125rem',
-              fontWeight: '600',
-              color: '#1F2937',
-              marginBottom: '1rem'
-            }}>Current Appointment</h2>
-            {/* Doctor Info */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-              <div style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '50%',
-                backgroundColor: '#E5E7EB',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>👤</div>
-              <div>
-                <div style={{
-                  fontSize: '0.875rem',
-                  fontWeight: '600',
-                  color: '#1F2937'
-                }}>
-                  {doctorDetails ?
-                    `Dr. ${doctorDetails.firstName} ${doctorDetails.lastName}` :
-                    `Doctor ID: ${appointment?.doctorId}`}
-                </div>
-                <div style={{
-                  fontSize: '0.75rem',
-                  color: '#9CA3AF'
-                }}>
-                  {doctorDetails?.specialization || 'General Practice'}
-                </div>
-              </div>
-            </div>
-
-            {/* Meta Information */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>📅</span>
-                <span style={{ fontSize: '0.875rem', color: '#6B7280' }}>
-                  {formatDate(appointment?.date || '')}
-                </span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>🕐</span>
-                <span style={{ fontSize: '0.875rem', color: '#6B7280' }}>
-                  {formatTime(appointment?.time || '')}
-                </span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>📍</span>
-                <span style={{ fontSize: '0.875rem', color: '#6B7280' }}>
-                  {appointment?.isVideoCall ? 'Telemedicine' : 'In-Person'}
-                </span>
-              </div>
-            </div>
-
-            {/* Reason */}
-            <div>
-              <div style={{
-                fontSize: '0.75rem',
-                color: '#9CA3AF',
-                marginBottom: '0.25rem'
-              }}>Reason:</div>
-              <div style={{
-                fontSize: '0.875rem',
-                color: '#6B7280'
-              }}>
-                {appointment?.reason && appointment.reason.includes('|')
-                  ? appointment.reason.split('|').pop()?.trim()
-                  : appointment?.reason || 'No reason provided'}
-              </div>
-            </div>
-          </div>
-
-          {/* Reschedule Form Card */}
-          <div style={{
-            backgroundColor: 'white',
-            border: '1px solid #E5E7EB',
-            borderRadius: '0.5rem',
-            padding: '1.5rem',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1rem'
-          }}>
-
-            {/* Date Picker */}
-            <div>
-              <div style={{
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                color: '#1F2937',
-                marginBottom: '0.5rem'
-              }}>Select New Date</div>
-              <input
-                type="date"
-                id="newDate"
-                name="newDate"
-                value={formData.newDate}
-                onChange={handleInputChange}
-                onBlur={handleBlur}
-                min={minDateString}
-                aria-invalid={Boolean(touched.newDate && errors.newDate)}
-                aria-describedby={touched.newDate && errors.newDate ? 'newDate-error' : undefined}
-                style={{
-                  width: '100%',
-                  padding: '0.5rem',
-                  border: `1px solid ${errors.newDate ? '#EF4444' : '#E5E7EB'}`,
-                  borderRadius: '0.375rem',
-                  fontSize: '0.875rem',
-                  fontFamily: 'Inter, sans-serif'
-                }}
-              />
-              {touched.newDate && errors.newDate && (
-                <p style={{
-                  color: '#EF4444',
-                  fontSize: '0.75rem',
-                  marginTop: '0.25rem'
-                }}>
-                  {errors.newDate}
-                </p>
-              )}
-            </div>
-
-            {/* Time Slot Selector */}
-            <div>
-              <div style={{
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                color: '#1F2937',
-                marginBottom: '0.5rem'
-              }}>Select Time Slot</div>
-              <div style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '0.5rem'
-              }}>
-                {timeSlots.map(time => (
-                  <button
-                    key={time}
-                    type="button"
-                    onClick={() => {
-                      setFormData(prev => ({ ...prev, newTime: time }));
-                      if (touched.newTime) {
-                        setErrors(prev => ({ ...prev, newTime: validateTime(time) }));
-                      }
-                    }}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      border: `1px solid ${formData.newTime === time ? '#3B82F6' : '#E5E7EB'}`,
-                      borderRadius: '0.375rem',
-                      backgroundColor: formData.newTime === time ? '#3B82F6' : 'white',
-                      color: formData.newTime === time ? 'white' : '#6B7280',
-                      fontSize: '0.875rem',
-                      fontWeight: '500',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    {formatTime(time)}
-                  </button>
-                ))}
-              </div>
-              {touched.newTime && errors.newTime && (
-                <p style={{
-                  color: '#EF4444',
-                  fontSize: '0.75rem',
-                  marginTop: '0.25rem'
-                }}>
-                  {errors.newTime}
-                </p>
-              )}
-            </div>
-
-            {/* Reason Text Area */}
-            <div>
-              <label htmlFor="reason" style={{
-                display: 'block',
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                color: '#1F2937',
-                marginBottom: '0.5rem'
-              }}>
-                Reason for Rescheduling
-              </label>
-              <textarea
-                id="reason"
-                name="reason"
-                value={formData.reason}
-                onChange={handleInputChange}
-                onBlur={handleBlur}
-                rows={3}
-                placeholder="Please let us know why you need to reschedule..."
-                maxLength={500}
-                aria-invalid={Boolean(touched.reason && errors.reason)}
-                aria-describedby={touched.reason && errors.reason ? 'reason-error' : undefined}
-                style={{
-                  width: '100%',
-                  padding: '0.5rem',
-                  border: `1px solid ${errors.reason ? '#EF4444' : '#E5E7EB'}`,
-                  borderRadius: '0.375rem',
-                  fontSize: '0.875rem',
-                  fontFamily: 'Inter, sans-serif',
-                  resize: 'vertical'
-                }}
-              />
-              {touched.reason && errors.reason && (
-                <p style={{
-                  color: '#EF4444',
-                  fontSize: '0.75rem',
-                  marginTop: '0.25rem'
-                }}>
-                  {errors.reason}
-                </p>
-              )}
-              <div style={{
-                textAlign: 'right',
-                fontSize: '0.75rem',
-                color: '#9CA3AF',
-                marginTop: '0.25rem'
-              }}>
-                {formData.reason.length}/500 characters
-              </div>
-            </div>
-
-            {/* Form Actions */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: '0.5rem',
-              marginTop: '1rem'
-            }}>
-              <button
-                type="button"
-                onClick={() => navigate('/patient/my-appointments')}
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: 'white',
-                  color: '#6B7280',
-                  border: '1px solid #D1D5DB',
-                  borderRadius: '0.375rem',
-                  fontSize: '0.875rem',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                onClick={handleSubmit}
-                disabled={submitting}
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: submitting ? '#9CA3AF' : '#3B82F6',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '0.375rem',
-                  fontSize: '0.875rem',
-                  fontWeight: '600',
-                  cursor: submitting ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s'
-                }}
-              >
-                {submitting ? 'Rescheduling...' : 'Confirm Reschedule'}
-              </button>
-            </div>
-          </div>
-        </div>
-        </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="pd-footer">
-        <div className="pd-footer-inner">
-          <div className="pd-footer-grid">
-            <div className="pd-footer-section">
-              <div className="pd-footer-brand">
-                <span className="pd-footer-logo" aria-hidden="true" />
-                <div>
-                  <strong>Doctor Appointment Booker</strong>
-                  <div style={{ fontSize: '0.875rem', color: 'var(--color-text-light)' }}>Accessible healthcare for everyone.</div>
-                </div>
-              </div>
-            </div>
-            <div className="pd-footer-section">
-              <h6>Quick Links</h6>
-              <ul className="pd-footer-links">
-                <li>Find Doctors</li>
-                <li>Book Appointment</li>
-                <li>Health Records</li>
-              </ul>
-            </div>
-            <div className="pd-footer-section">
-              <h6>Support</h6>
-              <ul className="pd-footer-links">
-                <li>Help Center</li>
-                <li>Contact Us</li>
-                <li>FAQ</li>
-              </ul>
-            </div>
-            <div className="pd-footer-section">
-              <h6>Contact</h6>
-              <ul className="pd-footer-info">
-                <li>support@example.com</li>
-                <li>+1 (555) 123-4567</li>
-              </ul>
-            </div>
-          </div>
-          <div className="pd-footer-copy">© 2025 Placeholder. All rights reserved.</div>
-        </div>
-      </footer>
-
-      {/* Help icon removed */}
-    </>
+      </div>
+    </div>
   );
 };

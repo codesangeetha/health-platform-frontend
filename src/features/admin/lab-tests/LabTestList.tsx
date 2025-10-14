@@ -1,9 +1,12 @@
 /** @jsxImportSource @emotion/react */
 import { useEffect, useState, useCallback } from 'react';
 import styled from '@emotion/styled';
-import type { Category } from '../../../types/category/category.types';
-import { getCategories } from '../../../services/admin/pharmacy.service';
+import type { LabTest } from '../../../types/lab-test/lab-test.types';
+import { getLabTests } from '../../../services/admin/lab-tests.service';
 import { ApiError } from '../../../services/auth/auth.service';
+import { EditLabTestModal } from './components/EditLabTestModal';
+import { DeleteConfirmDialog } from './components/DeleteConfirmDialog';
+import { CreateLabTestModal } from './components/CreateLabTestModal';
 
 const TableContainer = styled.div`
   background: #FFFFFF;
@@ -34,13 +37,13 @@ const Td = styled.td`
   color: #666666;
 `;
 
-const StatusBadge = styled.span<{ status: 'active' | 'inactive' }>`
+const StatusBadge = styled.span<{ status: boolean }>`
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 12px;
   font-weight: 500;
-  background-color: ${props => props.status === 'active' ? '#4CAF50' : '#FFC107'};
-  color: ${props => props.status === 'active' ? '#FFFFFF' : '#333333'};
+  background-color: ${props => props.status ? '#4CAF50' : '#FFC107'};
+  color: ${props => props.status ? '#FFFFFF' : '#333333'};
 `;
 
 const ActionButton = styled.button`
@@ -193,62 +196,110 @@ const ErrorMessage = styled.div`
   border: 1px solid #FFCDD2;
 `;
 
-export const CategoryList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
-  const [categories, setCategories] = useState<Category[]>([]);
+
+interface LabTestListProps {
+  refreshKey?: number;
+  categories?: { categoryId: string; name: string }[];
+}
+
+export const LabTestList = ({ refreshKey = 0, categories = [] }: LabTestListProps) => {
+  const [labTests, setLabTests] = useState<LabTest[]>([]);
   const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    total: 0,
-    totalPages: 1
+    currentPage: 1,
+    totalPages: 1,
+    totalCount: 0,
+    hasNextPage: false,
+    hasPreviousPage: false
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [selectedLabTest, setSelectedLabTest] = useState<LabTest | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [editingLabTest, setEditingLabTest] = useState<LabTest | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [deletingLabTest, setDeletingLabTest] = useState<LabTest | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const fetchCategoriesList = useCallback(async (page: number = 1) => {
+
+  const fetchLabTestsList = useCallback(async (page: number = 1) => {
     try {
       setLoading(true);
-      const response = await getCategories({
+
+      const response = await getLabTests({
         page,
-        limit: pagination.limit
+        limit: 10,
+        isActive: true
       });
 
-      // Sort categories by creation date (newest first)
-      const sortedCategories = response.data.categories.sort((a, b) => {
+      // Sort lab tests by creation date (newest first)
+      const sortedLabTests = response.data.tests.sort((a, b) => {
         const dateA = new Date(a.createdAt).getTime();
         const dateB = new Date(b.createdAt).getTime();
         return dateB - dateA; // Descending order (newest first)
       });
 
-      setCategories(sortedCategories);
+      setLabTests(sortedLabTests);
       setPagination(response.data.pagination);
       setError(null);
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
       } else {
-        setError('Failed to fetch categories list');
+        setError('Failed to fetch lab tests list');
       }
-      console.error('Error fetching categories:', err);
+      console.error('Error fetching lab tests:', err);
     } finally {
       setLoading(false);
     }
-  }, [pagination.limit]);
+  }, []);
+
 
   useEffect(() => {
-    fetchCategoriesList(pagination.page);
-  }, [pagination.page, fetchCategoriesList, refreshKey]);
+    fetchLabTestsList(pagination.currentPage);
+  }, [pagination.currentPage, fetchLabTestsList, refreshKey]);
 
-  const handleViewDetails = (category: Category) => {
-    setSelectedCategory(category);
+  const handleViewDetails = (labTest: LabTest) => {
+    setSelectedLabTest(labTest);
     setShowModal(true);
   };
 
   const closeModal = () => {
     setShowModal(false);
-    setSelectedCategory(null);
+    setSelectedLabTest(null);
   };
+
+  const handleEdit = (labTest: LabTest) => {
+    setEditingLabTest(labTest);
+    setShowEditModal(true);
+  };
+
+  const handleDelete = (labTest: LabTest) => {
+    setDeletingLabTest(labTest);
+    setShowDeleteDialog(true);
+  };
+
+  const closeEditModal = () => {
+    setShowEditModal(false);
+    setEditingLabTest(null);
+  };
+
+  const closeDeleteDialog = () => {
+    setShowDeleteDialog(false);
+    setDeletingLabTest(null);
+  };
+
+  const handleLabTestUpdated = () => {
+    closeEditModal();
+    // Refresh the list
+    fetchLabTestsList(pagination.currentPage);
+  };
+
+  const handleLabTestDeleted = () => {
+    closeDeleteDialog();
+    // Refresh the list
+    fetchLabTestsList(pagination.currentPage);
+  };
+
 
   if (error) {
     return (
@@ -278,30 +329,44 @@ export const CategoryList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                   <td colSpan={5}>
                     <LoadingOverlay>
                       <LoadingSpinner />
-                      Loading medicine categories...
+                      Loading lab tests...
                     </LoadingOverlay>
                   </td>
                 </tr>
               ) : (
-                categories.map(category => (
-                  <tr key={category.id}>
-                    <Td>{category.name}</Td>
-                    <Td title={category.description}>
-                      {category.description.length > 50
-                        ? `${category.description.substring(0, 50)}...`
-                        : category.description}
+                labTests.map(labTest => (
+                  <tr key={labTest.testId}>
+                    <Td>{labTest.name}</Td>
+                    <Td title={labTest.description}>
+                      {labTest.description.length > 50
+                        ? `${labTest.description.substring(0, 50)}...`
+                        : labTest.description}
                     </Td>
                     <Td>
-                      <StatusBadge status={category.status}>
-                        {category.status}
+                      <StatusBadge status={labTest.isActive}>
+                        {labTest.isActive ? 'Active' : 'Inactive'}
                       </StatusBadge>
                     </Td>
                     <Td>
-                      {category.createdAt ? new Date(category.createdAt).toLocaleDateString() : '-'}
+                      {labTest.createdAt ? new Date(labTest.createdAt).toLocaleDateString() : '-'}
                     </Td>
                     <Td>
-                      <ActionButton onClick={() => handleViewDetails(category)}>
+                      <ActionButton onClick={() => handleViewDetails(labTest)}>
                         View
+                      </ActionButton>
+                      <ActionButton onClick={() => handleEdit(labTest)} style={{ marginLeft: '4px', marginRight: '4px' }}>
+                        Edit
+                      </ActionButton>
+                      <ActionButton
+                        onClick={() => handleDelete(labTest)}
+                        style={{
+                          marginLeft: '4px',
+                          backgroundColor: '#dc3545',
+                          borderColor: '#dc3545',
+                          color: '#fff'
+                        }}
+                      >
+                        Delete
                       </ActionButton>
                     </Td>
                   </tr>
@@ -313,18 +378,18 @@ export const CategoryList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
 
         <PaginationContainer>
           <PageInfo>
-            Showing {categories.length} of {pagination.total} medicine categories
+            Showing {labTests.length} of {pagination.totalCount} lab tests
           </PageInfo>
           <div>
             <PaginationButton
-              disabled={loading || pagination.page === 1}
-              onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+              disabled={loading || !pagination.hasPreviousPage}
+              onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage - 1 }))}
             >
               Previous
             </PaginationButton>
             <PaginationButton
-              disabled={loading || pagination.page === pagination.totalPages}
-              onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+              disabled={loading || !pagination.hasNextPage}
+              onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage + 1 }))}
             >
               Next
             </PaginationButton>
@@ -332,29 +397,29 @@ export const CategoryList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
         </PaginationContainer>
       </TableContainer>
 
-      {showModal && selectedCategory && (
+      {showModal && selectedLabTest && (
         <ModalOverlay onClick={closeModal}>
           <ModalContent onClick={(e: React.MouseEvent) => e.stopPropagation()}>
             <ModalHeader>
-              <ModalTitle>Medicine Category Details</ModalTitle>
+              <ModalTitle>Lab Test Details</ModalTitle>
               <CloseButton onClick={closeModal}>&times;</CloseButton>
             </ModalHeader>
 
             <DetailRow>
               <DetailLabel>Name:</DetailLabel>
-              <DetailValue>{selectedCategory.name}</DetailValue>
+              <DetailValue>{selectedLabTest.name}</DetailValue>
             </DetailRow>
 
             <DetailRow>
               <DetailLabel>Description:</DetailLabel>
-              <DetailValue>{selectedCategory.description}</DetailValue>
+              <DetailValue>{selectedLabTest.description}</DetailValue>
             </DetailRow>
 
             <DetailRow>
               <DetailLabel>Status:</DetailLabel>
               <DetailValue>
-                <StatusBadge status={selectedCategory.status}>
-                  {selectedCategory.status}
+                <StatusBadge status={selectedLabTest.isActive}>
+                  {selectedLabTest.isActive ? 'Active' : 'Inactive'}
                 </StatusBadge>
               </DetailValue>
             </DetailRow>
@@ -362,19 +427,34 @@ export const CategoryList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
             <DetailRow>
               <DetailLabel>Created:</DetailLabel>
               <DetailValue>
-                {selectedCategory.createdAt && new Date(selectedCategory.createdAt).toLocaleDateString()}
+                {selectedLabTest.createdAt && new Date(selectedLabTest.createdAt).toLocaleDateString()}
               </DetailValue>
             </DetailRow>
 
             <DetailRow>
               <DetailLabel>Last Updated:</DetailLabel>
               <DetailValue>
-                {selectedCategory.updatedAt && new Date(selectedCategory.updatedAt).toLocaleDateString()}
+                {selectedLabTest.updatedAt && new Date(selectedLabTest.updatedAt).toLocaleDateString()}
               </DetailValue>
             </DetailRow>
           </ModalContent>
         </ModalOverlay>
       )}
+
+      <EditLabTestModal
+        open={showEditModal}
+        labTest={editingLabTest}
+        categories={categories}
+        onClose={closeEditModal}
+        onUpdated={handleLabTestUpdated}
+      />
+
+      <DeleteConfirmDialog
+        open={showDeleteDialog}
+        labTest={deletingLabTest}
+        onClose={closeDeleteDialog}
+        onDeleted={handleLabTestDeleted}
+      />
     </div>
   );
 };
