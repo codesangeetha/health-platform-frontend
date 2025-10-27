@@ -215,13 +215,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     setAuthState(defaultAuthState);
 
-    console.log('🗂️ [AUTH_CONTEXT] Clearing browser history...');
-    // Clear browser history to prevent back button from showing authenticated pages
-    // Use replaceState to clear the current history entry and redirect to home
-    if (typeof window !== 'undefined') {
-      window.history.replaceState(null, '', '/');
-      console.log('✅ [AUTH_CONTEXT] Browser history cleared');
-    }
+    console.log('🗂️ [AUTH_CONTEXT] Redirecting to home page...');
+    // Use window.location.href for hard navigation to avoid aborting pending requests
+    window.location.href = '/';
 
     console.log('🎉 [AUTH_CONTEXT] Logout process completed');
   };
