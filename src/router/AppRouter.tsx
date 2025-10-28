@@ -26,6 +26,7 @@ import { ResetPassword } from '../features/auth/ResetPassword';
 import GoogleCallback from '../features/auth/GoogleCallback';
 import { LandingPage } from '../pages/LandingPage';
 import { PatientDashboard } from '../features/patient/dashboard/PatientDashboard';
+import VideoCall from '../components/VideoCall/VideoCall';
 import { PatientProfileEdit } from '../features/patient/profile/PatientProfileEdit';
 import { DoctorDashboard } from '../features/doctor/dashboard/DoctorDashboard';
 import { PatientLayout } from '../components/layout/PatientLayout';
@@ -128,6 +129,10 @@ const router = createBrowserRouter([
             path: 'dashboard',
             element: <PatientDashboard />,
           },
+              {
+                path: 'video-call',
+                element: <VideoCall />,
+              },
           {
             path: 'doctor-directory',
             element: <DoctorDirectory />,
@@ -173,6 +178,10 @@ const router = createBrowserRouter([
           {
             path: 'dashboard',
             element: <DoctorDashboard />,
+          },
+          {
+            path: 'video-call',
+            element: <VideoCall />,
           },
           {
             path: 'appointments',

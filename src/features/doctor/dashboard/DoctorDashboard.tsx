@@ -306,6 +306,14 @@ export const DoctorDashboard = () => {
               >
                 Messages
               </button>
+              <button
+                type="button"
+                className="dd-button"
+                onClick={() => navigate('/doctor/video-call')}
+                aria-label="Start video call"
+              >
+                Video Call
+              </button>
             </div>
           </div>
 
