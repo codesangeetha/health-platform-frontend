@@ -1,0 +1,20 @@
+{
+  "routes": [
+    { "src": "/admin/login", "dest": "/index.html" },
+    { "src": "/patient/login", "dest": "/index.html" },
+    { "src": "/doctor/login", "dest": "/index.html" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ],
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ]
+}
