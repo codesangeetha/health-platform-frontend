@@ -50,11 +50,20 @@ export const VideoCall: React.FC = () => {
       try {
         const from: string = payload.from;
         console.log('received offer from', from);
-        const pc = await ensurePeerConnection(from);
-        await pc.setRemoteDescription(new RTCSessionDescription(payload.offer));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        socket.emit('answer', { answer, target: from, from: socketId });
+        // If we already have a local offer for this peer, there could be a glare.
+        // In that case, prefer the deterministic rule: the lower lexicographic id acts as offerer.
+        if (socketId && socketId > from) {
+          // We are the "polite" side in this pair and should accept their offer.
+          const pc = await ensurePeerConnection(from);
+          await pc.setRemoteDescription(new RTCSessionDescription(payload.offer));
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          socket.emit('answer', { answer, target: from, from: socketId });
+        } else {
+          // We expected to be the offerer for this pair, but received an offer; this is a glare.
+          // Ignore it to avoid conflicting signaling state. Log for debugging.
+          console.warn('Received unexpected offer from', from, '— ignoring to avoid glare');
+        }
       } catch (err) {
         console.error('handle offer error', err);
       }
@@ -137,6 +146,17 @@ export const VideoCall: React.FC = () => {
   const createOfferForUser = async (peerId: string) => {
     try {
       if (!socket) return;
+      // Avoid glare: use a deterministic rule so only one side creates the offer for a pair.
+      // If our socketId is lexicographically greater than peerId, skip creating an offer
+      // and wait for their offer instead.
+      if (!socketId) {
+        console.log('no socketId yet, skipping offer to', peerId);
+        return;
+      }
+      if (socketId > peerId) {
+        console.log('Skipping createOffer to', peerId, 'to avoid glare (socketId > peerId)');
+        return;
+      }
       const pc = await ensurePeerConnection(peerId);
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
