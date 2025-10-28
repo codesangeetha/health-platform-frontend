@@ -5,15 +5,21 @@ import './video-call.styles.css';
 
 export const VideoCall: React.FC = () => {
   const [socket, setSocket] = useState<any>(null);
+  const [socketId, setSocketId] = useState<string | null>(null);
   const [roomId, setRoomId] = useState('');
   const [isInRoom, setIsInRoom] = useState(false);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
-  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
+  // map of peerId -> RTCPeerConnection
+  const peerConnectionsRef = useRef<Record<string, RTCPeerConnection>>({});
 
   useEffect(() => {
     const s = io(SOCKET_SERVER_URL);
-    s.on('connect', () => console.log('socket connected', s.id));
+    s.on('connect', () => {
+      console.log('socket connected', s.id);
+      setSocketId(s.id || null);
+    });
     setSocket(s);
     return () => {
       try {
@@ -24,14 +30,31 @@ export const VideoCall: React.FC = () => {
 
   useEffect(() => {
     if (!socket) return;
+
+    // When joining a room, server may emit existing users
+    socket.on('existing-users', async (users: string[]) => {
+      console.log('existing-users', users);
+      // create an offer for each existing user
+      for (const userId of users) {
+        await createOfferForUser(userId);
+      }
+    });
+
+    socket.on('user-joined', async ({ userId }: { userId: string }) => {
+      console.log('user-joined', userId);
+      // When a new user joins, create an offer for them
+      await createOfferForUser(userId);
+    });
+
     socket.on('offer', async (payload: any) => {
       try {
-        const pc = peerConnectionRef.current;
-        if (!pc) return;
+        const from: string = payload.from;
+        console.log('received offer from', from);
+        const pc = await ensurePeerConnection(from);
         await pc.setRemoteDescription(new RTCSessionDescription(payload.offer));
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
-        socket.emit('answer', { answer, target: payload.from });
+        socket.emit('answer', { answer, target: from, from: socketId });
       } catch (err) {
         console.error('handle offer error', err);
       }
@@ -39,7 +62,9 @@ export const VideoCall: React.FC = () => {
 
     socket.on('answer', async (payload: any) => {
       try {
-        const pc = peerConnectionRef.current;
+        const from: string = payload.from;
+        console.log('received answer from', from);
+        const pc = peerConnectionsRef.current[from];
         if (!pc) return;
         await pc.setRemoteDescription(new RTCSessionDescription(payload.answer));
       } catch (err) {
@@ -49,7 +74,8 @@ export const VideoCall: React.FC = () => {
 
     socket.on('ice-candidate', (payload: any) => {
       try {
-        const pc = peerConnectionRef.current;
+        const from: string = payload.from;
+        const pc = peerConnectionsRef.current[from];
         if (pc && payload?.candidate) {
           pc.addIceCandidate(new RTCIceCandidate(payload.candidate)).catch(console.error);
         }
@@ -58,48 +84,97 @@ export const VideoCall: React.FC = () => {
       }
     });
 
+    socket.on('user-left', ({ userId }: { userId: string }) => {
+      console.log('user-left', userId);
+      const pc = peerConnectionsRef.current[userId];
+      if (pc) {
+        try { pc.close(); } catch (e) {}
+        delete peerConnectionsRef.current[userId];
+      }
+      if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
+    });
+
     return () => {
       socket.off('offer');
       socket.off('answer');
       socket.off('ice-candidate');
+      socket.off('existing-users');
+      socket.off('user-joined');
+      socket.off('user-left');
     };
   }, [socket]);
 
-  const startMedia = async () => {
-    if (!navigator.mediaDevices?.getUserMedia) {
-      alert('getUserMedia not supported in this browser');
-      return null;
-    }
+  // Ensure a peer connection exists for a remote user
+  const ensurePeerConnection = async (peerId: string) => {
+    let pc = peerConnectionsRef.current[peerId];
+    if (pc) return pc;
 
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    if (localVideoRef.current) {
-      localVideoRef.current.srcObject = stream;
-      localVideoRef.current.muted = true;
-      localVideoRef.current.play().catch(() => {});
-    }
-    return stream;
-  };
-
-  const createPeerConnection = () => {
-    const pc = new RTCPeerConnection({
-      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-    });
+    pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
 
     pc.onicecandidate = (e) => {
       if (e.candidate && socket) {
-        socket.emit('ice-candidate', { candidate: e.candidate });
+        socket.emit('ice-candidate', { candidate: e.candidate, target: peerId, from: socketId });
       }
     };
 
     pc.ontrack = (ev) => {
+      console.log('pc.ontrack from', peerId, ev.streams[0]);
       if (remoteVideoRef.current) {
         remoteVideoRef.current.srcObject = ev.streams[0];
         remoteVideoRef.current.play().catch(() => {});
       }
     };
 
+    // Add local tracks if available
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((t) => pc!.addTrack(t, localStreamRef.current!));
+    }
+
+    peerConnectionsRef.current[peerId] = pc;
     return pc;
   };
+
+  const createOfferForUser = async (peerId: string) => {
+    try {
+      if (!socket) return;
+      const pc = await ensurePeerConnection(peerId);
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      console.log('sending offer to', peerId);
+      socket.emit('offer', { offer, target: peerId, from: socketId });
+    } catch (err) {
+      console.error('createOfferForUser error', err);
+    }
+  };
+
+  const startMedia = async () => {
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        alert('getUserMedia not supported in this browser');
+        return null;
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+        localVideoRef.current.muted = true;
+        localVideoRef.current.play().catch(() => {});
+      }
+      return stream;
+    } catch (err: any) {
+      console.error('Error accessing camera/microphone', err);
+      if (err?.name === 'NotAllowedError') {
+        alert('Camera/microphone access denied. Please allow permissions and try again.');
+      } else if (err?.name === 'NotReadableError') {
+        alert('Could not access camera/microphone. It may be in use by another application.');
+      } else {
+        alert('Error accessing camera/microphone: ' + (err?.message || err));
+      }
+      return null;
+    }
+  };
+
+  // (createPeerConnection removed) We now create per-peer connections via ensurePeerConnection
 
   const joinRoom = async () => {
     if (!roomId.trim()) {
@@ -107,33 +182,34 @@ export const VideoCall: React.FC = () => {
       return;
     }
 
-    const stream = await startMedia();
-    if (!stream || !socket) return;
+  const stream = await startMedia();
+  if (!stream || !socket) return;
 
-    const pc = createPeerConnection();
-    peerConnectionRef.current = pc;
+  // Save local stream for future peer connections
+  localStreamRef.current = stream;
 
-    stream.getTracks().forEach((t) => pc.addTrack(t, stream));
-
-    // create offer
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    socket.emit('join-room', roomId);
-    socket.emit('offer', { offer, roomId });
-    setIsInRoom(true);
+  // Notify server that we joined; server should emit 'existing-users' with other peer ids
+  socket.emit('join-room', roomId);
+  setIsInRoom(true);
   };
 
   const leaveRoom = () => {
     try {
-      peerConnectionRef.current?.close();
-      peerConnectionRef.current = null;
+      // Close all peer connections
+      Object.values(peerConnectionsRef.current).forEach((pc) => {
+        try { pc.close(); } catch (e) {}
+      });
+      peerConnectionsRef.current = {};
       setIsInRoom(false);
-      if (localVideoRef.current && localVideoRef.current.srcObject) {
-        const tracks = (localVideoRef.current.srcObject as MediaStream).getTracks();
-        tracks.forEach((t) => t.stop());
-        localVideoRef.current.srcObject = null;
+
+      // Stop and clear local stream
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach((t) => t.stop());
+        localStreamRef.current = null;
       }
+      if (localVideoRef.current) localVideoRef.current.srcObject = null;
       if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
+
       if (socket) socket.emit('leave-room', roomId);
     } catch (e) {
       console.error(e);
