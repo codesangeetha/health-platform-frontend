@@ -11,6 +11,7 @@ export const API_ENDPOINTS = {
   },
 } as const;
 
+
 // Socket server URL used by the video call component. Override with Vite env VITE_SOCKET_URL.
 export const SOCKET_SERVER_URL =
   (import.meta as any)?.env?.VITE_SOCKET_URL || 'https://health-platform-backend-production.up.railway.app';
