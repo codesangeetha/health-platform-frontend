@@ -333,7 +333,7 @@ export class AuthService {
 
       console.log('🔄 [LOGOUT] Using logout endpoint:', logoutEndpoint);
       console.log('🔄 [LOGOUT] Full URL:', fullUrl);
-
+/* 
       // Test backend connectivity first
       console.log('🔄 [LOGOUT] Testing backend connectivity...');
       try {
@@ -345,7 +345,7 @@ export class AuthService {
       } catch (testError) {
         console.warn('⚠️ [LOGOUT] Backend connectivity test failed:', testError);
         console.warn('⚠️ [LOGOUT] This suggests the backend server might not be running');
-      }
+      } */
 
       const requestOptions: RequestInit = {
         method: 'POST',

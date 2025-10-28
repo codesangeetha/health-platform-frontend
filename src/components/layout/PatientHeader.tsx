@@ -14,7 +14,6 @@ export const PatientHeader = () => {
 
   const handleLogout = () => {
     logout();
-    window.location.href = '/patient/login';
   };
 
   // Get current path to determine active link

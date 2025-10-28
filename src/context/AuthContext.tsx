@@ -217,7 +217,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     console.log('🗂️ [AUTH_CONTEXT] Redirecting to home page...');
     // Use window.location.href for hard navigation to avoid aborting pending requests
-    window.location.href = '/';
+    //window.location.href = '/';
 
     console.log('🎉 [AUTH_CONTEXT] Logout process completed');
   };
