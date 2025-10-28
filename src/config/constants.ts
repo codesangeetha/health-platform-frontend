@@ -3,7 +3,7 @@ export const BASE_URL =
   (import.meta as any)?.env?.VITE_API_URL ||
   (import.meta as any)?.env?.REACT_APP_API_URL ||
   ((typeof process !== 'undefined' ? (process as any)?.env?.REACT_APP_API_URL : undefined)) ||
-  'https://health-platform-backend-fq3w.onrender.com';
+  'https://health-platform-backend-production.up.railway.app';
 
 export const API_ENDPOINTS = {
   ADMIN: {
