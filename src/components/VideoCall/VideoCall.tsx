@@ -29,19 +29,43 @@ export const VideoCall: React.FC = () => {
   }, [remoteStreams]);
 
   useEffect(() => {
+    console.log('Initializing socket connection...');
     const s = io(SOCKET_SERVER_URL);
+    
     s.on('connect', () => {
-      console.log('socket connected', s.id);
-      setSocketId(s.id || null);
+      console.log('Socket connected with ID:', s.id);
+      if (!s.id) {
+        console.error('Socket connected but no ID assigned!');
+        return;
+      }
+      setSocketId(s.id);
+      setSocket(s);
     });
-    setSocket(s);
+
+    s.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
+    });
+
+    s.on('disconnect', (reason) => {
+      console.log('Socket disconnected:', reason);
+      setSocketId(null);
+    });
+
     return () => {
+      console.log('Cleaning up socket and peer connections...');
       try {
-        Object.values(peerConnectionsRef.current).forEach(pc => {
-          try { pc.close(); } catch (e) {}
+        Object.entries(peerConnectionsRef.current).forEach(([peerId, pc]) => {
+          console.log('Closing peer connection for:', peerId);
+          try { 
+            pc.close(); 
+          } catch (e) {
+            console.error('Error closing peer connection:', e);
+          }
         });
         s.disconnect();
-      } catch (e) {}
+      } catch (e) {
+        console.error('Error in cleanup:', e);
+      }
     };
   }, []);
 
@@ -51,6 +75,16 @@ export const VideoCall: React.FC = () => {
     // When joining a room, server may emit existing users
     socket.on('existing-users', async (users: string[]) => {
       console.log('existing-users', users);
+      if (!socketId) {
+        console.log('Waiting for socketId before processing existing users');
+        setTimeout(async () => {
+          console.log('Processing delayed existing users with socketId:', socketId);
+          for (const userId of users) {
+            await createOfferForUser(userId);
+          }
+        }, 1000);
+        return;
+      }
       // create an offer for each existing user
       for (const userId of users) {
         await createOfferForUser(userId);
@@ -59,6 +93,14 @@ export const VideoCall: React.FC = () => {
 
     socket.on('user-joined', async ({ userId }: { userId: string }) => {
       console.log('user-joined', userId);
+      if (!socketId) {
+        console.log('Waiting for socketId before processing new user');
+        setTimeout(async () => {
+          console.log('Processing delayed new user with socketId:', socketId);
+          await createOfferForUser(userId);
+        }, 1000);
+        return;
+      }
       // When a new user joins, create an offer for them
       await createOfferForUser(userId);
     });
@@ -168,25 +210,49 @@ export const VideoCall: React.FC = () => {
 
   const createOfferForUser = async (peerId: string) => {
     try {
-      if (!socket) return;
-      // Avoid glare: use a deterministic rule so only one side creates the offer for a pair.
-      // If our socketId is lexicographically greater than peerId, skip creating an offer
-      // and wait for their offer instead.
+      if (!socket) {
+        console.error('Cannot create offer: socket not initialized');
+        return;
+      }
+      
       if (!socketId) {
-        console.log('no socketId yet, skipping offer to', peerId);
+        console.error('Cannot create offer: socketId not available');
         return;
       }
+
+      // Avoid glare: use a deterministic rule so only one side creates the offer for a pair.
       if (socketId > peerId) {
-        console.log('Skipping createOffer to', peerId, 'to avoid glare (socketId > peerId)');
+        console.log(`Skipping createOffer: our ID (${socketId}) > peer ID (${peerId})`);
         return;
       }
+
+      console.log(`Creating offer: our ID (${socketId}) < peer ID (${peerId})`);
+      
+      if (!localStreamRef.current) {
+        console.log('Getting local media stream...');
+        localStreamRef.current = await startMedia();
+      }
+
       const pc = await ensurePeerConnection(peerId);
-      const offer = await pc.createOffer();
+      console.log('Created/retrieved peer connection for:', peerId);
+
+      const offer = await pc.createOffer({
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: true
+      });
+      
       await pc.setLocalDescription(offer);
-      console.log('sending offer to', peerId);
-      socket.emit('offer', { offer, target: peerId, from: socketId });
+      console.log('Local description set, sending offer to:', peerId);
+      
+      socket.emit('offer', { 
+        offer, 
+        target: peerId, 
+        from: socketId 
+      });
+      
+      console.log('Offer sent to peer:', peerId);
     } catch (err) {
-      console.error('createOfferForUser error', err);
+      console.error('Error in createOfferForUser:', err);
     }
   };
 
