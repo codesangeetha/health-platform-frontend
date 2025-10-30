@@ -13,6 +13,7 @@ export const PatientVideoCallView: React.FC = () => {
   const [socketId, setSocketId] = useState<string | null>(null);
   const [roomId] = useState(appointmentId || '');
   const [isInRoom, setIsInRoom] = useState(false);
+  const [doctorLeft, setDoctorLeft] = useState(false);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
@@ -170,6 +171,15 @@ export const PatientVideoCallView: React.FC = () => {
         delete newStreams[userId];
         return newStreams;
       });
+      
+      // If doctor left the call, automatically end the patient's call and navigate to appointments
+      console.log('Doctor left the call');
+      setDoctorLeft(true);
+      
+      // Auto-navigate after showing the disconnection effect
+      setTimeout(() => {
+        leaveRoom();
+      }, 2000); // Give 2 seconds to show the disconnection effect
     });
 
     return () => {
@@ -347,8 +357,13 @@ export const PatientVideoCallView: React.FC = () => {
             <h3>Video Consultation</h3>
             <p>Appointment ID: {appointmentId}</p>
             <p>Room ID: {roomId}</p>
+            {doctorLeft && (
+              <p style={{ color: '#EF4444', fontWeight: '600', marginTop: '0.5rem' }}>
+                🔴 Doctor has ended the consultation
+              </p>
+            )}
           </div>
-          {isInRoom && (
+          {isInRoom && !doctorLeft && (
             <button onClick={leaveRoom} className="patient-leave-call-btn">
               End Call & Return
             </button>
@@ -357,25 +372,46 @@ export const PatientVideoCallView: React.FC = () => {
 
         <div className="patient-video-grid">
           <div className="patient-video-container">
-            <video 
-              id="localVideo" 
-              ref={localVideoRef} 
-              playsInline 
-              autoPlay 
-              muted 
+            <video
+              id="localVideo"
+              ref={localVideoRef}
+              playsInline
+              autoPlay
+              muted
               className="patient-video-element"
             />
             <div className="patient-video-label">You (Patient)</div>
           </div>
           <div className="patient-video-container">
-            <video 
-              id="remoteVideo" 
-              ref={remoteVideoRef} 
-              playsInline 
-              autoPlay 
-              className="patient-video-element"
-            />
-            <div className="patient-video-label">Doctor</div>
+            {doctorLeft ? (
+              <div style={{
+                width: '100%',
+                height: '400px',
+                background: '#1F2937',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📞</div>
+                <h3>Consultation Ended</h3>
+                <p style={{ opacity: 0.8 }}>The doctor has ended the video call</p>
+                <p style={{ opacity: 0.6, fontSize: '0.875rem' }}>Redirecting to your appointments...</p>
+              </div>
+            ) : (
+              <>
+                <video
+                  id="remoteVideo"
+                  ref={remoteVideoRef}
+                  playsInline
+                  autoPlay
+                  className="patient-video-element"
+                />
+                <div className="patient-video-label">Doctor</div>
+              </>
+            )}
           </div>
         </div>
       </div>
