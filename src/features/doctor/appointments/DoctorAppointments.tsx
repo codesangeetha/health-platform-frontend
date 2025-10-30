@@ -122,8 +122,19 @@ export const DoctorAppointments = () => {
       return; // Don't show button for cancelled or completed appointments
     }
 
-    // Navigate to prescription creation page
+    // For video appointments, navigate to video call
+    if (appointment.appointmentType === 'video') {
+      navigate(`/doctor/video-call/${appointment.appointmentId}`);
+      return;
+    }
+
+    // For in-person appointments, navigate to prescription creation page
     navigate(`/doctor/prescription/${appointment.appointmentId}`);
+  };
+
+  const handleVideoCall = (appointment: DoctorAppointment) => {
+    // Navigate to video call page with appointment ID
+    navigate(`/doctor/video-call/${appointment.appointmentId}`);
   };
 
   const getStatusColor = (status: string) => {
@@ -368,30 +379,60 @@ export const DoctorAppointments = () => {
                           {/* Actions */}
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                             {appointment.status !== 'cancelled' && appointment.status !== 'completed' && (
-                              <button
-                                onClick={() => handleMarkAsComplete(appointment)}
-                                style={{
-                                  padding: '0.5rem 1rem',
-                                  backgroundColor: DESIGN_SYSTEM.colors.status_confirmed,
-                                  color: '#065F46',
-                                  border: `1px solid ${DESIGN_SYSTEM.colors.status_confirmed}40`,
-                                  borderRadius: '0.5rem',
-                                  fontSize: DESIGN_SYSTEM.typography.body.fontSize,
-                                  fontWeight: '500',
-                                  cursor: 'pointer',
-                                  transition: 'all 0.2s'
-                                }}
-                                onMouseOver={(e) => {
-                                  e.currentTarget.style.backgroundColor = '#D1FAE5';
-                                  e.currentTarget.style.color = '#065F46';
-                                }}
-                                onMouseOut={(e) => {
-                                  e.currentTarget.style.backgroundColor = DESIGN_SYSTEM.colors.status_confirmed;
-                                  e.currentTarget.style.color = '#065F46';
-                                }}
-                              >
-                                Create Prescription
-                              </button>
+                              <>
+                                {appointment.appointmentType === 'video' ? (
+                                  <button
+                                    onClick={() => handleVideoCall(appointment)}
+                                    style={{
+                                      padding: '0.5rem 1rem',
+                                      backgroundColor: '#3B82F6',
+                                      color: 'white',
+                                      border: 'none',
+                                      borderRadius: '0.5rem',
+                                      fontSize: DESIGN_SYSTEM.typography.body.fontSize,
+                                      fontWeight: '500',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '0.5rem'
+                                    }}
+                                    onMouseOver={(e) => {
+                                      e.currentTarget.style.backgroundColor = '#2563EB';
+                                    }}
+                                    onMouseOut={(e) => {
+                                      e.currentTarget.style.backgroundColor = '#3B82F6';
+                                    }}
+                                  >
+                                    📹 Start Video Call
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => handleMarkAsComplete(appointment)}
+                                    style={{
+                                      padding: '0.5rem 1rem',
+                                      backgroundColor: DESIGN_SYSTEM.colors.status_confirmed,
+                                      color: '#065F46',
+                                      border: `1px solid ${DESIGN_SYSTEM.colors.status_confirmed}40`,
+                                      borderRadius: '0.5rem',
+                                      fontSize: DESIGN_SYSTEM.typography.body.fontSize,
+                                      fontWeight: '500',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s'
+                                    }}
+                                    onMouseOver={(e) => {
+                                      e.currentTarget.style.backgroundColor = '#D1FAE5';
+                                      e.currentTarget.style.color = '#065F46';
+                                    }}
+                                    onMouseOut={(e) => {
+                                      e.currentTarget.style.backgroundColor = DESIGN_SYSTEM.colors.status_confirmed;
+                                      e.currentTarget.style.color = '#065F46';
+                                    }}
+                                  >
+                                    Create Prescription
+                                  </button>
+                                )}
+                              </>
                             )}
                             <div style={{
                               fontSize: DESIGN_SYSTEM.typography.subtext.fontSize,

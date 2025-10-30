@@ -1,13 +1,18 @@
 import { useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../context/AuthContext';
 import '../../../styles/components/patient-dashboard.styles.css';
-
 export const PatientDashboard = () => {
   const { authState } = useContext(AuthContext);
+  const navigate = useNavigate();
   const displayName = authState.user?.email?.split('@')[0] || 'Patient';
+  
 
   return (
     <>
+        <div style={{ marginBottom: 16 }}>
+          <h3>Welcome, {displayName}</h3>
+        </div>
 
         {/* Main grid */}
         <section className="pd-grid">
@@ -86,6 +91,10 @@ export const PatientDashboard = () => {
                 <button className="pd-btn pd-btn-outlined">
                   <span className="pd-btn-icon" style={{ background: 'var(--color-tertiary-gray)' }}>🔎</span>
                   Find Doctor
+                </button>
+                <button className="pd-btn pd-btn-outlined" onClick={() => navigate('/patient/video-call')}>
+                  <span className="pd-btn-icon" style={{ background: 'var(--color-tertiary-gray)' }}>📹</span>
+                  Video Call
                 </button>
                 <button className="pd-btn pd-btn-outlined">
                   <span className="pd-btn-icon" style={{ background: 'var(--color-tertiary-gray)' }}>📋</span>

@@ -26,6 +26,7 @@ import { ResetPassword } from '../features/auth/ResetPassword';
 import GoogleCallback from '../features/auth/GoogleCallback';
 import { LandingPage } from '../pages/LandingPage';
 import { PatientDashboard } from '../features/patient/dashboard/PatientDashboard';
+import VideoCall from '../components/VideoCall/VideoCall';
 import { PatientProfileEdit } from '../features/patient/profile/PatientProfileEdit';
 import { DoctorDashboard } from '../features/doctor/dashboard/DoctorDashboard';
 import { PatientLayout } from '../components/layout/PatientLayout';
@@ -33,6 +34,8 @@ import { DoctorAppointments } from '../features/doctor/appointments/DoctorAppoin
 import { DoctorProfile } from '../features/doctor/profile/DoctorProfile';
 import { DoctorProfileEdit } from '../features/doctor/profile/DoctorProfileEdit';
 import { CreatePrescription } from '../features/doctor/prescription/CreatePrescription';
+import { DoctorVideoCallView } from '../features/doctor/video-call/DoctorVideoCallView';
+import { PatientVideoCallView } from '../features/patient/video-call/PatientVideoCallView';
 
 // Component to combine ProtectedRoute with PatientLayout
 const ProtectedPatientLayout = () => {
@@ -128,10 +131,18 @@ const router = createBrowserRouter([
             path: 'dashboard',
             element: <PatientDashboard />,
           },
-          {
-            path: 'doctor-directory',
-            element: <DoctorDirectory />,
-          },
+              {
+                path: 'video-call',
+                element: <VideoCall />,
+              },
+              {
+                path: 'video-call/:appointmentId',
+                element: <PatientVideoCallView />,
+              },
+              {
+                path: 'doctor-directory',
+                element: <DoctorDirectory />,
+              },
           {
             path: 'doctor/:doctorId/book-appointment',
             element: <BookAppointment />,
@@ -175,8 +186,16 @@ const router = createBrowserRouter([
             element: <DoctorDashboard />,
           },
           {
+            path: 'video-call',
+            element: <VideoCall />,
+          },
+          {
             path: 'appointments',
             element: <DoctorAppointments />,
+          },
+          {
+            path: 'video-call/:appointmentId',
+            element: <DoctorVideoCallView />,
           },
           {
             path: 'prescription/:appointmentId',
