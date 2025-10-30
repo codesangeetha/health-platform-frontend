@@ -13,6 +13,20 @@ export const VideoCall: React.FC = () => {
   const localStreamRef = useRef<MediaStream | null>(null);
   // map of peerId -> RTCPeerConnection
   const peerConnectionsRef = useRef<Record<string, RTCPeerConnection>>({});
+  const [remoteStreams, setRemoteStreams] = useState<Record<string, MediaStream>>({});
+
+  // Effect to handle remote video streams
+  useEffect(() => {
+    Object.entries(remoteStreams).forEach(([peerId, stream]) => {
+      if (remoteVideoRef.current && stream) {
+        console.log('Setting remote stream to video element for peer:', peerId);
+        remoteVideoRef.current.srcObject = stream;
+        remoteVideoRef.current.play().catch(e => {
+          console.error('Error playing remote video:', e);
+        });
+      }
+    });
+  }, [remoteStreams]);
 
   useEffect(() => {
     const s = io(SOCKET_SERVER_URL);
@@ -23,6 +37,9 @@ export const VideoCall: React.FC = () => {
     setSocket(s);
     return () => {
       try {
+        Object.values(peerConnectionsRef.current).forEach(pc => {
+          try { pc.close(); } catch (e) {}
+        });
         s.disconnect();
       } catch (e) {}
     };
@@ -100,7 +117,11 @@ export const VideoCall: React.FC = () => {
         try { pc.close(); } catch (e) {}
         delete peerConnectionsRef.current[userId];
       }
-      if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
+      setRemoteStreams(prev => {
+        const newStreams = { ...prev };
+        delete newStreams[userId];
+        return newStreams;
+      });
     });
 
     return () => {
@@ -128,9 +149,11 @@ export const VideoCall: React.FC = () => {
 
     pc.ontrack = (ev) => {
       console.log('pc.ontrack from', peerId, ev.streams[0]);
-      if (remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = ev.streams[0];
-        remoteVideoRef.current.play().catch(() => {});
+      if (ev.streams && ev.streams[0]) {
+        setRemoteStreams(prev => ({
+          ...prev,
+          [peerId]: ev.streams[0]
+        }));
       }
     };
 
