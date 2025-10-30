@@ -588,6 +588,33 @@ export const MyAppointments = () => {
 
                       {/* Actions */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {appointment.isVideoCall && (appointment.status === 'pending' || appointment.status === 'confirmed') && (
+                          <button
+                            onClick={() => navigate(`/patient/video-call/${appointment.id}`)}
+                            style={{
+                              padding: '0.5rem 1rem',
+                              backgroundColor: '#10B981',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '0.5rem',
+                              fontSize: DESIGN_SYSTEM.typography.body.fontSize,
+                              fontWeight: '500',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.5rem'
+                            }}
+                            onMouseOver={(e) => {
+                              e.currentTarget.style.backgroundColor = '#059669';
+                            }}
+                            onMouseOut={(e) => {
+                              e.currentTarget.style.backgroundColor = '#10B981';
+                            }}
+                          >
+                            📹 Join Video Call
+                          </button>
+                        )}
                         {appointment.status === 'pending' && (
                           <>
                             <button
