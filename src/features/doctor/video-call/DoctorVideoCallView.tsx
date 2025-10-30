@@ -325,8 +325,8 @@ export const DoctorVideoCallView: React.FC = () => {
 
       if (socket) socket.emit('leave-room', roomId);
       
-      // Navigate back to appointments
-      navigate('/doctor/appointments');
+      // Navigate to prescription creation page to complete the appointment
+      navigate(`/doctor/prescription/${appointmentId}`);
     } catch (e) {
       console.error(e);
     }
@@ -353,7 +353,7 @@ export const DoctorVideoCallView: React.FC = () => {
           </div>
           {isInRoom && (
             <button onClick={leaveRoom} className="leave-call-btn">
-              End Call & Return
+              End Call & Create Prescription
             </button>
           )}
         </div>
