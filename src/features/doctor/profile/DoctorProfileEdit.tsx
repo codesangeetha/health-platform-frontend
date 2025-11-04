@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../context/AuthContext';
 import { AuthService } from '../../../services/auth/auth.service';
 import { DoctorLayout } from '../../../components/layout/DoctorLayout';
+import { BASE_URL } from '@/config/constants';
 import '../../../styles/components/patient-dashboard.styles.css';
 
 interface DoctorProfileData {
@@ -154,7 +155,7 @@ export const DoctorProfileEdit = () => {
       setLoading(true);
       setError(null);
       try {
-        let res = await fetch('http://localhost:3000/api/v1/doctors/profile', {
+        let res = await fetch(`${BASE_URL}/api/v1/doctors/profile`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -163,7 +164,7 @@ export const DoctorProfileEdit = () => {
         });
 
         if (!res.ok && (res.status === 405 || res.status === 404)) {
-          res = await fetch('http://localhost:3000/api/v1/doctors/profile', {
+          res = await fetch(`${BASE_URL}/api/v1/doctors/profile`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -463,7 +464,7 @@ export const DoctorProfileEdit = () => {
         },
       };
 
-      const res = await fetch('http://localhost:3000/api/v1/doctors/profile', {
+      const res = await fetch(`${BASE_URL}/api/v1/doctors/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

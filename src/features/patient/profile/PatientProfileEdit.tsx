@@ -3,6 +3,7 @@ import { AuthContext } from '@/context/AuthContext';
 import { AuthService } from '@/services/auth/auth.service';
 import { Link, useNavigate } from 'react-router-dom';
 import { PatientLayout } from '@/components/layout/PatientLayout';
+import { BASE_URL } from '@/config/constants';
 import '@/styles/components/patient-dashboard.styles.css';
 
 interface EmergencyContactForm {
@@ -155,7 +156,7 @@ export const PatientProfileEdit = () => {
       setLoading(true);
       setError(null);
       try {
-        let res = await fetch('http://localhost:3000/api/v1/patients/profile', {
+        let res = await fetch(`${BASE_URL}/api/v1/patients/profile`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -163,7 +164,7 @@ export const PatientProfileEdit = () => {
           },
         });
         if (!res.ok && (res.status === 405 || res.status === 404)) {
-          res = await fetch('http://localhost:3000/api/v1/patients/profile', {
+          res = await fetch(`${BASE_URL}/api/v1/patients/profile`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -375,7 +376,7 @@ export const PatientProfileEdit = () => {
         },
       };
 
-      const res = await fetch('http://localhost:3000/api/v1/patients/profile', {
+      const res = await fetch(`${BASE_URL}/api/v1/patients/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

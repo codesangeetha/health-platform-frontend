@@ -1,3 +1,4 @@
+import { BASE_URL } from '../../config/constants';
 import type { PatientOrdersResponse, PatientOrdersRequest } from '../../types/order/order.types';
 
 // Dashboard data interface
@@ -46,7 +47,7 @@ interface AppointmentsResponse {
 }
 
 // Base URL for API
-const API_BASE_URL = 'http://localhost:3000/api/v1';
+const API_BASE_URL = `${BASE_URL}/api/v1`;
 
 // Generic API response type
 interface ApiResponse<T> {
@@ -86,7 +87,7 @@ export class PatientService {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`${API_BASE_URL}/patients/dashboard`, {
+      const response = await fetch(`${BASE_URL}/api/v1/patients/dashboard`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -121,7 +122,7 @@ export class PatientService {
       queryParams.append('page', page.toString());
       queryParams.append('limit', limit.toString());
 
-      const response = await fetch(`${API_BASE_URL}/appointments/patient?${queryParams.toString()}`, {
+      const response = await fetch(`${BASE_URL}/api/v1/appointments/patient?${queryParams.toString()}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -152,7 +153,7 @@ export class PatientService {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`${API_BASE_URL}/appointments/doctor/${doctorId}`, {
+      const response = await fetch(`${BASE_URL}/api/v1/appointments/doctor/${doctorId}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -191,7 +192,7 @@ export class PatientService {
       if (params.startDate) queryParams.append('startDate', params.startDate);
       if (params.endDate) queryParams.append('endDate', params.endDate);
 
-      const url = `${API_BASE_URL}/pharmacy/orders/patient${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      const url = `${BASE_URL}/api/v1/pharmacy/orders/patient${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
 
       const response = await fetch(url, {
         method: 'GET',
@@ -224,7 +225,7 @@ export class PatientService {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`${API_BASE_URL}/pharmacy/orders/${orderId}`, {
+      const response = await fetch(`${BASE_URL}/api/v1/pharmacy/orders/${orderId}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -255,7 +256,7 @@ export class PatientService {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`${API_BASE_URL}/pharmacy/orders/${orderId}/cancel`, {
+      const response = await fetch(`${BASE_URL}/api/v1/pharmacy/orders/${orderId}/cancel`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
