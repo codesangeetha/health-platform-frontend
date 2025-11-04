@@ -25,6 +25,10 @@ export interface PaginationInfo {
 interface GetCategoriesParams {
   page?: number;
   limit?: number;
+  name?: string;
+  description?: string;
+  status?: 'active' | 'inactive';
+  createdAt?: string;
 }
 
 interface ApiResponse<T> {
@@ -41,10 +45,14 @@ export type CategoriesResponse = ApiResponse<{
 
 export const getCategories = async (params: GetCategoriesParams = {}): Promise<CategoriesResponse> => {
   try {
-    const { page = 1, limit = 10 } = params;
+    const { page = 1, limit = 10, name, description, status, createdAt } = params;
     const queryParams = new URLSearchParams({
       page: page.toString(),
-      limit: limit.toString()
+      limit: limit.toString(),
+      ...(name && { name }),
+      ...(description && { description }),
+      ...(status && { status }),
+      ...(createdAt && { createdAt })
     });
 
     const token = getAuthToken();

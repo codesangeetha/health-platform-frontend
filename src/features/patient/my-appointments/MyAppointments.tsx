@@ -17,6 +17,7 @@ const DESIGN_SYSTEM = {
     status_confirmed: "#10B981",
     status_pending: "#F59E0B",
     status_cancelled: "#EF4444",
+    status_completed: "#E5E7EB",
     icon_cardiology: "#3B82F6",
     icon_dermatology: "#34D399",
     icon_neurology: "#8B5CF6"
@@ -254,7 +255,7 @@ export const MyAppointments = () => {
       case 'cancelled':
         return DESIGN_SYSTEM.colors.status_cancelled;
       case 'completed':
-        return DESIGN_SYSTEM.colors.text_light;
+        return DESIGN_SYSTEM.colors.status_completed;
       default:
         return DESIGN_SYSTEM.colors.text_light;
     }
@@ -531,9 +532,10 @@ export const MyAppointments = () => {
                               fontSize: DESIGN_SYSTEM.typography.status_text.fontSize, 
                               fontWeight: DESIGN_SYSTEM.typography.status_text.fontWeight,
                               backgroundColor: getStatusColor(appointment.status),
-                              color: appointment.status === 'confirmed' ? '#065F46' : 
-                                     appointment.status === 'pending' ? '#92400E' : 
-                                     appointment.status === 'cancelled' ? '#991B1B' : 
+                              color: appointment.status === 'confirmed' ? '#065F46' :
+                                     appointment.status === 'pending' ? '#92400E' :
+                                     appointment.status === 'cancelled' ? '#991B1B' :
+                                     appointment.status === 'completed' ? '#374151' :
                                      DESIGN_SYSTEM.colors.text_light
                             }}
                           >

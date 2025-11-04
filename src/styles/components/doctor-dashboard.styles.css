@@ -172,10 +172,11 @@
 /* Stat Cards (solid white) */
 .info-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: var(--ds-space-m);
   margin-bottom: var(--ds-space-l);
 }
+
 .info-card {
   background: var(--ds-surface);
   border-radius: var(--ds-radius);
@@ -185,17 +186,28 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+
+.info-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px 0 var(--ds-shadow-color);
+}
+
 .info-card .number {
   font-size: 2rem;
   font-weight: 600;
   color: var(--ds-text-dark);
+  margin-bottom: 4px;
 }
+
 .info-card .label {
   font-size: var(--ds-caption-size);
   font-weight: 400;
   color: var(--ds-text-muted);
+  line-height: 1.4;
 }
+
 .info-card .icon-wrap {
   width: var(--ds-icon-container-size);
   height: var(--ds-icon-container-size);
@@ -204,7 +216,13 @@
   display: grid;
   place-items: center;
   margin-bottom: var(--ds-space-s);
+  transition: background-color 0.2s ease;
 }
+
+.info-card:hover .icon-wrap {
+  background: rgba(74, 144, 226, 0.1);
+}
+
 .info-card .icon-wrap svg {
   width: var(--ds-icon-size);
   height: var(--ds-icon-size);

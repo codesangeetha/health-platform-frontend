@@ -5,6 +5,95 @@ import type { Category } from '../../../types/category/category.types';
 import { getCategories } from '../../../services/admin/pharmacy.service';
 import { ApiError } from '../../../services/auth/auth.service';
 
+interface CategoryFilters {
+  name: string;
+  description: string;
+  status: string;
+  createdAt: string;
+}
+
+const FilterContainer = styled.div`
+  background: #F8F9FA;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+`;
+
+const FilterGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+`;
+
+const FilterLabel = styled.label`
+  font-size: 14px;
+  font-weight: 500;
+  color: #333333;
+  margin-bottom: 4px;
+`;
+
+const FilterInput = styled.input`
+  padding: 8px 12px;
+  border: 1px solid #E0E0E0;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333333;
+
+  &:focus {
+    outline: none;
+    border-color: #4A90E2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+  }
+`;
+
+const FilterSelect = styled.select`
+  padding: 8px 12px;
+  border: 1px solid #E0E0E0;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333333;
+  background: #FFFFFF;
+
+  &:focus {
+    outline: none;
+    border-color: #4A90E2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+  }
+`;
+
+const FilterButton = styled.button`
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 22px;
+  height: 36px;
+  
+  &.primary {
+    background-color: #4A90E2;
+    color: #FFFFFF;
+    
+    &:hover {
+      background-color: #3a78c3;
+    }
+  }
+  
+  &.secondary {
+    background-color: #6C757D;
+    color: #FFFFFF;
+    
+    &:hover {
+      background-color: #5a6268;
+    }
+  }
+`;
+
 const TableContainer = styled.div`
   background: #FFFFFF;
   border-radius: 8px;
@@ -205,13 +294,23 @@ export const CategoryList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [filters, setFilters] = useState<CategoryFilters>({
+    name: '',
+    description: '',
+    status: '',
+    createdAt: ''
+  });
 
-  const fetchCategoriesList = useCallback(async (page: number = 1) => {
+  const fetchCategoriesList = useCallback(async (page: number = 1, currentFilters: CategoryFilters = filters) => {
     try {
       setLoading(true);
       const response = await getCategories({
         page,
-        limit: pagination.limit
+        limit: pagination.limit,
+        ...(currentFilters.name && { name: currentFilters.name }),
+        ...(currentFilters.description && { description: currentFilters.description }),
+        ...(currentFilters.status && { status: currentFilters.status as 'active' | 'inactive' }),
+        ...(currentFilters.createdAt && { createdAt: currentFilters.createdAt })
       });
 
       // Sort categories by creation date (newest first)
@@ -235,6 +334,27 @@ export const CategoryList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
       setLoading(false);
     }
   }, [pagination.limit]);
+
+  const handleFilterChange = (field: keyof CategoryFilters, value: string) => {
+    setFilters(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleApplyFilters = () => {
+    setPagination(prev => ({ ...prev, page: 1 }));
+    fetchCategoriesList(1, filters);
+  };
+
+  const handleClearFilters = () => {
+    const emptyFilters = {
+      name: '',
+      description: '',
+      status: '',
+      createdAt: ''
+    };
+    setFilters(emptyFilters);
+    setPagination(prev => ({ ...prev, page: 1 }));
+    fetchCategoriesList(1, emptyFilters);
+  };
 
   useEffect(() => {
     fetchCategoriesList(pagination.page);
@@ -260,6 +380,59 @@ export const CategoryList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
 
   return (
     <div>
+      <FilterContainer>
+        <FilterGroup>
+          <FilterLabel>Name</FilterLabel>
+          <FilterInput
+            type="text"
+            placeholder="Filter by name..."
+            value={filters.name}
+            onChange={(e) => handleFilterChange('name', e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleApplyFilters()}
+          />
+        </FilterGroup>
+
+        <FilterGroup>
+          <FilterLabel>Description</FilterLabel>
+          <FilterInput
+            type="text"
+            placeholder="Filter by description..."
+            value={filters.description}
+            onChange={(e) => handleFilterChange('description', e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleApplyFilters()}
+          />
+        </FilterGroup>
+
+        <FilterGroup>
+          <FilterLabel>Status</FilterLabel>
+          <FilterSelect
+            value={filters.status}
+            onChange={(e) => handleFilterChange('status', e.target.value)}
+          >
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </FilterSelect>
+        </FilterGroup>
+
+        <FilterGroup>
+          <FilterLabel>Created Date</FilterLabel>
+          <FilterInput
+            type="date"
+            value={filters.createdAt}
+            onChange={(e) => handleFilterChange('createdAt', e.target.value)}
+          />
+        </FilterGroup>
+
+        <FilterButton className="primary" onClick={handleApplyFilters}>
+          Apply Filters
+        </FilterButton>
+        
+        <FilterButton className="secondary" onClick={handleClearFilters}>
+          Clear Filters
+        </FilterButton>
+      </FilterContainer>
+
       <TableContainer>
         <ScrollContainer>
           <Table>

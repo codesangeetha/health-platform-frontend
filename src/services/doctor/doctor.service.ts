@@ -2,6 +2,21 @@ import { BASE_URL } from '@/config/constants';
 import type { DoctorResponse, DoctorFilters } from '@/types/doctor/doctor.types';
 import { ApiError, handleApiError } from '@/services/auth/auth.service';
 
+// Dashboard data interface
+interface DashboardData {
+  todayAppointments: number;
+  totalAppointments: number;
+  pendingConsultations: number;
+  todayCompletedConsultations: number;
+}
+
+interface DashboardResponse {
+  success: boolean;
+  message: string;
+  timestamp: string;
+  data: DashboardData;
+}
+
 const API_URL = `${BASE_URL}/api/v1`;
 
 interface DoctorAppointmentsResponse {
@@ -32,7 +47,38 @@ interface DoctorAppointmentsResponse {
   };
 }
 
+/**
+ * Doctor Service
+ * Handles all doctor-related API calls
+ */
 export class DoctorService {
+  /**
+   * Get doctor dashboard data
+   */
+  static async getDashboardData(): Promise<DashboardResponse> {
+    try {
+      const response = await fetch(`${API_URL}/doctors/dashboard`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      if (!response.ok) {
+        await handleApiError(response);
+      }
+
+      const data: DashboardResponse = await response.json();
+      return data;
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      throw new ApiError('Failed to fetch dashboard data');
+    }
+  }
+
   static async getDoctors(filters: DoctorFilters = {}): Promise<DoctorResponse> {
     try {
       const { limit = 5, page = 1, specialization, search, searchName, availableDays } = filters;

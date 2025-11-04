@@ -194,18 +194,17 @@ const ErrorMessage = styled.div`
 `;
 
 const SearchContainer = styled.div`
-  display: flex;
-  gap: 16px;
+  background: #FFFFFF;
+  border-radius: 8px;
+  padding: 20px;
   margin-bottom: 20px;
-  align-items: end;
-  flex-wrap: wrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 `;
 
 const SearchField = styled.div`
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-width: 300px;
 `;
 
 const SearchLabel = styled.label`
@@ -250,17 +249,45 @@ const SearchButton = styled.button`
 
 const ResetButton = styled.button`
   padding: 8px 16px;
-  background-color: transparent;
-  color: #666666;
-  border: 1px solid #E0E0E0;
+  background-color: #6C757D;
+  color: #FFFFFF;
+  border: 1px solid #6C757D;
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
+  font-weight: 500;
 
   &:hover {
-    background-color: #F8F9FA;
-    color: #333333;
+    background-color: #5A6268;
+    border-color: #5A6268;
   }
+`;
+
+const EmptyStateMessage = styled.div`
+  padding: 60px 20px;
+  text-align: center;
+  background: #FFFFFF;
+  color: #666666;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  border: 1px solid #E0E0E0;
+`;
+
+const EmptyStateText = styled.p`
+  font-size: 18px;
+  font-weight: 500;
+  margin: 0 0 8px 0;
+  color: #333333;
+`;
+
+const EmptyStateSubtext = styled.p`
+  font-size: 14px;
+  margin: 0;
+  color: #666666;
 `;
 
 export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
@@ -277,7 +304,14 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    specialization: '',
+    experience: '',
+    createdAt: ''
+  });
 
   const fetchDoctorsList = useCallback(async (page: number = 1) => {
     try {
@@ -285,7 +319,12 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
       const response = await getDoctors({
         page,
         limit: pagination.limit,
-        firstName: searchTerm || undefined
+        firstName: filters.firstName || undefined,
+        lastName: filters.lastName || undefined,
+        email: filters.email || undefined,
+        specialization: filters.specialization || undefined,
+        experience: filters.experience ? parseInt(filters.experience) : undefined,
+        createdAt: filters.createdAt || undefined
       });
 
       // Sort doctors by creation date (newest first)
@@ -308,7 +347,7 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
     } finally {
       setLoading(false);
     }
-  }, [pagination.limit, searchTerm]);
+  }, [pagination.limit, filters]);
 
   const handleSearch = () => {
     setPagination(prev => ({ ...prev, page: 1 }));
@@ -316,13 +355,23 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
   };
 
   const handleReset = () => {
-    setSearchTerm('');
+    setFilters({
+      firstName: '',
+      lastName: '',
+      email: '',
+      specialization: '',
+      experience: '',
+      createdAt: ''
+    });
     setPagination(prev => ({ ...prev, page: 1 }));
     fetchDoctorsList(1);
   };
 
-  const handleSearchInputChange = (value: string) => {
-    setSearchTerm(value);
+  const handleFilterChange = (field: string, value: string | boolean | undefined) => {
+    setFilters(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   useEffect(() => {
@@ -373,35 +422,87 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
     setSelectedDoctor(null);
   };
 
-  if (error) {
-    return (
-      <ErrorMessage>
-        <strong>Error:</strong> {error}
-      </ErrorMessage>
-    );
-  }
-
   return (
     <div>
       <SearchContainer>
-        <SearchField>
-          <SearchLabel htmlFor="search">Search Doctors</SearchLabel>
-          <SearchInput
-            id="search"
-            type="text"
-            placeholder="Search by name..."
-            value={searchTerm}
-            onChange={(e) => handleSearchInputChange(e.target.value)}
-          />
-        </SearchField>
+        <h3 style={{ margin: '0 0 16px 0', color: '#333333', fontSize: '18px', fontWeight: '600' }}>Filter Doctors</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', width: '100%', marginBottom: '16px' }}>
+          <SearchField>
+            <SearchLabel htmlFor="firstName">First Name</SearchLabel>
+            <SearchInput
+              id="firstName"
+              type="text"
+              placeholder="Enter first name"
+              value={filters.firstName}
+              onChange={(e) => handleFilterChange('firstName', e.target.value)}
+            />
+          </SearchField>
 
-        <SearchButton onClick={handleSearch}>
-          Search
-        </SearchButton>
+          <SearchField>
+            <SearchLabel htmlFor="lastName">Last Name</SearchLabel>
+            <SearchInput
+              id="lastName"
+              type="text"
+              placeholder="Enter last name"
+              value={filters.lastName}
+              onChange={(e) => handleFilterChange('lastName', e.target.value)}
+            />
+          </SearchField>
 
-        <ResetButton onClick={handleReset}>
-          Reset
-        </ResetButton>
+          <SearchField>
+            <SearchLabel htmlFor="email">Email</SearchLabel>
+            <SearchInput
+              id="email"
+              type="email"
+              placeholder="Enter email address"
+              value={filters.email}
+              onChange={(e) => handleFilterChange('email', e.target.value)}
+            />
+          </SearchField>
+
+          <SearchField>
+            <SearchLabel htmlFor="specialization">Specialization</SearchLabel>
+            <SearchInput
+              id="specialization"
+              type="text"
+              placeholder="e.g., Cardiologist"
+              value={filters.specialization}
+              onChange={(e) => handleFilterChange('specialization', e.target.value)}
+            />
+          </SearchField>
+
+          <SearchField>
+            <SearchLabel htmlFor="experience">Experience (Years)</SearchLabel>
+            <SearchInput
+              id="experience"
+              type="number"
+              min="0"
+              max="50"
+              placeholder="e.g., 15"
+              value={filters.experience}
+              onChange={(e) => handleFilterChange('experience', e.target.value)}
+            />
+          </SearchField>
+
+          <SearchField>
+            <SearchLabel htmlFor="createdAt">Created After</SearchLabel>
+            <SearchInput
+              id="createdAt"
+              type="date"
+              value={filters.createdAt}
+              onChange={(e) => handleFilterChange('createdAt', e.target.value)}
+            />
+          </SearchField>
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <SearchButton onClick={handleSearch}>
+            Apply Filters
+          </SearchButton>
+          <ResetButton onClick={handleReset}>
+            Reset Filters
+          </ResetButton>
+        </div>
       </SearchContainer>
 
       <TableContainer>
@@ -426,6 +527,19 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                       <LoadingSpinner />
                       Loading doctors...
                     </LoadingOverlay>
+                  </td>
+                </tr>
+              ) : doctors.length === 0 ? (
+                <tr>
+                  <td colSpan={7}>
+                    <EmptyStateMessage>
+                      <EmptyStateText>No doctors found</EmptyStateText>
+                      <EmptyStateSubtext>
+                        {Object.values(filters).some(filter => filter !== '')
+                          ? 'Try adjusting your filters to see more results'
+                          : 'No doctors have been added to the system yet'}
+                      </EmptyStateSubtext>
+                    </EmptyStateMessage>
                   </td>
                 </tr>
               ) : (

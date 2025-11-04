@@ -4,7 +4,7 @@ import { AppointmentService } from '../../../services/appointment/appointment.se
 import { DoctorService } from '../../../services/doctor/doctor.service';
 import type { Appointment } from '../../../types/appointment/appointment.types';
 import type { Doctor } from '../../../types/doctor/doctor.types';
-import '../../../styles/components/patient-dashboard.styles.css';
+import './RescheduleAppointment.styles.css';
 
 interface FieldErrors {
   newDate?: string;

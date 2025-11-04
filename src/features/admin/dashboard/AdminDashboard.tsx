@@ -1,41 +1,76 @@
 /** @jsxImportSource @emotion/react */
 import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
+import { useContext, useEffect, useState } from 'react';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
 import StatCard from './components/StatCard';
-import ActivityCard from './components/ActivityCard';
 import { AuthContext } from '@/context/AuthContext';
-import { useContext,useEffect } from 'react';
+import { getDashboardCounts, type DashboardCounts } from '../../../services/admin/dashboard.service';
 
 import { AppLayout, MainContainer, Footer } from '../../../components/layout/AppLayout';
 
 const StatsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
   margin-bottom: 32px;
+  
+  @media (min-width: 1200px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  @media (min-width: 768px) and (max-width: 1199px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  @media (max-width: 767px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
 `;
 
-const ActivitySection = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 24px;
-  margin-bottom: 24px;
+const DashboardContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
 `;
 
 export const AdminDashboard = () => {
   const navigate = useNavigate();
+  const { authState, logout } = useContext(AuthContext);
+  const [dashboardData, setDashboardData] = useState<DashboardCounts | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-const { authState, logout } = useContext(AuthContext);
-
-
-useEffect(() => {
+  useEffect(() => {
     const role = authState?.user && (authState.user as any)?.role;
     if (role && role !== 'admin') {
       navigate('/', { replace: true });
     }
   }, [authState?.user, navigate]);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const response = await getDashboardCounts();
+        if (response.success) {
+          setDashboardData(response.data);
+        } else {
+          setError(response.message);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch dashboard data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (authState?.token) {
+      fetchDashboardData();
+    }
+  }, [authState?.token]);
 
   const handleLogout = () => {
     logout();
@@ -45,51 +80,45 @@ useEffect(() => {
   const statsData = [
     {
       title: 'Total Patients',
-      value: '2,847',
-      change: '+12% from last month',
+      value: dashboardData ? dashboardData.totalPatients.toString() : '--',
+      change: 'Registered patients',
       isPositive: true,
     },
     {
       title: 'Total Doctors',
-      value: '158',
-      change: '+5% from last month',
+      value: dashboardData ? dashboardData.totalDoctors.toString() : '--',
+      change: 'Active doctors',
       isPositive: true,
     },
     {
       title: 'Appointments',
-      value: '482',
-      change: '+8% from last month',
+      value: dashboardData ? dashboardData.totalAppointments.toString() : '--',
+      change: 'Booked appointments',
       isPositive: true,
     },
     {
-      title: 'Revenue',
-      value: '$94,245',
-      change: '+15% from last month',
+      title: 'Medicines',
+      value: dashboardData ? dashboardData.totalMedicines.toString() : '--',
+      change: 'Available medicines',
       isPositive: true,
     },
-  ];
-
-  const recentActivities = [
     {
-      icon: '📋',
-      color: '#2196F3',
-      text: 'New appointment booked',
-      details: 'Sarah Johnson booked with Dr. Smith',
-      time: '2 minutes ago',
+      title: 'Lab Tests',
+      value: dashboardData ? dashboardData.totalLabTests.toString() : '--',
+      change: 'Available tests',
+      isPositive: true,
     },
     {
-      icon: '👤',
-      color: '#4CAF50',
-      text: 'New patient registered',
-      details: 'Michael Davis joined the platform',
-      time: '15 minutes ago',
+      title: 'Pharmacy Categories',
+      value: dashboardData ? dashboardData.totalPharmacyCategories.toString() : '--',
+      change: 'Medicine categories',
+      isPositive: true,
     },
     {
-      icon: '✅',
-      color: '#4A90E2',
-      text: 'Appointment completed',
-      details: 'Dr. Wilson completed checkup with James Brown',
-      time: '1 hour ago',
+      title: 'Lab Test Categories',
+      value: dashboardData ? dashboardData.totalLabTestCategories.toString() : '--',
+      change: 'Test categories',
+      isPositive: true,
     },
   ];
 
@@ -98,46 +127,19 @@ useEffect(() => {
       <Sidebar />
       <MainContainer>
         <TopBar onLogout={handleLogout} />
-        <StatsGrid>
-          {statsData.map((stat, index) => (
-            <StatCard
-              key={index}
-              title={stat.title}
-              value={stat.value}
-              change={stat.change}
-              isPositive={stat.isPositive}
-            />
-          ))}
-        </StatsGrid>
-
-        <ActivitySection>
-          <ActivityCard
-            title="Recent Activity"
-            description="Latest platform interactions"
-            activities={recentActivities}
-          />
-          
-          <ActivityCard
-            title="Important Updates"
-            description="System and policy updates"
-            activities={[
-              {
-                icon: '🔔',
-                color: '#FF9800',
-                text: 'System Maintenance',
-                details: 'Scheduled maintenance on Sunday, 2 AM',
-                time: '1 day ago',
-              },
-              {
-                icon: '📢',
-                color: '#F44336',
-                text: 'New Policy Update',
-                details: 'Updated patient data protection guidelines',
-                time: '2 days ago',
-              },
-            ]}
-          />
-        </ActivitySection>
+        <DashboardContent>
+          <StatsGrid>
+            {statsData.map((stat, index) => (
+              <StatCard
+                key={index}
+                title={stat.title}
+                value={loading ? 'Loading...' : stat.value}
+                change={stat.change}
+                isPositive={stat.isPositive}
+              />
+            ))}
+          </StatsGrid>
+        </DashboardContent>
         <Footer />
       </MainContainer>
     </AppLayout>
