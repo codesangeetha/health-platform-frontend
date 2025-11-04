@@ -1,5 +1,50 @@
 import type { PatientOrdersResponse, PatientOrdersRequest } from '../../types/order/order.types';
 
+// Dashboard data interface
+interface DashboardData {
+  upcomingAppointments: number;
+  allAppointments: number;
+  lastVisitDate: string | null;
+}
+
+interface DashboardResponse {
+  success: boolean;
+  message: string;
+  timestamp: string;
+  data: DashboardData;
+}
+
+// Appointment interfaces
+interface Appointment {
+  id: string;
+  patientId: string;
+  doctorId: string;
+  date: string;
+  time: string;
+  isVideoCall: boolean;
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'rescheduled';
+  reason: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface AppointmentPagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+interface AppointmentsResponse {
+  success: boolean;
+  message: string;
+  timestamp: string;
+  data: {
+    appointments: Appointment[];
+    pagination: AppointmentPagination;
+  };
+}
+
 // Base URL for API
 const API_BASE_URL = 'http://localhost:3000/api/v1';
 
@@ -11,11 +56,123 @@ interface ApiResponse<T> {
   timestamp?: string;
 }
 
+// Doctor details interface
+interface DoctorDetails {
+  doctorId: string;
+  firstName: string;
+  lastName: string;
+  // Add other fields as needed from the API response
+}
+
+interface DoctorDetailsResponse {
+  success: boolean;
+  message: string;
+  timestamp: string;
+  data: DoctorDetails;
+}
+
 /**
  * Patient Service
  * Handles all patient-related API calls
  */
 export class PatientService {
+  /**
+   * Get patient dashboard data
+   */
+  static async getDashboardData(): Promise<DashboardResponse> {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/patients/dashboard`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const data: DashboardResponse = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get patient appointments with pagination
+   */
+  static async getAppointments(page = 1, limit = 5): Promise<AppointmentsResponse> {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const queryParams = new URLSearchParams();
+      queryParams.append('page', page.toString());
+      queryParams.append('limit', limit.toString());
+
+      const response = await fetch(`${API_BASE_URL}/appointments/patient?${queryParams.toString()}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const data: AppointmentsResponse = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get doctor details by doctor ID
+   */
+  static async getDoctorDetails(doctorId: string): Promise<DoctorDetailsResponse> {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/appointments/doctor/${doctorId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const data: DoctorDetailsResponse = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching doctor details:', error);
+      throw error;
+    }
+  }
+
   /**
    * Get patient orders with optional filtering and pagination
    */

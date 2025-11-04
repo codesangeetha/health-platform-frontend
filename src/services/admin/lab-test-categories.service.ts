@@ -17,14 +17,26 @@ const API_ENDPOINTS = {
 
 export const getLabTestCategories = async (params: GetLabTestCategoriesParams = {}): Promise<LabTestCategoriesResponse> => {
   try {
-    const { status, page = 1, limit = 10 } = params;
+    const { name, description, status, createdAt, page = 1, limit = 10 } = params;
     const queryParams = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString()
     });
 
+    if (name) {
+      queryParams.append('name', name);
+    }
+
+    if (description) {
+      queryParams.append('description', description);
+    }
+
     if (status) {
       queryParams.append('status', status);
+    }
+
+    if (createdAt) {
+      queryParams.append('createdAt', createdAt);
     }
 
     const token = getAuthToken();

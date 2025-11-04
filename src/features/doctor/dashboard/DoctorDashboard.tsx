@@ -2,6 +2,7 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../context/AuthContext';
 import { DoctorLayout } from '../../../components/layout/DoctorLayout';
+import { DoctorService } from '../../../services/doctor/doctor.service';
 import '../../../styles/components/doctor-dashboard.styles.css';
 import '../../../styles/components/patient-dashboard.styles.css';
 
@@ -19,10 +20,18 @@ type Patient = {
   lastVisit: string; // ISO string
 };
 
+interface DashboardData {
+  todayAppointments: number;
+  totalAppointments: number;
+  pendingConsultations: number;
+  todayCompletedConsultations: number;
+}
+
 export const DoctorDashboard = () => {
   const { authState, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [recentPatients, setRecentPatients] = useState<Patient[]>([]);
@@ -39,54 +48,54 @@ export const DoctorDashboard = () => {
     }
   }, [authState?.user, navigate]);
 
+  const fetchDashboardData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Fetch dashboard data from API
+      const dashboardResponse = await DoctorService.getDashboardData();
+      setDashboardData(dashboardResponse.data);
+
+      // Keep mock data for other components until we have real APIs
+      const today = new Date();
+      const isoToday = today.toISOString().slice(0, 10); // YYYY-MM-DD
+
+      const mockAppointments: Appointment[] = [
+        { id: 'a1', patientName: 'John Doe', type: 'General Checkup', date: isoToday, time: '10:00 AM' },
+        { id: 'a2', patientName: 'Jane Smith', type: 'Follow-up', date: isoToday, time: '11:30 AM' },
+        { id: 'a3', patientName: 'Chris Lee', type: 'Consultation', date: isoToday, time: '01:00 PM' },
+        { id: 'a4', patientName: 'Priya Patel', type: 'Dermatology', date: isoToday, time: '02:30 PM' },
+        { id: 'a5', patientName: 'Alex Johnson', type: 'Cardiology', date: isoToday, time: '04:00 PM' },
+        // Upcoming (tomorrow)
+        {
+          id: 'a6',
+          patientName: 'Mia Gomez',
+          type: 'Follow-up',
+          date: new Date(Date.now() + 24 * 3600 * 1000).toISOString().slice(0, 10),
+          time: '09:00 AM'
+        }
+      ];
+
+      const mockPatients: Patient[] = [
+        { id: 'p1', name: 'John Doe', lastVisit: new Date().toISOString() },
+        { id: 'p2', name: 'Jane Smith', lastVisit: new Date().toISOString() },
+        { id: 'p3', name: 'Chris Lee', lastVisit: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString() }
+      ];
+
+      setAppointments(mockAppointments);
+      setRecentPatients(mockPatients);
+    } catch (e) {
+      setError('Failed to load dashboard data. Please try again.');
+      console.error('Error fetching dashboard data:', e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     let mounted = true;
-
-    // Simulate fetching doctor's dashboard data
-    (async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        // Replace with real API calls when available
-        await new Promise((r) => setTimeout(r, 400));
-
-        const today = new Date();
-        const isoToday = today.toISOString().slice(0, 10); // YYYY-MM-DD
-
-        const mockAppointments: Appointment[] = [
-          { id: 'a1', patientName: 'John Doe', type: 'General Checkup', date: isoToday, time: '10:00 AM' },
-          { id: 'a2', patientName: 'Jane Smith', type: 'Follow-up', date: isoToday, time: '11:30 AM' },
-          { id: 'a3', patientName: 'Chris Lee', type: 'Consultation', date: isoToday, time: '01:00 PM' },
-          { id: 'a4', patientName: 'Priya Patel', type: 'Dermatology', date: isoToday, time: '02:30 PM' },
-          { id: 'a5', patientName: 'Alex Johnson', type: 'Cardiology', date: isoToday, time: '04:00 PM' },
-          // Upcoming (tomorrow)
-          {
-            id: 'a6',
-            patientName: 'Mia Gomez',
-            type: 'Follow-up',
-            date: new Date(Date.now() + 24 * 3600 * 1000).toISOString().slice(0, 10),
-            time: '09:00 AM'
-          }
-        ];
-
-        const mockPatients: Patient[] = [
-          { id: 'p1', name: 'John Doe', lastVisit: new Date().toISOString() },
-          { id: 'p2', name: 'Jane Smith', lastVisit: new Date().toISOString() },
-          { id: 'p3', name: 'Chris Lee', lastVisit: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString() }
-        ];
-
-        if (!mounted) return;
-
-        setAppointments(mockAppointments);
-        setRecentPatients(mockPatients);
-      } catch (e) {
-        if (!mounted) return;
-        setError('Failed to load dashboard data. Please try again.');
-      } finally {
-        if (mounted) setIsLoading(false);
-      }
-    })();
+    fetchDashboardData();
 
     return () => {
       mounted = false;
@@ -98,19 +107,8 @@ export const DoctorDashboard = () => {
     navigate('/', { replace: true });
   };
 
-  // Derived stats
+  // Derived stats - now using real API data
   const todayISO = useMemo(() => new Date().toISOString().slice(0, 10), []);
-  const todayCounts = useMemo(() => {
-    const todays = appointments.filter((a) => a.date === todayISO);
-    const pendingConsultations = todays.filter((a) => /consult/i.test(a.type)).length;
-    const followUps = todays.filter((a) => /follow/i.test(a.type)).length;
-
-    return {
-      todaysAppointments: todays.length,
-      pendingConsultations,
-      followUps
-    };
-  }, [appointments, todayISO]);
 
   const todaysSchedule = useMemo(() => appointments.filter((a) => a.date === todayISO), [appointments, todayISO]);
 
@@ -196,6 +194,21 @@ export const DoctorDashboard = () => {
           </div>
           <div style={{ padding: '0 var(--ds-space-l) var(--ds-space-l) var(--ds-space-l)' }}>
             <p className="dd-muted">{error}</p>
+            <button
+              onClick={() => fetchDashboardData()}
+              disabled={isLoading}
+              style={{
+                marginTop: '16px',
+                padding: '8px 16px',
+                backgroundColor: '#dc3545',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: isLoading ? 'not-allowed' : 'pointer'
+              }}
+            >
+              {isLoading ? 'Retrying...' : 'Retry'}
+            </button>
           </div>
         </div>
       )}
@@ -208,7 +221,7 @@ export const DoctorDashboard = () => {
               <path d="M19 4h-1V3a1 1 0 1 0-2 0v1H8V3a1 1 0 1 0-2 0v1H5a3 3 0 0 0-3 3v11a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3Zm1 14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V10h16v8Z" />
             </svg>
           </div>
-          <div className="number">{isLoading ? '—' : todayCounts.todaysAppointments}</div>
+          <div className="number">{isLoading ? '—' : (dashboardData?.todayAppointments || 0)}</div>
           <div className="label">Today's Appointments</div>
         </div>
 
@@ -218,7 +231,7 @@ export const DoctorDashboard = () => {
               <path d="M12 2a5 5 0 0 1 5 5v2h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h1V7a5 5 0 0 1 5-5Zm3 7V7a3 3 0 0 0-6 0v2h6Z" />
             </svg>
           </div>
-          <div className="number">{isLoading ? '—' : todayCounts.pendingConsultations}</div>
+          <div className="number">{isLoading ? '—' : (dashboardData?.pendingConsultations || 0)}</div>
           <div className="label">Pending Consultations</div>
         </div>
 
@@ -228,8 +241,18 @@ export const DoctorDashboard = () => {
               <path d="M12 3a9 9 0 1 1-9 9 9 9 0 0 1 9-9Zm4.3 6.3a1 1 0 0 0-1.4-1.4L11 11.8l-1.9-1.9a1 1 0 1 0-1.4 1.4l2.6 2.6a1 1 0 0 0 1.4 0l5.6-5.6Z" />
             </svg>
           </div>
-          <div className="number">{isLoading ? '—' : todayCounts.followUps}</div>
-          <div className="label">Follow-ups</div>
+          <div className="number">{isLoading ? '—' : (dashboardData?.todayCompletedConsultations || 0)}</div>
+          <div className="label">Completed Today</div>
+        </div>
+
+        <div className="info-card">
+          <div className="icon-wrap" aria-hidden>
+            <svg viewBox="0 0 24 24">
+              <path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Zm-7 3h5v5h-5V6Zm-2 6H6v-2h4v2Zm0-4H6V8h4v2Zm6 4h-4v-2h4v2Zm0-4h-4V8h4v2Z" />
+            </svg>
+          </div>
+          <div className="number">{isLoading ? '—' : (dashboardData?.totalAppointments || 0)}</div>
+          <div className="label">Total Appointments</div>
         </div>
       </section>
 

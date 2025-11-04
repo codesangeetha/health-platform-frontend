@@ -44,9 +44,11 @@ interface GetDoctorsParams {
   page?: number;
   limit?: number;
   specialization?: string;
-  verified?: boolean;
   firstName?: string;
   lastName?: string;
+  email?: string;
+  createdAt?: string;
+  experience?: string | number;
 }
 
 interface ApiResponse<T> {
@@ -100,15 +102,17 @@ export const verifyDoctor = async (doctorId: string): Promise<VerifyDoctorRespon
 
 export const getDoctors = async (params: GetDoctorsParams = {}): Promise<DoctorsResponse> => {
   try {
-    const { page = 1, limit = 5, specialization, verified, firstName, lastName } = params;
+    const { page = 1, limit = 5, specialization, firstName, lastName, email, createdAt, experience } = params;
     const queryParams = new URLSearchParams({
       userType: 'doctor',
       page: page.toString(),
       limit: limit.toString(),
       ...(specialization && { specialization }),
-      ...(verified !== undefined && { verified: verified.toString() }),
       ...(firstName && { firstName }),
-      ...(lastName && { lastName })
+      ...(lastName && { lastName }),
+      ...(email && { email }),
+      ...(createdAt && { createdAt }),
+      ...(experience && { experience: experience.toString() })
     });
 
     const token = getAuthToken();

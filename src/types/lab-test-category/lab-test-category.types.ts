@@ -75,7 +75,10 @@ export interface DeleteLabTestCategoryResponse {
 }
 
 export interface GetLabTestCategoriesParams {
+  name?: string;
+  description?: string;
   status?: 'active' | 'inactive';
+  createdAt?: string;
   page?: number;
   limit?: number;
 }

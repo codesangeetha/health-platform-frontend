@@ -168,28 +168,18 @@ const DetailValue = styled.span`
   flex: 1;
 `;
 
-const ErrorMessage = styled.div`
-  padding: 16px;
-  margin: 16px 0;
-  background-color: #FFEBEE;
-  color: #D32F2F;
-  border-radius: 4px;
-  border: 1px solid #FFCDD2;
-`;
-
 const SearchContainer = styled.div`
-  display: flex;
-  gap: 16px;
+  background: #FFFFFF;
+  border-radius: 8px;
+  padding: 20px;
   margin-bottom: 20px;
-  align-items: end;
-  flex-wrap: wrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 `;
 
 const SearchField = styled.div`
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-width: 300px;
 `;
 
 const SearchLabel = styled.label`
@@ -234,16 +224,17 @@ const SearchButton = styled.button`
 
 const ResetButton = styled.button`
   padding: 8px 16px;
-  background-color: transparent;
-  color: #666666;
-  border: 1px solid #E0E0E0;
+  background-color: #6C757D;
+  color: #FFFFFF;
+  border: 1px solid #6C757D;
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
+  font-weight: 500;
 
   &:hover {
-    background-color: #F8F9FA;
-    color: #333333;
+    background-color: #5A6268;
+    border-color: #5A6268;
   }
 `;
 
@@ -263,6 +254,33 @@ const ActionButton = styled.button`
   }
 `;
 
+const EmptyStateMessage = styled.div`
+  padding: 60px 20px;
+  text-align: center;
+  background: #FFFFFF;
+  color: #666666;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  border: 1px solid #E0E0E0;
+`;
+
+const EmptyStateText = styled.p`
+  font-size: 18px;
+  font-weight: 500;
+  margin: 0 0 8px 0;
+  color: #333333;
+`;
+
+const EmptyStateSubtext = styled.p`
+  font-size: 14px;
+  margin: 0;
+  color: #666666;
+`;
+
 export const PatientList = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [pagination, setPagination] = useState({
@@ -275,7 +293,13 @@ export const PatientList = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    bloodGroup: '',
+    createdAt: ''
+  });
 
   const fetchPatientsList = useCallback(async (page: number = 1) => {
     try {
@@ -283,7 +307,11 @@ export const PatientList = () => {
       const response = await getPatients({
         page,
         limit: pagination.limit,
-        firstName: searchTerm || undefined
+        firstName: filters.firstName || undefined,
+        lastName: filters.lastName || undefined,
+        email: filters.email || undefined,
+        bloodGroup: filters.bloodGroup || undefined,
+        createdAt: filters.createdAt || undefined
       });
 
       // Sort patients by creation date (newest first)
@@ -306,7 +334,7 @@ export const PatientList = () => {
     } finally {
       setLoading(false);
     }
-  }, [pagination.limit, searchTerm]);
+  }, [pagination.limit, filters]);
 
   const handleSearch = () => {
     setPagination(prev => ({ ...prev, page: 1 }));
@@ -314,13 +342,22 @@ export const PatientList = () => {
   };
 
   const handleReset = () => {
-    setSearchTerm('');
+    setFilters({
+      firstName: '',
+      lastName: '',
+      email: '',
+      bloodGroup: '',
+      createdAt: ''
+    });
     setPagination(prev => ({ ...prev, page: 1 }));
     fetchPatientsList(1);
   };
 
-  const handleSearchInputChange = (value: string) => {
-    setSearchTerm(value);
+  const handleFilterChange = (field: string, value: string) => {
+    setFilters(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   useEffect(() => {
@@ -339,104 +376,165 @@ export const PatientList = () => {
 
   if (error) {
     return (
-      <ErrorMessage>
+      <div style={{ padding: '16px', backgroundColor: '#FFEBEE', color: '#D32F2F', borderRadius: '4px', border: '1px solid #FFCDD2' }}>
         <strong>Error:</strong> {error}
-      </ErrorMessage>
+      </div>
     );
   }
 
   return (
     <div>
       <SearchContainer>
-        <SearchField>
-          <SearchLabel htmlFor="search">Search Patients</SearchLabel>
-          <SearchInput
-            id="search"
-            type="text"
-            placeholder="Search by name..."
-            value={searchTerm}
-            onChange={(e) => handleSearchInputChange(e.target.value)}
-          />
-        </SearchField>
+        <h3 style={{ margin: '0 0 16px 0', color: '#333333', fontSize: '18px', fontWeight: '600' }}>Filter Patients</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', width: '100%', marginBottom: '16px' }}>
+          <SearchField>
+            <SearchLabel htmlFor="firstName">First Name</SearchLabel>
+            <SearchInput
+              id="firstName"
+              type="text"
+              placeholder="Enter first name"
+              value={filters.firstName}
+              onChange={(e) => handleFilterChange('firstName', e.target.value)}
+            />
+          </SearchField>
 
-        <SearchButton onClick={handleSearch}>
-          Search
-        </SearchButton>
+          <SearchField>
+            <SearchLabel htmlFor="lastName">Last Name</SearchLabel>
+            <SearchInput
+              id="lastName"
+              type="text"
+              placeholder="Enter last name"
+              value={filters.lastName}
+              onChange={(e) => handleFilterChange('lastName', e.target.value)}
+            />
+          </SearchField>
 
-        <ResetButton onClick={handleReset}>
-          Reset
-        </ResetButton>
+          <SearchField>
+            <SearchLabel htmlFor="email">Email</SearchLabel>
+            <SearchInput
+              id="email"
+              type="email"
+              placeholder="Enter email address"
+              value={filters.email}
+              onChange={(e) => handleFilterChange('email', e.target.value)}
+            />
+          </SearchField>
+
+          <SearchField>
+            <SearchLabel htmlFor="bloodGroup">Blood Group</SearchLabel>
+            <SearchInput
+              id="bloodGroup"
+              type="text"
+              placeholder="e.g., O+, A-, B+"
+              value={filters.bloodGroup}
+              onChange={(e) => handleFilterChange('bloodGroup', e.target.value)}
+            />
+          </SearchField>
+
+          <SearchField>
+            <SearchLabel htmlFor="createdAt">Created After</SearchLabel>
+            <SearchInput
+              id="createdAt"
+              type="date"
+              value={filters.createdAt}
+              onChange={(e) => handleFilterChange('createdAt', e.target.value)}
+            />
+          </SearchField>
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <SearchButton onClick={handleSearch}>
+            Apply Filters
+          </SearchButton>
+          <ResetButton onClick={handleReset}>
+            Reset Filters
+          </ResetButton>
+        </div>
       </SearchContainer>
 
       <TableContainer>
-      <ScrollContainer>
-        <Table>
-          <thead>
-            <tr>
-              <Th>Name</Th>
-              <Th>Blood Group</Th>
-              <Th>Contact</Th>
-              <Th>Created</Th>
-              <Th>Actions</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
+        <ScrollContainer>
+          <Table>
+            <thead>
               <tr>
-                <td colSpan={5}>
-                  <LoadingOverlay>
-                    <LoadingSpinner />
-                    Loading patients...
-                  </LoadingOverlay>
-                </td>
+                <Th>Name</Th>
+                <Th>Blood Group</Th>
+                <Th>Contact</Th>
+                <Th>Created</Th>
+                <Th>Actions</Th>
               </tr>
-            ) : (
-              patients.map(patient => (
-                <tr key={patient.id}>
-                  <Td>
-                    {patient.firstName && patient.lastName
-                      ? `${patient.firstName} ${patient.lastName}`
-                      : patient.email}
-                  </Td>
-                  <Td>{patient.bloodGroup || '-'}</Td>
-                  <Td>
-                    {patient.email}<br />
-                    {patient.phone}
-                  </Td>
-                  <Td>
-                    {patient.createdAt ? new Date(patient.createdAt).toLocaleDateString() : '-'}
-                  </Td>
-                  <Td>
-                    <ActionButton onClick={() => handleViewDetails(patient)}>
-                      View
-                    </ActionButton>
-                  </Td>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={5}>
+                    <LoadingOverlay>
+                      <LoadingSpinner />
+                      Loading patients...
+                    </LoadingOverlay>
+                  </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </Table>
-      </ScrollContainer>
+              ) : patients.length === 0 ? (
+                <tr>
+                  <td colSpan={5}>
+                    <EmptyStateMessage>
+                      <EmptyStateText>No patients found</EmptyStateText>
+                      <EmptyStateSubtext>
+                        {Object.values(filters).some(filter => filter !== '')
+                          ? 'Try adjusting your filters to see more results'
+                          : 'No patients have been added to the system yet'}
+                      </EmptyStateSubtext>
+                    </EmptyStateMessage>
+                  </td>
+                </tr>
+              ) : (
+                patients.map(patient => (
+                  <tr key={patient.id}>
+                    <Td>
+                      {patient.firstName && patient.lastName
+                        ? `${patient.firstName} ${patient.lastName}`
+                        : patient.email}
+                    </Td>
+                    <Td>{patient.bloodGroup || '-'}</Td>
+                    <Td>
+                      {patient.email}<br />
+                      {patient.phone}
+                    </Td>
+                    <Td>
+                      {patient.createdAt ? new Date(patient.createdAt).toLocaleDateString() : '-'}
+                    </Td>
+                    <Td>
+                      <ActionButton onClick={() => handleViewDetails(patient)}>
+                        View
+                      </ActionButton>
+                    </Td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </Table>
+        </ScrollContainer>
 
-      <PaginationContainer>
-        <PageInfo>
-          Showing {patients.length} of {pagination.total} patients
-        </PageInfo>
-        <div>
-          <PaginationButton 
-            disabled={loading || pagination.page === 1}
-            onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
-          >
-            Previous
-          </PaginationButton>
-          <PaginationButton 
-            disabled={loading || pagination.page === pagination.totalPages}
-            onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
-          >
-            Next
-          </PaginationButton>
-        </div>
-      </PaginationContainer>
+        <PaginationContainer>
+          <PageInfo>
+            Showing {patients.length} of {pagination.total} patients
+          </PageInfo>
+          <div>
+            <PaginationButton
+              disabled={loading || pagination.page === 1}
+              onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+            >
+              Previous
+            </PaginationButton>
+            <PaginationButton
+              disabled={loading || pagination.page === pagination.totalPages}
+              onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+            >
+              Next
+            </PaginationButton>
+          </div>
+        </PaginationContainer>
+      </TableContainer>
       
       {showModal && selectedPatient && (
         <ModalOverlay onClick={closeModal}>
@@ -449,7 +547,7 @@ export const PatientList = () => {
             <DetailRow>
               <DetailLabel>Name:</DetailLabel>
               <DetailValue>
-                {selectedPatient.firstName && selectedPatient.lastName
+                {selectedPatient?.firstName && selectedPatient?.lastName
                   ? `${selectedPatient.firstName} ${selectedPatient.lastName}`
                   : 'N/A'}
               </DetailValue>
@@ -457,23 +555,23 @@ export const PatientList = () => {
             
             <DetailRow>
               <DetailLabel>Email:</DetailLabel>
-              <DetailValue>{selectedPatient.email}</DetailValue>
+              <DetailValue>{selectedPatient?.email || 'N/A'}</DetailValue>
             </DetailRow>
             
             <DetailRow>
               <DetailLabel>Phone:</DetailLabel>
-              <DetailValue>{selectedPatient.phone}</DetailValue>
+              <DetailValue>{selectedPatient?.phone || 'N/A'}</DetailValue>
             </DetailRow>
             
             <DetailRow>
               <DetailLabel>Blood Group:</DetailLabel>
-              <DetailValue>{selectedPatient.bloodGroup || 'Not specified'}</DetailValue>
+              <DetailValue>{selectedPatient?.bloodGroup || 'Not specified'}</DetailValue>
             </DetailRow>
             
             <DetailRow>
               <DetailLabel>Date of Birth:</DetailLabel>
               <DetailValue>
-                {selectedPatient.dateOfBirth ? new Date(selectedPatient.dateOfBirth).toLocaleDateString() : 'Not specified'}
+                {selectedPatient?.dateOfBirth ? new Date(selectedPatient.dateOfBirth).toLocaleDateString() : 'Not specified'}
               </DetailValue>
             </DetailRow>
             
@@ -490,7 +588,7 @@ export const PatientList = () => {
             <DetailRow>
               <DetailLabel>Allergies:</DetailLabel>
               <DetailValue>
-                {selectedPatient.allergies && selectedPatient.allergies.length > 0
+                {selectedPatient?.allergies && selectedPatient.allergies.length > 0
                   ? selectedPatient.allergies.join(', ')
                   : 'None'}
               </DetailValue>
@@ -499,7 +597,7 @@ export const PatientList = () => {
             <DetailRow>
               <DetailLabel>Chronic Diseases:</DetailLabel>
               <DetailValue>
-                {selectedPatient.chronicDiseases && selectedPatient.chronicDiseases.length > 0
+                {selectedPatient?.chronicDiseases && selectedPatient.chronicDiseases.length > 0
                   ? selectedPatient.chronicDiseases.join(', ')
                   : 'None'}
               </DetailValue>
@@ -508,7 +606,7 @@ export const PatientList = () => {
             <DetailRow>
               <DetailLabel>Emergency Contact:</DetailLabel>
               <DetailValue>
-                {selectedPatient.emergencyContact?.name
+                {selectedPatient?.emergencyContact?.name
                   ? `${selectedPatient.emergencyContact.name} (${selectedPatient.emergencyContact.relationship}) - ${selectedPatient.emergencyContact.phone}`
                   : 'Not specified'}
               </DetailValue>
@@ -517,8 +615,8 @@ export const PatientList = () => {
             <DetailRow>
               <DetailLabel>Status:</DetailLabel>
               <DetailValue>
-                <StatusBadge isVerified={selectedPatient.isVerified}>
-                  {selectedPatient.isVerified ? 'Verified' : 'Pending'}
+                <StatusBadge isVerified={selectedPatient?.isVerified || false}>
+                  {selectedPatient?.isVerified ? 'Verified' : 'Pending'}
                 </StatusBadge>
               </DetailValue>
             </DetailRow>
@@ -526,20 +624,19 @@ export const PatientList = () => {
             <DetailRow>
               <DetailLabel>Created:</DetailLabel>
               <DetailValue>
-                {selectedPatient.createdAt && new Date(selectedPatient.createdAt).toLocaleDateString()}
+                {selectedPatient?.createdAt && new Date(selectedPatient.createdAt).toLocaleDateString()}
               </DetailValue>
             </DetailRow>
             
             <DetailRow>
               <DetailLabel>Last Updated:</DetailLabel>
               <DetailValue>
-                {selectedPatient.updatedAt && new Date(selectedPatient.updatedAt).toLocaleDateString()}
+                {selectedPatient?.updatedAt && new Date(selectedPatient.updatedAt).toLocaleDateString()}
               </DetailValue>
             </DetailRow>
           </ModalContent>
         </ModalOverlay>
       )}
-      </TableContainer>
     </div>
   );
 };
