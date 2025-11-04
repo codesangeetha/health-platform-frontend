@@ -2,6 +2,7 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 import { AuthContext } from '@/context/AuthContext';
 import { AuthService } from '@/services/auth/auth.service';
 import { useNavigate } from 'react-router-dom';
+import { BASE_URL } from '@/config/constants';
 import '@/styles/components/patient-dashboard.styles.css';
 
 // Minimal shape based on patient registration fields; server may return more
@@ -56,7 +57,7 @@ export const PatientProfile = () => {
       setError(null);
       try {
         // First try GET
-        let res = await fetch('http://localhost:3000/api/v1/patients/profile', {
+        let res = await fetch(`${BASE_URL}/api/v1/patients/profile`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -66,7 +67,7 @@ export const PatientProfile = () => {
 
         // If API expects POST due to curl -d, fallback
         if (!res.ok && (res.status === 405 || res.status === 404)) {
-          res = await fetch('http://localhost:3000/api/v1/patients/profile', {
+          res = await fetch(`${BASE_URL}/api/v1/patients/profile`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
