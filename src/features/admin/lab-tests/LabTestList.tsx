@@ -12,13 +12,17 @@ const TableContainer = styled.div`
   background: #FFFFFF;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
+  overflow-x: auto;
 `;
 
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
   min-width: 600px;
+  
+  @media (max-width: 768px) {
+    min-width: 500px;
+  }
 `;
 
 const Th = styled.th`
@@ -29,12 +33,24 @@ const Th = styled.th`
   color: #333333;
   border-bottom: 1px solid #E0E0E0;
   white-space: nowrap;
+  font-size: 14px;
+  
+  @media (max-width: 768px) {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
 `;
 
 const Td = styled.td`
   padding: 16px;
   border-bottom: 1px solid #E0E0E0;
   color: #666666;
+  font-size: 14px;
+  
+  @media (max-width: 768px) {
+    padding: 12px 8px;
+    font-size: 12px;
+  }
 `;
 
 const StatusBadge = styled.span<{ status: boolean }>`
@@ -44,21 +60,63 @@ const StatusBadge = styled.span<{ status: boolean }>`
   font-weight: 500;
   background-color: ${props => props.status ? '#4CAF50' : '#FFC107'};
   color: ${props => props.status ? '#FFFFFF' : '#333333'};
+  white-space: nowrap;
+  
+  @media (max-width: 768px) {
+    font-size: 10px;
+    padding: 3px 6px;
+  }
 `;
 
-const ActionButton = styled.button`
+const ActionButtonsContainer = styled.td`
+  padding: 16px;
+  border-bottom: 1px solid #E0E0E0;
+  
+  @media (max-width: 768px) {
+    padding: 12px 8px;
+  }
+`;
+
+const ActionButtonsWrapper = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 6px;
+  }
+`;
+
+const ActionButton = styled.button<{ variant?: 'primary' | 'danger' }>`
   padding: 6px 12px;
   border-radius: 4px;
-  border: 1px solid #4A90E2;
-  background: transparent;
-  color: #4A90E2;
+  border: 1px solid ${props => props.variant === 'danger' ? '#dc3545' : '#4A90E2'};
+  background: ${props => props.variant === 'danger' ? '#dc3545' : 'transparent'};
+  color: ${props => props.variant === 'danger' ? '#fff' : '#4A90E2'};
   cursor: pointer;
   font-size: 14px;
-  margin-right: 8px;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 60px;
+  
+  @media (max-width: 768px) {
+    padding: 10px 8px;
+    font-size: 13px;
+    flex: none;
+    width: 100%;
+    text-align: center;
+  }
 
   &:hover {
-    background: #4A90E2;
+    background: ${props => props.variant === 'danger' ? '#c82333' : '#4A90E2'};
     color: #FFFFFF;
+  }
+
+  &:focus {
+    outline: 2px solid rgba(74, 144, 226, 0.3);
+    outline-offset: 1px;
   }
 `;
 
@@ -69,11 +127,36 @@ const PaginationContainer = styled.div`
   padding: 16px;
   background: #FFFFFF;
   border-top: 1px solid #E0E0E0;
+  flex-wrap: wrap;
+  gap: 12px;
+  
+  @media (max-width: 768px) {
+    padding: 12px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
 `;
 
 const PageInfo = styled.span`
   color: #666666;
   font-size: 14px;
+  text-align: center;
+  
+  @media (max-width: 768px) {
+    font-size: 12px;
+  }
+`;
+
+const PaginationControls = styled.div`
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  
+  @media (max-width: 768px) {
+    order: -1;
+  }
 `;
 
 const PaginationButton = styled.button<{ disabled?: boolean }>`
@@ -83,7 +166,14 @@ const PaginationButton = styled.button<{ disabled?: boolean }>`
   color: ${props => props.disabled ? '#666666' : '#4A90E2'};
   border-radius: 4px;
   cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
-  margin: 0 4px;
+  font-size: 14px;
+  white-space: nowrap;
+  
+  @media (max-width: 768px) {
+    padding: 8px 12px;
+    font-size: 12px;
+    flex: 1;
+  }
 
   &:hover:not(:disabled) {
     background: #4A90E2;
@@ -93,6 +183,10 @@ const PaginationButton = styled.button<{ disabled?: boolean }>`
 
 const ScrollContainer = styled.div`
   overflow-x: auto;
+  
+  @media (max-width: 768px) {
+    -webkit-overflow-scrolling: touch;
+  }
 `;
 
 const LoadingOverlay = styled.div`
@@ -142,6 +236,12 @@ const ModalContent = styled.div`
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
+  
+  @media (max-width: 768px) {
+    width: 95%;
+    padding: 16px;
+    margin: 10px;
+  }
 `;
 
 const ModalHeader = styled.div`
@@ -149,6 +249,10 @@ const ModalHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  
+  @media (max-width: 768px) {
+    margin-bottom: 16px;
+  }
 `;
 
 const ModalTitle = styled.h2`
@@ -156,6 +260,10 @@ const ModalTitle = styled.h2`
   font-weight: 600;
   color: #333333;
   margin: 0;
+  
+  @media (max-width: 768px) {
+    font-size: 1.25rem;
+  }
 `;
 
 const CloseButton = styled.button`
@@ -164,6 +272,11 @@ const CloseButton = styled.button`
   font-size: 1.5rem;
   cursor: pointer;
   color: #666666;
+  padding: 4px;
+  
+  @media (max-width: 768px) {
+    font-size: 1.25rem;
+  }
 
   &:hover {
     color: #333333;
@@ -173,18 +286,33 @@ const CloseButton = styled.button`
 const DetailRow = styled.div`
   display: flex;
   margin-bottom: 12px;
+  flex-direction: column;
+  
+  @media (min-width: 480px) {
+    flex-direction: row;
+  }
 `;
 
 const DetailLabel = styled.span`
   font-weight: 500;
   color: #666666;
-  width: 120px;
-  flex-shrink: 0;
+  margin-bottom: 4px;
+  
+  @media (min-width: 480px) {
+    width: 120px;
+    flex-shrink: 0;
+    margin-bottom: 0;
+    margin-right: 16px;
+  }
 `;
 
 const DetailValue = styled.span`
   color: #333333;
-  flex: 1;
+  word-wrap: break-word;
+  
+  @media (min-width: 480px) {
+    flex: 1;
+  }
 `;
 
 const ErrorMessage = styled.div`
@@ -350,25 +478,22 @@ export const LabTestList = ({ refreshKey = 0, categories = [] }: LabTestListProp
                     <Td>
                       {labTest.createdAt ? new Date(labTest.createdAt).toLocaleDateString() : '-'}
                     </Td>
-                    <Td>
-                      <ActionButton onClick={() => handleViewDetails(labTest)}>
-                        View
-                      </ActionButton>
-                      <ActionButton onClick={() => handleEdit(labTest)} style={{ marginLeft: '4px', marginRight: '4px' }}>
-                        Edit
-                      </ActionButton>
-                      <ActionButton
-                        onClick={() => handleDelete(labTest)}
-                        style={{
-                          marginLeft: '4px',
-                          backgroundColor: '#dc3545',
-                          borderColor: '#dc3545',
-                          color: '#fff'
-                        }}
-                      >
-                        Delete
-                      </ActionButton>
-                    </Td>
+                    <ActionButtonsContainer>
+                      <ActionButtonsWrapper>
+                        <ActionButton onClick={() => handleViewDetails(labTest)}>
+                          View
+                        </ActionButton>
+                        <ActionButton onClick={() => handleEdit(labTest)}>
+                          Edit
+                        </ActionButton>
+                        <ActionButton
+                          variant="danger"
+                          onClick={() => handleDelete(labTest)}
+                        >
+                          Delete
+                        </ActionButton>
+                      </ActionButtonsWrapper>
+                    </ActionButtonsContainer>
                   </tr>
                 ))
               )}
@@ -380,7 +505,7 @@ export const LabTestList = ({ refreshKey = 0, categories = [] }: LabTestListProp
           <PageInfo>
             Showing {labTests.length} of {pagination.totalCount} lab tests
           </PageInfo>
-          <div>
+          <PaginationControls>
             <PaginationButton
               disabled={loading || !pagination.hasPreviousPage}
               onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage - 1 }))}
@@ -393,7 +518,7 @@ export const LabTestList = ({ refreshKey = 0, categories = [] }: LabTestListProp
             >
               Next
             </PaginationButton>
-          </div>
+          </PaginationControls>
         </PaginationContainer>
       </TableContainer>
 

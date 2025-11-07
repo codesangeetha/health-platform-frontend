@@ -10,11 +10,20 @@ import { useNavigate } from 'react-router-dom';
 import { useContext } from 'react';
 import { AuthContext } from '../../../context/AuthContext';
 
+const PageContainer = styled.div`
+  width: 100%;
+`;
+
 const PageTitle = styled.h1`
   font-size: 24px;
   font-weight: 600;
   color: #333333;
   margin-bottom: 24px;
+  
+  @media (max-width: 768px) {
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
 `;
 
 const ActionBar = styled.div`
@@ -22,6 +31,14 @@ const ActionBar = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
 `;
 
 const CreateButton = styled.button`
@@ -32,6 +49,13 @@ const CreateButton = styled.button`
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
+  white-space: nowrap;
+  
+  @media (max-width: 768px) {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 16px;
+  }
 
   &:hover {
     background-color: #3a78c3;
@@ -60,12 +84,14 @@ const MedicinesPage = () => {
       <Sidebar />
       <MainContainer>
         <TopBar onLogout={handleLogout} />
-        <PageTitle>Manage Medicines</PageTitle>
-        <ActionBar>
-          <div />
-          <CreateButton onClick={() => setOpen(true)}>+ Create Medicine</CreateButton>
-        </ActionBar>
-        <MedicineList refreshKey={refreshToken} />
+        <PageContainer>
+          <PageTitle>Manage Medicines</PageTitle>
+          <ActionBar>
+            <div />
+            <CreateButton onClick={() => setOpen(true)}>+ Create Medicine</CreateButton>
+          </ActionBar>
+          <MedicineList refreshKey={refreshToken} />
+        </PageContainer>
         <CreateMedicineModal open={open} onClose={() => setOpen(false)} onCreated={handleCreated} />
         <Footer />
       </MainContainer>
