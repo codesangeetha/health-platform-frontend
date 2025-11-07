@@ -1,5 +1,8 @@
 import { createBrowserRouter, RouterProvider, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
+import { AdminRoute } from './AdminRoute';
+import { DoctorRoute } from './DoctorRoute';
+import { PatientRoute } from './PatientRoute';
 import { useAuth } from '../context/AuthContext';
 import { PatientProfile } from '../features/patient/profile/PatientProfile';
 import { DoctorDirectory } from '../features/patient/doctor-directory/DoctorDirectory';
@@ -37,48 +40,14 @@ import { CreatePrescription } from '../features/doctor/prescription/CreatePrescr
 import { DoctorVideoCallView } from '../features/doctor/video-call/DoctorVideoCallView';
 import { PatientVideoCallView } from '../features/patient/video-call/PatientVideoCallView';
 
-// Component to combine ProtectedRoute with PatientLayout
+// Component to combine PatientRoute with PatientLayout
 const ProtectedPatientLayout = () => {
-  const { authState } = useAuth();
-  const location = useLocation();
-
-  // If user is not authenticated (either not loading or loading but no token), redirect to login
-  if (!authState.isAuthenticated || !authState.token) {
-    // Determine the appropriate login page based on the current path
-    let loginPath = '/';
-
-    if (location.pathname.startsWith('/admin')) {
-      loginPath = '/admin/login';
-    } else if (location.pathname.startsWith('/doctor')) {
-      loginPath = '/doctor/login';
-    } else if (location.pathname.startsWith('/patient')) {
-      loginPath = '/patient/login';
-    }
-
-    // Save the current location to redirect back after login
-    return <Navigate to={loginPath} state={{ from: location }} replace />;
-  }
-
-  // If still loading but user is authenticated, show loading state
-  if (authState.isLoading) {
-    return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        fontSize: '18px',
-        color: '#666'
-      }}>
-        Loading...
-      </div>
-    );
-  }
-
   return (
-    <PatientLayout>
-      <Outlet />
-    </PatientLayout>
+    <ProtectedRoute requiredRole="patient">
+      <PatientLayout>
+        <Outlet />
+      </PatientLayout>
+    </ProtectedRoute>
   );
 };
 
@@ -179,7 +148,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'doctor',
-        element: <ProtectedRoute />,
+        element: <ProtectedRoute requiredRole="doctor" />,
         children: [
           {
             path: 'dashboard',
@@ -213,7 +182,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'admin',
-        element: <ProtectedRoute />,
+        element: <ProtectedRoute requiredRole="admin" />,
         children: [
           {
             path: 'dashboard',
