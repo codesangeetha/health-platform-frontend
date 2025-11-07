@@ -1,7 +1,13 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import type { ReactNode } from 'react';
 import { useAuth } from '../context/AuthContext';
 
-export function ProtectedRoute() {
+interface ProtectedRouteProps {
+  requiredRole?: 'admin' | 'doctor' | 'patient';
+  children?: ReactNode;
+}
+
+export function ProtectedRoute({ requiredRole, children }: ProtectedRouteProps = {}) {
   const { authState } = useAuth();
   const location = useLocation();
 
@@ -38,5 +44,44 @@ export function ProtectedRoute() {
     );
   }
 
-  return <Outlet />;
+  // Check role-based access control
+  if (requiredRole && authState.user?.userType !== requiredRole) {
+    console.warn(`Access denied: User role '${authState.user?.userType}' cannot access '${requiredRole}' routes`);
+    
+    // Redirect to appropriate dashboard based on user role
+    let redirectPath = '/';
+    switch (authState.user?.userType) {
+      case 'admin':
+        redirectPath = '/admin/dashboard';
+        break;
+      case 'doctor':
+        redirectPath = '/doctor/dashboard';
+        break;
+      case 'patient':
+        redirectPath = '/patient/dashboard';
+        break;
+      default:
+        redirectPath = '/';
+    }
+    
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        padding: '20px',
+        textAlign: 'center'
+      }}>
+        <h2>Access Denied</h2>
+        <p>You don't have permission to access this page.</p>
+        <p>Redirecting to your dashboard...</p>
+        <Navigate to={redirectPath} replace />
+      </div>
+    );
+  }
+
+  // Return children if provided, otherwise use Outlet for nested routes
+  return children ? <>{children}</> : <Outlet />;
 }
