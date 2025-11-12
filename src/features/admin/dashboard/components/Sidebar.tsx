@@ -72,7 +72,10 @@ const Sidebar = () => {
     cursor: 'pointer',
   });
 
-  const navigationItems = {
+  const navigationItems: {
+    main: Array<{ label: string; icon: string; path: string }>;
+    management: Array<{ label: string; icon: string; path: string }>;
+  } = {
     main: [
       { label: 'Dashboard', icon: '📊', path: '/admin/dashboard' },
       { label: 'Doctors', icon: '👨‍⚕️', path: '/admin/doctors' },
@@ -82,12 +85,8 @@ const Sidebar = () => {
       { label: 'Lab Test Categories', icon: '🧪', path: '/admin/lab-test-categories' },
       { label: 'Lab Tests', icon: '🔬', path: '/admin/lab-tests' },
       { label: 'Medicines', icon: '💊', path: '/admin/medicines' },
-      { label: 'Appointments', icon: '📅', path: '/admin/appointments' },
     ],
-    management: [
-      { label: 'Departments', icon: '🏢', path: '/admin/departments' },
-      { label: 'Settings', icon: '⚙️', path: '/admin/settings' },
-    ],
+    management: [],
   };
 
   const handleNavItemClick = (path: string) => {
@@ -122,19 +121,21 @@ const Sidebar = () => {
         ))}
       </div>
 
-      <div style={NavSection}>
-        <h2 style={NavTitle as React.CSSProperties}>MANAGEMENT</h2>
-        {navigationItems.management.map((item) => (
-          <div
-            key={item.label}
-            style={getNavItemStyle(activeItem === item.path)}
-            onClick={() => handleNavItemClick(item.path)}
-          >
-            <span style={{ marginRight: '0.75rem' }}>{item.icon}</span>
-            {item.label}
-          </div>
-        ))}
-      </div>
+      {navigationItems.management.length > 0 && (
+        <div style={NavSection}>
+          <h2 style={NavTitle as React.CSSProperties}>MANAGEMENT</h2>
+          {navigationItems.management.map((item) => (
+            <div
+              key={item.label}
+              style={getNavItemStyle(activeItem === item.path)}
+              onClick={() => handleNavItemClick(item.path)}
+            >
+              <span style={{ marginRight: '0.75rem' }}>{item.icon}</span>
+              {item.label}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

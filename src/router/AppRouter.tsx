@@ -11,7 +11,6 @@ import { MyAppointments } from '../features/patient/my-appointments/MyAppointmen
 import { RescheduleAppointment } from '../features/patient/reschedule-appointment/RescheduleAppointment';
 import { CancelAppointment } from '../features/patient/cancel-appointment/CancelAppointment';
 import { OrderMedicines } from '../features/patient/order-medicines/OrderMedicines';
-import { PatientOrders } from '../features/patient/patient-orders/PatientOrders';
 import DoctorsPage from '../features/admin/doctors/DoctorsPage';
 import { CategoriesPage } from '../features/admin/categories';
 import LabTestCategoriesPage from '../features/admin/lab-test-categories/LabTestCategoriesPage';
@@ -141,10 +140,6 @@ const router = createBrowserRouter([
             path: 'order-medicines',
             element: <OrderMedicines />,
           },
-          {
-            path: 'my-orders',
-            element: <PatientOrders />,
-          }
         ]
       },
       {
