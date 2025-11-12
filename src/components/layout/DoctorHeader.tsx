@@ -25,10 +25,7 @@ export const DoctorHeader = () => {
   const navLinks = [
     { path: '/doctor/dashboard', label: 'Dashboard' },
     { path: '/doctor/appointments', label: 'Appointments' },
-    { path: '/doctor/patients', label: 'Patients' },
-    { path: '/doctor/schedule', label: 'Schedule' },
-    { path: '/doctor/profile', label: 'Profile' },
-    { path: '/doctor/settings', label: 'Settings' }
+    { path: '/doctor/profile', label: 'Profile' }
   ];
 
   // Get user initials for avatar fallback
