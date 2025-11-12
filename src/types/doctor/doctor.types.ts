@@ -5,6 +5,7 @@ export interface Doctor {
   firstName: string;
   lastName: string;
   phone: string;
+  whatsapp?: string;
   dateOfBirth: string;
   isVerified: boolean;
   createdAt: string;

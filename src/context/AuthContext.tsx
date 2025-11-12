@@ -21,6 +21,7 @@ interface AuthContextType {
   handleGoogleCallback: () => Promise<AuthResponseData>;
   forgotPassword: (email: string) => Promise<{ success: boolean; message: string }>;
   resetPassword: (token: string, newPassword: string, confirmPassword: string) => Promise<{ success: boolean; message: string }>;
+  doctorPasswordSet: (token: string, newPassword: string, confirmPassword: string) => Promise<{ success: boolean; message: string }>;
 }
 
 // Accepts different payloads based on user type (patient/doctor/admin)
@@ -65,7 +66,8 @@ export const AuthContext = createContext<AuthContextType>({
   googleLogin: async () => {},
   handleGoogleCallback: async () => ({ token: '', user: { userId: '', email: '', userType: 'patient' } }),
   forgotPassword: async () => ({ success: false, message: 'Not implemented' }),
-  resetPassword: async () => ({ success: false, message: 'Not implemented' })
+  resetPassword: async () => ({ success: false, message: 'Not implemented' }),
+  doctorPasswordSet: async () => ({ success: false, message: 'Not implemented' })
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -248,6 +250,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const doctorPasswordSet = async (token: string, newPassword: string, confirmPassword: string) => {
+    try {
+      setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
+      const res = await AuthService.doctorPasswordSet(token, newPassword, confirmPassword);
+      setAuthState(prev => ({ ...prev, isLoading: false }));
+      return { success: true, message: res.message };
+    } catch (error: any) {
+      const message = typeof error?.message === 'string' ? error.message : 'Setting doctor password failed';
+      setAuthState(prev => ({ ...prev, isLoading: false, error: message }));
+      return { success: false, message };
+    }
+  };
+
   const googleLogin = async () => {
     try {
       console.log('🚀 Initiating Google OAuth login...');
@@ -283,7 +298,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ authState, setAuthState, login, register, logout, googleLogin, handleGoogleCallback, forgotPassword, resetPassword }}>
+    <AuthContext.Provider value={{ authState, setAuthState, login, register, logout, googleLogin, handleGoogleCallback, forgotPassword, resetPassword, doctorPasswordSet }}>
       {children}
     </AuthContext.Provider>
   );

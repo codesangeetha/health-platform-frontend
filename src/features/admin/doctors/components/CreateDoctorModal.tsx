@@ -159,10 +159,9 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
 `;
 
 export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: () => void; }) {
-  const [form, setForm] = useState<CreateDoctorPayload & { confirmPassword?: string }>({
+  const [form, setForm] = useState<CreateDoctorPayload>({
+    userType: 'doctor',
     email: '',
-    password: '',
-    confirmPassword: '',
     firstName: '',
     lastName: '',
     phone: '',
@@ -174,6 +173,11 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
     licenseNumber: '',
     experience: '',
     consultationFee: undefined,
+    availableDays: [],
+    availableTime: {
+      start: '',
+      end: '',
+    },
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -227,18 +231,6 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
     if (!s) return 'Email is required.';
     const emailRe = /.+@.+\..+/;
     if (!emailRe.test(s)) return 'Enter a valid email address.';
-    return undefined;
-  };
-
-  const validatePassword = (v: string) => {
-    if (!v) return 'Password is required.';
-    if (v.length < 8) return 'Password must be at least 8 characters.';
-    return undefined;
-  };
-
-  const validateConfirmPassword = (v: string, password: string) => {
-    if (!v) return 'Please confirm your password.';
-    if (v !== password) return 'Passwords do not match.';
     return undefined;
   };
 
@@ -319,22 +311,48 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
     return undefined;
   };
 
-  const validateField = (name: keyof typeof form, value: string): string | undefined => {
+  const validateAvailableDays = (v: string[]) => {
+    if (!v || v.length === 0) return 'At least one available day must be selected.';
+    return undefined;
+  };
+
+  const validateAvailableTimeStart = (v: string) => {
+    if (!v) return 'Start time is required.';
+    const timeRe = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    if (!timeRe.test(v)) return 'Start time must be in HH:MM format (24-hour).';
+    return undefined;
+  };
+
+  const validateAvailableTimeEnd = (v: string) => {
+    if (!v) return 'End time is required.';
+    const timeRe = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    if (!timeRe.test(v)) return 'End time must be in HH:MM format (24-hour).';
+    return undefined;
+  };
+
+const validateField = (name: keyof typeof form, value: string | string[] | { start: string; end: string }): string | undefined => {
     switch (name) {
-      case 'email': return validateEmail(value);
-      case 'password': return validatePassword(value);
-      case 'confirmPassword': return validateConfirmPassword(value, form.password);
-      case 'firstName': return validateFirstName(value);
-      case 'lastName': return validateLastName(value);
-      case 'phone': return validatePhone(value);
-      case 'whatsapp': return validateWhatsapp(value);
-      case 'dateOfBirth': return validateDOB(value);
-      case 'specialization': return validateSpecialization(value);
-      case 'qualification': return validateQualification(value);
-      case 'hospital': return validateHospital(value);
-      case 'licenseNumber': return validateLicenseNumber(value);
-      case 'experience': return validateExperience(value);
-      case 'consultationFee': return validateConsultationFee(value);
+      case 'email': return validateEmail(value as string);
+      case 'firstName': return validateFirstName(value as string);
+      case 'lastName': return validateLastName(value as string);
+      case 'phone': return validatePhone(value as string);
+      case 'whatsapp': return validateWhatsapp(value as string);
+      case 'dateOfBirth': return validateDOB(value as string);
+      case 'specialization': return validateSpecialization(value as string);
+      case 'qualification': return validateQualification(value as string);
+      case 'hospital': return validateHospital(value as string);
+      case 'licenseNumber': return validateLicenseNumber(value as string);
+      case 'experience': return validateExperience(value as string);
+      case 'consultationFee': return validateConsultationFee(value as string);
+      case 'availableDays': return validateAvailableDays(value as string[]);
+      case 'availableTime': {
+        if (typeof value === 'object' && value !== null && 'start' in value && 'end' in value) {
+          const startError = validateAvailableTimeStart(value.start);
+          const endError = validateAvailableTimeEnd(value.end);
+          return startError || endError;
+        }
+        return 'Available time is required.';
+      }
       default: return undefined;
     }
   };
@@ -342,8 +360,6 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
   const validateForm = () => {
     const errors: Record<string, string> = {
       email: validateEmail(form.email) || '',
-      password: validatePassword(form.password) || '',
-      confirmPassword: validateConfirmPassword(form.confirmPassword || '', form.password) || '',
       firstName: validateFirstName(form.firstName) || '',
       lastName: validateLastName(form.lastName) || '',
       phone: validatePhone(form.phone) || '',
@@ -355,37 +371,12 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
       licenseNumber: validateLicenseNumber(form.licenseNumber || '') || '',
       experience: validateExperience(form.experience?.toString() || '') || '',
       consultationFee: validateConsultationFee(form.consultationFee?.toString() || '') || '',
+      availableDays: validateAvailableDays(form.availableDays || []) || '',
+      availableTime: validateField('availableTime', form.availableTime || '') || '',
     };
 
     setFieldErrors(errors);
     return Object.values(errors).every((m) => !m);
-  };
-
-  const validate = () => {
-    const errors: Record<string, string> = {};
-    const emailRe = /.+@.+\..+/;
-    if (!form.email) errors.email = 'Email is required';
-    else if (!emailRe.test(form.email)) errors.email = 'Enter a valid email';
-
-    if (!form.password) errors.password = 'Password is required';
-    else if (form.password.length < 8) errors.password = 'Password must be at least 8 characters';
-
-    if (!form.firstName) errors.firstName = 'First name is required';
-    if (!form.lastName) errors.lastName = 'Last name is required';
-
-    const phoneRe = /^[0-9+][0-9\s\-()]{6,14}$/;
-    if (!form.phone) errors.phone = 'Phone is required';
-    else if (!phoneRe.test(form.phone)) errors.phone = 'Enter a valid phone number';
-
-    if (!form.dateOfBirth) errors.dateOfBirth = 'Date of birth is required';
-    else if (form.dateOfBirth > todayStr) errors.dateOfBirth = 'Date of birth cannot be in the future';
-
-    if (!form.specialization) errors.specialization = 'Specialization is required';
-
-    if (form.experience !== '' && Number(form.experience) < 0) errors.experience = 'Experience cannot be negative';
-    if (typeof form.consultationFee === 'number' && form.consultationFee < 0) errors.consultationFee = 'Consultation fee cannot be negative';
-
-    return errors;
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -438,7 +429,7 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
@@ -448,8 +439,6 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
       // Mark all as touched so errors are visible
       setTouched({
         email: true,
-        password: true,
-        confirmPassword: true,
         firstName: true,
         lastName: true,
         phone: true,
@@ -461,6 +450,8 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
         licenseNumber: true,
         experience: true,
         consultationFee: true,
+        availableDays: true,
+        availableTime: true,
       });
       setError('Please fix the highlighted fields');
       return;
@@ -469,8 +460,8 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
     try {
       setSubmitting(true);
       const payload: CreateDoctorPayload = {
+        userType: 'doctor',
         email: form.email.trim(),
-        password: form.password,
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         phone: form.phone.trim(),
@@ -482,13 +473,32 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
         licenseNumber: form.licenseNumber?.trim() || undefined,
         experience: form.experience ? Number(form.experience) : undefined,
         consultationFee: form.consultationFee ? Number(form.consultationFee) : undefined,
+        availableDays: form.availableDays || [],
+        availableTime: form.availableTime,
       };
 
       await createDoctor(payload);
 
       // Clear form on successful submission
       setForm({
-        email: '', password: '', confirmPassword: '', firstName: '', lastName: '', phone: '', whatsapp: '', dateOfBirth: '', specialization: '', qualification: '', hospital: '', licenseNumber: '', experience: '', consultationFee: undefined,
+        userType: 'doctor',
+        email: '',
+        firstName: '',
+        lastName: '',
+        phone: '',
+        whatsapp: '',
+        dateOfBirth: '',
+        specialization: '',
+        qualification: '',
+        hospital: '',
+        licenseNumber: '',
+        experience: '',
+        consultationFee: undefined,
+        availableDays: [],
+        availableTime: {
+          start: '',
+          end: '',
+        },
       });
       setFieldErrors({});
       setTouched({});
@@ -511,7 +521,24 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
 
   const resetAndClose = () => {
     setForm({
-      email: '', password: '', confirmPassword: '', firstName: '', lastName: '', phone: '', whatsapp: '', dateOfBirth: '', specialization: '', qualification: '', hospital: '', licenseNumber: '', experience: '', consultationFee: undefined,
+      userType: 'doctor',
+      email: '',
+      firstName: '',
+      lastName: '',
+      phone: '',
+      whatsapp: '',
+      dateOfBirth: '',
+      specialization: '',
+      qualification: '',
+      hospital: '',
+      licenseNumber: '',
+      experience: '',
+      consultationFee: undefined,
+      availableDays: [],
+      availableTime: {
+        start: '',
+        end: '',
+      },
     });
     setError(null);
     setSuccess(null);
@@ -553,7 +580,7 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
               </Label>
             </InputRow>
 
-            <InputRow>
+<InputRow>
               <Label>
                 Email*
                 <Input
@@ -566,35 +593,6 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
                   placeholder="doctor@example.com"
                 />
                 {fieldErrors.email && <ErrorText>{fieldErrors.email}</ErrorText>}
-              </Label>
-              <Label>
-                Password*
-                <Input
-                  type="password"
-                  aria-invalid={!!fieldErrors.password}
-                  value={form.password}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  name="password"
-                  placeholder="••••••••"
-                />
-                {fieldErrors.password && <ErrorText>{fieldErrors.password}</ErrorText>}
-              </Label>
-            </InputRow>
-
-            <InputRow>
-              <Label>
-                Confirm Password*
-                <Input
-                  type="password"
-                  aria-invalid={!!fieldErrors.confirmPassword}
-                  value={form.confirmPassword}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  name="confirmPassword"
-                  placeholder="••••••••"
-                />
-                {fieldErrors.confirmPassword && <ErrorText>{fieldErrors.confirmPassword}</ErrorText>}
               </Label>
             </InputRow>
 
@@ -749,6 +747,105 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
                   name="consultationFee"
                 />
                 {fieldErrors.consultationFee && <ErrorText>{fieldErrors.consultationFee}</ErrorText>}
+              </Label>
+            </InputRow>
+
+            <InputRow>
+              <Label>
+                Available Days*
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '6px' }}>
+                  {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
+                    <label
+                      key={day}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        padding: '4px 8px',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        background: form.availableDays?.includes(day) ? '#e3f2fd' : '#fff',
+                        fontSize: '12px',
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={form.availableDays?.includes(day) || false}
+                        onChange={(e) => {
+                          const currentDays = form.availableDays || [];
+                          const updatedDays = e.target.checked
+                            ? [...currentDays, day]
+                            : currentDays.filter((d) => d !== day);
+                          setField('availableDays', updatedDays);
+                          if (touched.availableDays) {
+                            setFieldErrors((prev) => ({
+                              ...prev,
+                              availableDays: validateAvailableDays(updatedDays) || '',
+                            }));
+                          }
+                        }}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      {day}
+                    </label>
+                  ))}
+                </div>
+                {fieldErrors.availableDays && <ErrorText>{fieldErrors.availableDays}</ErrorText>}
+              </Label>
+            </InputRow>
+
+            <InputRow>
+              <Label>
+                Available Time - Start*
+                <Input
+                  type="time"
+                  aria-invalid={!!fieldErrors.availableTime}
+                  value={form.availableTime?.start || ''}
+                  onChange={(e) => {
+                    setField('availableTime', { ...form.availableTime, start: e.target.value });
+                    if (touched.availableTime) {
+                      setFieldErrors((prev) => ({
+                        ...prev,
+                        availableTime: validateField('availableTime', { start: e.target.value, end: form.availableTime?.end || '' }) || '',
+                      }));
+                    }
+                  }}
+                  onBlur={() => {
+                    setTouched((t) => ({ ...t, availableTime: true }));
+                    setFieldErrors((prev) => ({
+                      ...prev,
+                      availableTime: validateField('availableTime', form.availableTime || '') || '',
+                    }));
+                  }}
+                  name="availableTimeStart"
+                />
+                {fieldErrors.availableTime && <ErrorText>{fieldErrors.availableTime}</ErrorText>}
+              </Label>
+              <Label>
+                Available Time - End*
+                <Input
+                  type="time"
+                  aria-invalid={!!fieldErrors.availableTime}
+                  value={form.availableTime?.end || ''}
+                  onChange={(e) => {
+                    setField('availableTime', { ...form.availableTime, end: e.target.value });
+                    if (touched.availableTime) {
+                      setFieldErrors((prev) => ({
+                        ...prev,
+                        availableTime: validateField('availableTime', { start: form.availableTime?.start || '', end: e.target.value }) || '',
+                      }));
+                    }
+                  }}
+                  onBlur={() => {
+                    setTouched((t) => ({ ...t, availableTime: true }));
+                    setFieldErrors((prev) => ({
+                      ...prev,
+                      availableTime: validateField('availableTime', form.availableTime || '') || '',
+                    }));
+                  }}
+                  name="availableTimeEnd"
+                />
               </Label>
             </InputRow>
           </Content>
