@@ -1,9 +1,10 @@
 /** @jsxImportSource @emotion/react */
 import { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
-import { createDoctor, type CreateDoctorPayload } from '../../../../services/admin/doctors.service';
+import { updateDoctor } from '../../../../services/admin/doctors.service';
 import { getSpecializations } from '../../../../services/admin/specializations.service';
 import { ApiError } from '../../../../services/auth/auth.service';
+import type { Doctor } from '../../../../services/admin/doctors.service';
 import type { Specialization } from '../../../../types/specialization/specialization.types';
 
 const Backdrop = styled.div<{ open: boolean }>`
@@ -158,34 +159,71 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
   }
 `;
 
-export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: () => void; }) {
-  const [form, setForm] = useState<CreateDoctorPayload & { confirmPassword?: string }>({
-    email: '',
-    password: '',
-    confirmPassword: '',
+interface EditFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  specialization: string;
+  qualification: string;
+  hospital: string;
+  experience: string;
+  consultationFee: string;
+}
+
+export function EditDoctorModal({ 
+  open, 
+  onClose, 
+  onUpdated, 
+  doctor 
+}: { 
+  open: boolean; 
+  onClose: () => void; 
+  onUpdated: () => void; 
+  doctor: Doctor | null;
+}) {
+  const [form, setForm] = useState<EditFormData>({
     firstName: '',
     lastName: '',
+    email: '',
     phone: '',
-    whatsapp: '',
-    dateOfBirth: '',
     specialization: '',
     qualification: '',
     hospital: '',
-    licenseNumber: '',
     experience: '',
-    consultationFee: undefined,
+    consultationFee: '',
   });
+  
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const [sameAsPhone, setSameAsPhone] = useState(false);
   const [specializations, setSpecializations] = useState<Specialization[]>([]);
   const [specializationsLoading, setSpecializationsLoading] = useState(false);
-  const todayStr = new Date().toISOString().slice(0, 10);
 
-  // Fetch specializations when component mounts
+  // Initialize form with doctor data when modal opens
+  useEffect(() => {
+    if (open && doctor) {
+      setForm({
+        firstName: doctor.firstName || '',
+        lastName: doctor.lastName || '',
+        email: doctor.email || '',
+        phone: doctor.phone || '',
+        specialization: doctor.specialization || '',
+        qualification: doctor.qualification || '',
+        hospital: doctor.hospital || '',
+        experience: doctor.experience?.toString() || '',
+        consultationFee: doctor.consultationFee?.toString() || '',
+      });
+      setError(null);
+      setSuccess(null);
+      setFieldErrors({});
+      setTouched({});
+    }
+  }, [open, doctor]);
+
+  // Fetch specializations when component opens
   useEffect(() => {
     const fetchSpecializations = async () => {
       try {
@@ -207,7 +245,7 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
     }
   }, [open]);
 
-  const setField = (key: keyof typeof form, value: any) => {
+  const setField = (key: keyof EditFormData, value: string) => {
     setForm(prev => ({ ...prev, [key]: value }));
     if (fieldErrors[key as string]) {
       setFieldErrors(prev => {
@@ -227,18 +265,6 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
     if (!s) return 'Email is required.';
     const emailRe = /.+@.+\..+/;
     if (!emailRe.test(s)) return 'Enter a valid email address.';
-    return undefined;
-  };
-
-  const validatePassword = (v: string) => {
-    if (!v) return 'Password is required.';
-    if (v.length < 8) return 'Password must be at least 8 characters.';
-    return undefined;
-  };
-
-  const validateConfirmPassword = (v: string, password: string) => {
-    if (!v) return 'Please confirm your password.';
-    if (v !== password) return 'Passwords do not match.';
     return undefined;
   };
 
@@ -264,20 +290,6 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
     return undefined;
   };
 
-  const validateWhatsapp = (v: string) => {
-    const s = v.trim();
-    if (!s) return 'WhatsApp number is required.';
-    const whatsappRe = /^\d{10}$/;
-    if (!whatsappRe.test(s)) return 'Enter a valid 10-digit WhatsApp number.';
-    return undefined;
-  };
-
-  const validateDOB = (v: string) => {
-    if (!v) return 'Date of birth is required.';
-    if (v > todayStr) return 'Date of birth cannot be in the future.';
-    return undefined;
-  };
-
   const validateSpecialization = (v: string) => {
     const s = v.trim();
     if (!s) return 'Specialization is required.';
@@ -298,13 +310,6 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
     return undefined;
   };
 
-  const validateLicenseNumber = (v: string) => {
-    const s = v.trim();
-    if (!s) return 'License number is required.';
-    if (!/^[A-Za-z0-9]+$/.test(s)) return 'License number can only contain letters and numbers.';
-    return undefined;
-  };
-
   const validateExperience = (v: string) => {
     if (!v) return 'Experience is required.';
     if (isNaN(Number(v))) return 'Experience must be a number.';
@@ -319,20 +324,15 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
     return undefined;
   };
 
-  const validateField = (name: keyof typeof form, value: string): string | undefined => {
+  const validateField = (name: keyof EditFormData, value: string): string | undefined => {
     switch (name) {
       case 'email': return validateEmail(value);
-      case 'password': return validatePassword(value);
-      case 'confirmPassword': return validateConfirmPassword(value, form.password);
       case 'firstName': return validateFirstName(value);
       case 'lastName': return validateLastName(value);
       case 'phone': return validatePhone(value);
-      case 'whatsapp': return validateWhatsapp(value);
-      case 'dateOfBirth': return validateDOB(value);
       case 'specialization': return validateSpecialization(value);
       case 'qualification': return validateQualification(value);
       case 'hospital': return validateHospital(value);
-      case 'licenseNumber': return validateLicenseNumber(value);
       case 'experience': return validateExperience(value);
       case 'consultationFee': return validateConsultationFee(value);
       default: return undefined;
@@ -342,67 +342,27 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
   const validateForm = () => {
     const errors: Record<string, string> = {
       email: validateEmail(form.email) || '',
-      password: validatePassword(form.password) || '',
-      confirmPassword: validateConfirmPassword(form.confirmPassword || '', form.password) || '',
       firstName: validateFirstName(form.firstName) || '',
       lastName: validateLastName(form.lastName) || '',
       phone: validatePhone(form.phone) || '',
-      whatsapp: validateWhatsapp(form.whatsapp || '') || '',
-      dateOfBirth: validateDOB(form.dateOfBirth) || '',
       specialization: validateSpecialization(form.specialization) || '',
-      qualification: validateQualification(form.qualification || '') || '',
-      hospital: validateHospital(form.hospital || '') || '',
-      licenseNumber: validateLicenseNumber(form.licenseNumber || '') || '',
-      experience: validateExperience(form.experience?.toString() || '') || '',
-      consultationFee: validateConsultationFee(form.consultationFee?.toString() || '') || '',
+      qualification: validateQualification(form.qualification) || '',
+      hospital: validateHospital(form.hospital) || '',
+      experience: validateExperience(form.experience) || '',
+      consultationFee: validateConsultationFee(form.consultationFee) || '',
     };
 
     setFieldErrors(errors);
     return Object.values(errors).every((m) => !m);
   };
 
-  const validate = () => {
-    const errors: Record<string, string> = {};
-    const emailRe = /.+@.+\..+/;
-    if (!form.email) errors.email = 'Email is required';
-    else if (!emailRe.test(form.email)) errors.email = 'Enter a valid email';
-
-    if (!form.password) errors.password = 'Password is required';
-    else if (form.password.length < 8) errors.password = 'Password must be at least 8 characters';
-
-    if (!form.firstName) errors.firstName = 'First name is required';
-    if (!form.lastName) errors.lastName = 'Last name is required';
-
-    const phoneRe = /^[0-9+][0-9\s\-()]{6,14}$/;
-    if (!form.phone) errors.phone = 'Phone is required';
-    else if (!phoneRe.test(form.phone)) errors.phone = 'Enter a valid phone number';
-
-    if (!form.dateOfBirth) errors.dateOfBirth = 'Date of birth is required';
-    else if (form.dateOfBirth > todayStr) errors.dateOfBirth = 'Date of birth cannot be in the future';
-
-    if (!form.specialization) errors.specialization = 'Specialization is required';
-
-    if (form.experience !== '' && Number(form.experience) < 0) errors.experience = 'Experience cannot be negative';
-    if (typeof form.consultationFee === 'number' && form.consultationFee < 0) errors.consultationFee = 'Consultation fee cannot be negative';
-
-    return errors;
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+    setField(name as keyof EditFormData, value);
 
-    const key = name as keyof typeof form;
+    const key = name as keyof EditFormData;
     if (touched[key]) {
       setFieldErrors((prev) => ({ ...prev, [key]: validateField(key, value) || '' }));
-    }
-
-    // If phone number changes and "same as phone" is checked, update WhatsApp
-    if (name === 'phone' && sameAsPhone) {
-      setForm(prev => ({ ...prev, whatsapp: value }));
-      if (touched.whatsapp) {
-        setFieldErrors((prev) => ({ ...prev, whatsapp: validateField('whatsapp', value) || '' }));
-      }
     }
 
     // Clear success message when user starts editing
@@ -411,26 +371,24 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
     }
   };
 
-  const handleSameAsPhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const checked = e.target.checked;
-    setSameAsPhone(checked);
+  const handleSpecializationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const { value } = e.target;
+    setField('specialization', value);
     
-    if (checked) {
-      // Copy phone number to WhatsApp field
-      setForm(prev => ({ ...prev, whatsapp: prev.phone }));
-      // Clear WhatsApp field error if phone is valid
-      if (form.phone) {
-        const phoneError = validatePhone(form.phone);
-        if (!phoneError) {
-          setFieldErrors(prev => ({ ...prev, whatsapp: '' }));
-        }
-      }
+    const key = 'specialization';
+    if (touched[key]) {
+      setFieldErrors((prev) => ({ ...prev, [key]: validateField(key, value) || '' }));
+    }
+
+    // Clear success message when user starts editing
+    if (success) {
+      setSuccess(null);
     }
   };
 
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    const key = name as keyof typeof form;
+    const key = name as keyof EditFormData;
     setTouched((t) => ({ ...t, [key]: true }));
     setFieldErrors((prev) => ({
       ...prev,
@@ -443,22 +401,22 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
     setError(null);
     setSuccess(null);
 
+    if (!doctor) {
+      setError('No doctor data found');
+      return;
+    }
+
     const isValid = validateForm();
     if (!isValid) {
       // Mark all as touched so errors are visible
       setTouched({
         email: true,
-        password: true,
-        confirmPassword: true,
         firstName: true,
         lastName: true,
         phone: true,
-        whatsapp: true,
-        dateOfBirth: true,
         specialization: true,
         qualification: true,
         hospital: true,
-        licenseNumber: true,
         experience: true,
         consultationFee: true,
       });
@@ -468,41 +426,31 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
 
     try {
       setSubmitting(true);
-      const payload: CreateDoctorPayload = {
-        email: form.email.trim(),
-        password: form.password,
+      const payload: any = {
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
+        email: form.email.trim(),
         phone: form.phone.trim(),
-        whatsapp: form.whatsapp?.trim() || undefined,
-        dateOfBirth: form.dateOfBirth, // YYYY-MM-DD
         specialization: form.specialization.trim(),
-        qualification: form.qualification?.trim() || undefined,
-        hospital: form.hospital?.trim() || undefined,
-        licenseNumber: form.licenseNumber?.trim() || undefined,
-        experience: form.experience ? Number(form.experience) : undefined,
-        consultationFee: form.consultationFee ? Number(form.consultationFee) : undefined,
+        qualification: form.qualification.trim(),
+        hospital: form.hospital.trim(),
+        experience: Number(form.experience),
+        consultationFee: Number(form.consultationFee),
       };
 
-      await createDoctor(payload);
+      await updateDoctor(doctor.id, payload);
 
-      // Clear form on successful submission
-      setForm({
-        email: '', password: '', confirmPassword: '', firstName: '', lastName: '', phone: '', whatsapp: '', dateOfBirth: '', specialization: '', qualification: '', hospital: '', licenseNumber: '', experience: '', consultationFee: undefined,
-      });
-      setFieldErrors({});
-      setTouched({});
-      setSuccess('Doctor created successfully!');
+      setSuccess('Doctor updated successfully!');
 
-      // Keep modal open for 2 seconds to show success message, then close
+      // Close modal after 2 seconds to show success message
       setTimeout(() => {
-        onCreated();
+        onUpdated();
       }, 2000);
     } catch (err: any) {
       if (err instanceof ApiError) {
         setError(err.message);
       } else {
-        setError(err?.message || 'Failed to create doctor');
+        setError(err?.message || 'Failed to update doctor');
       }
     } finally {
       setSubmitting(false);
@@ -510,21 +458,33 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
   };
 
   const resetAndClose = () => {
-    setForm({
-      email: '', password: '', confirmPassword: '', firstName: '', lastName: '', phone: '', whatsapp: '', dateOfBirth: '', specialization: '', qualification: '', hospital: '', licenseNumber: '', experience: '', consultationFee: undefined,
-    });
     setError(null);
     setSuccess(null);
     setFieldErrors({});
     setTouched({});
-    setSameAsPhone(false);
     onClose();
   };
 
+  if (!doctor) {
+    return (
+      <Backdrop open={open}>
+        <Modal role="dialog" aria-modal="true" aria-label="Edit Doctor">
+          <Header>Edit Doctor</Header>
+          <Content>
+            <ErrorBox>No doctor data found</ErrorBox>
+          </Content>
+          <Actions>
+            <Button type="button" variant="secondary" onClick={resetAndClose}>Close</Button>
+          </Actions>
+        </Modal>
+      </Backdrop>
+    );
+  }
+
   return (
     <Backdrop open={open}>
-      <Modal role="dialog" aria-modal="true" aria-label="Create Doctor">
-        <Header>Create Doctor</Header>
+      <Modal role="dialog" aria-modal="true" aria-label="Edit Doctor">
+        <Header>Edit Doctor</Header>
         <Form onSubmit={handleSubmit}>
           <Content>
             {error && <ErrorBox>{error}</ErrorBox>}
@@ -568,38 +528,6 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
                 {fieldErrors.email && <ErrorText>{fieldErrors.email}</ErrorText>}
               </Label>
               <Label>
-                Password*
-                <Input
-                  type="password"
-                  aria-invalid={!!fieldErrors.password}
-                  value={form.password}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  name="password"
-                  placeholder="••••••••"
-                />
-                {fieldErrors.password && <ErrorText>{fieldErrors.password}</ErrorText>}
-              </Label>
-            </InputRow>
-
-            <InputRow>
-              <Label>
-                Confirm Password*
-                <Input
-                  type="password"
-                  aria-invalid={!!fieldErrors.confirmPassword}
-                  value={form.confirmPassword}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  name="confirmPassword"
-                  placeholder="••••••••"
-                />
-                {fieldErrors.confirmPassword && <ErrorText>{fieldErrors.confirmPassword}</ErrorText>}
-              </Label>
-            </InputRow>
-
-            <InputRow>
-              <Label>
                 Phone*
                 <Input
                   aria-invalid={!!fieldErrors.phone}
@@ -612,46 +540,6 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
                 />
                 {fieldErrors.phone && <ErrorText>{fieldErrors.phone}</ErrorText>}
               </Label>
-              <Label>
-                WhatsApp*
-                <Input
-                  aria-invalid={!!fieldErrors.whatsapp}
-                  value={form.whatsapp}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  name="whatsapp"
-                  pattern="^\d{10}$"
-                  title="Enter a valid 10-digit WhatsApp number"
-                  placeholder="Enter WhatsApp number"
-                  disabled={sameAsPhone}
-                />
-                {fieldErrors.whatsapp && <ErrorText>{fieldErrors.whatsapp}</ErrorText>}
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', fontSize: '12px', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={sameAsPhone}
-                    onChange={handleSameAsPhoneChange}
-                    style={{ cursor: 'pointer' }}
-                  />
-                  Same as phone number
-                </label>
-              </Label>
-            </InputRow>
-
-            <InputRow>
-              <Label>
-                Date of Birth* (YYYY-MM-DD)
-                <Input
-                  type="date"
-                  aria-invalid={!!fieldErrors.dateOfBirth}
-                  value={form.dateOfBirth}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  name="dateOfBirth"
-                  max={todayStr}
-                />
-                {fieldErrors.dateOfBirth && <ErrorText>{fieldErrors.dateOfBirth}</ErrorText>}
-              </Label>
             </InputRow>
 
 <InputRow>
@@ -660,11 +548,8 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
                 <Select
                   aria-invalid={!!fieldErrors.specialization}
                   value={form.specialization}
-                  onChange={(e) => {
-                    setField('specialization', e.target.value);
-                    const key = 'specialization' as keyof typeof form;
-                    setFieldErrors(prev => ({ ...prev, [key]: validateField(key, e.target.value) || '' }));
-                  }}
+                  onChange={handleSpecializationChange}
+                  onBlur={handleBlur}
                   name="specialization"
                 >
                   <option value="">Select a specialization</option>
@@ -708,21 +593,6 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
                 {fieldErrors.hospital && <ErrorText>{fieldErrors.hospital}</ErrorText>}
               </Label>
               <Label>
-                License Number*
-                <Input
-                  aria-invalid={!!fieldErrors.licenseNumber}
-                  value={form.licenseNumber}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  name="licenseNumber"
-                  placeholder="MD123456"
-                />
-                {fieldErrors.licenseNumber && <ErrorText>{fieldErrors.licenseNumber}</ErrorText>}
-              </Label>
-            </InputRow>
-
-            <InputRow>
-              <Label>
                 Experience (years)*
                 <Input
                   type="number"
@@ -736,6 +606,9 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
                 />
                 {fieldErrors.experience && <ErrorText>{fieldErrors.experience}</ErrorText>}
               </Label>
+            </InputRow>
+
+            <InputRow>
               <Label>
                 Consultation Fee*
                 <Input
@@ -743,7 +616,7 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
                   min={0}
                   step={1}
                   aria-invalid={!!fieldErrors.consultationFee}
-                  value={form.consultationFee ?? ''}
+                  value={form.consultationFee}
                   onChange={handleChange}
                   onBlur={handleBlur}
                   name="consultationFee"
@@ -755,7 +628,7 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
           <Actions>
             {success && <SuccessBox>{success}</SuccessBox>}
             <Button type="button" variant="secondary" onClick={resetAndClose} disabled={submitting}>Cancel</Button>
-            <Button type="submit" disabled={submitting}>{submitting ? 'Creating...' : 'Create Doctor'}</Button>
+            <Button type="submit" disabled={submitting}>{submitting ? 'Updating...' : 'Update Doctor'}</Button>
           </Actions>
         </Form>
       </Modal>

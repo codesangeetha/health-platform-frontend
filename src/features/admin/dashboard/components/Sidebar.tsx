@@ -77,6 +77,7 @@ const Sidebar = () => {
       { label: 'Dashboard', icon: '📊', path: '/admin/dashboard' },
       { label: 'Doctors', icon: '👨‍⚕️', path: '/admin/doctors' },
       { label: 'Patients', icon: '🏥', path: '/admin/patients' },
+      { label: 'Specializations', icon: '🎯', path: '/admin/specializations' },
       { label: 'Medicine Categories', icon: '🏷️', path: '/admin/categories' },
       { label: 'Lab Test Categories', icon: '🧪', path: '/admin/lab-test-categories' },
       { label: 'Lab Tests', icon: '🔬', path: '/admin/lab-tests' },
