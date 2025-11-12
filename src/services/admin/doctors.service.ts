@@ -3,6 +3,7 @@ import { getAuthToken, ApiError, handleApiError } from '../auth/auth.service';
 
 const API_ENDPOINTS = {
   DOCTORS: '/api/v1/admin/users',
+  REGISTER_DOCTOR: '/api/v1/auth/register',
   UPDATE_DOCTOR: (id: string) => `/api/v1/doctors/${id}`,
   DELETE_DOCTOR: (id: string) => `/api/v1/doctors/${id}`,
   VERIFY_DOCTOR: (id: string) => `/api/v1/admin/users/${id}/status`,
@@ -148,8 +149,8 @@ export const getDoctors = async (params: GetDoctorsParams = {}): Promise<Doctors
 };
 
 export interface CreateDoctorPayload {
+  userType?: string;
   email: string;
-  password: string;
   firstName: string;
   lastName: string;
   phone: string;
@@ -161,6 +162,11 @@ export interface CreateDoctorPayload {
   licenseNumber?: string;
   experience?: number | string;
   consultationFee?: number;
+  availableDays?: string[];
+  availableTime?: {
+    start: string;
+    end: string;
+  };
 }
 
 export type CreateDoctorResponse = ApiResponse<{
@@ -175,7 +181,7 @@ export const createDoctor = async (payload: CreateDoctorPayload): Promise<Create
     }
 
     const response = await fetch(
-      `${BASE_URL}${API_ENDPOINTS.DOCTORS}`,
+      `${BASE_URL}${API_ENDPOINTS.REGISTER_DOCTOR}`,
       {
         method: 'POST',
         headers: {

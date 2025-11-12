@@ -144,6 +144,29 @@ export class AuthService {
     }
   }
 
+  static async doctorPasswordSet(token: string, newPassword: string, confirmPassword: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await fetch(`${API_URL}/auth/doctor-password-set`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token, newPassword, confirmPassword }),
+      });
+
+      const data = await response.json();
+      const message = (data && data.message) ? data.message : 'Doctor password set processed.';
+
+      if (!response.ok) {
+        throw new Error(message || 'Setting doctor password failed');
+      }
+
+      return { success: true, message };
+    } catch (error: any) {
+      throw new Error(error?.message || 'Setting doctor password failed');
+    }
+  }
+
   static async register(userData: RegisterData): Promise<AuthResponseData> {
     try {
       const response = await fetch(`${API_URL}/auth/register`, {
