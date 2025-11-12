@@ -3,6 +3,8 @@ import { getAuthToken, ApiError, handleApiError } from '../auth/auth.service';
 
 const API_ENDPOINTS = {
   DOCTORS: '/api/v1/admin/users',
+  UPDATE_DOCTOR: (id: string) => `/api/v1/doctors/${id}`,
+  DELETE_DOCTOR: (id: string) => `/api/v1/doctors/${id}`,
   VERIFY_DOCTOR: (id: string) => `/api/v1/admin/users/${id}/status`,
   STATUS_DOCTOR: (id: string) => `/api/v1/admin/users/${id}/status`,
 } as const;
@@ -233,5 +235,94 @@ export const updateDoctorStatus = async (
       throw error;
     }
     throw new ApiError('Failed to update doctor status', 500);
+  }
+};
+
+export type UpdateDoctorResponse = ApiResponse<{
+  user: Doctor;
+}>;
+
+export interface UpdateDoctorPayload {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  specialization?: string;
+  qualification?: string;
+  hospital?: string;
+  experience?: number;
+  consultationFee?: number;
+}
+
+export const updateDoctor = async (
+  doctorId: string,
+  payload: UpdateDoctorPayload
+): Promise<UpdateDoctorResponse> => {
+  try {
+    const token = getAuthToken();
+    if (!token) {
+      throw new ApiError('No authentication token found', 401);
+    }
+
+    const response = await fetch(
+      `${BASE_URL}${API_ENDPOINTS.UPDATE_DOCTOR(doctorId)}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      }
+    );
+
+    if (!response.ok) {
+      await handleApiError(response);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError('Failed to update doctor', 500);
+  }
+};
+
+export type DeleteDoctorResponse = ApiResponse<{
+  doctorId: string;
+  deletedAt: string;
+}>;
+
+export const deleteDoctor = async (doctorId: string): Promise<DeleteDoctorResponse> => {
+  try {
+    const token = getAuthToken();
+    if (!token) {
+      throw new ApiError('No authentication token found', 401);
+    }
+
+    const response = await fetch(
+      `${BASE_URL}${API_ENDPOINTS.DELETE_DOCTOR(doctorId)}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+
+    if (!response.ok) {
+      await handleApiError(response);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError('Failed to delete doctor', 500);
   }
 };

@@ -3,6 +3,7 @@ import { getAuthToken, ApiError, handleApiError } from '../auth/auth.service';
 
 const API_ENDPOINTS = {
   USERS: '/api/v1/admin/users',
+  PATIENTS: '/api/v1/admin/patients',
 } as const;
 
 export interface EmergencyContact {
@@ -100,5 +101,67 @@ export const getPatients = async (params: GetPatientsParams = {}): Promise<Patie
       throw error;
     }
     throw new ApiError('Failed to fetch patients list', 500);
+  }
+};
+
+export const updatePatient = async (patientId: string, data: Partial<Patient>): Promise<Patient> => {
+  try {
+    const token = getAuthToken();
+    if (!token) {
+      throw new ApiError('No authentication token found', 401);
+    }
+
+    const response = await fetch(
+      `${BASE_URL}${API_ENDPOINTS.PATIENTS}/${patientId}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(data)
+      }
+    );
+
+    if (!response.ok) {
+      await handleApiError(response);
+    }
+
+    const result = await response.json();
+    return result.data;
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError('Failed to update patient', 500);
+  }
+};
+
+export const deletePatient = async (patientId: string): Promise<void> => {
+  try {
+    const token = getAuthToken();
+    if (!token) {
+      throw new ApiError('No authentication token found', 401);
+    }
+
+    const response = await fetch(
+      `${BASE_URL}${API_ENDPOINTS.PATIENTS}/${patientId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+
+    if (!response.ok) {
+      await handleApiError(response);
+    }
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError('Failed to delete patient', 500);
   }
 };

@@ -4,6 +4,8 @@ import styled from '@emotion/styled';
 import type { Patient } from '../../../../services/admin/patients.service';
 import { getPatients } from '../../../../services/admin/patients.service';
 import { ApiError } from '../../../../services/auth/auth.service';
+import { EditPatientModal } from './EditPatientModal';
+import { DeletePatientDialog } from './DeletePatientDialog';
 
 const TableContainer = styled.div`
   background: #FFFFFF;
@@ -293,6 +295,8 @@ export const PatientList = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [filters, setFilters] = useState({
     firstName: '',
     lastName: '',
@@ -367,6 +371,30 @@ export const PatientList = () => {
   const handleViewDetails = (patient: Patient) => {
     setSelectedPatient(patient);
     setShowModal(true);
+  };
+
+  const handleEditPatient = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setShowEditModal(true);
+  };
+
+  const handleDeletePatient = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setShowDeleteDialog(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
+    setSelectedPatient(null);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setShowDeleteDialog(false);
+    setSelectedPatient(null);
+  };
+
+  const handleRefresh = () => {
+    fetchPatientsList(pagination.page);
   };
   
   const closeModal = () => {
@@ -507,6 +535,23 @@ export const PatientList = () => {
                       <ActionButton onClick={() => handleViewDetails(patient)}>
                         View
                       </ActionButton>
+                      <ActionButton onClick={() => handleEditPatient(patient)}>
+                        Edit
+                      </ActionButton>
+                      <ActionButton
+                        onClick={() => handleDeletePatient(patient)}
+                        style={{ borderColor: '#dc3545', color: '#dc3545' }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.backgroundColor = '#dc3545';
+                          e.currentTarget.style.color = '#FFFFFF';
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                          e.currentTarget.style.color = '#dc3545';
+                        }}
+                      >
+                        Delete
+                      </ActionButton>
                     </Td>
                   </tr>
                 ))
@@ -636,6 +681,24 @@ export const PatientList = () => {
             </DetailRow>
           </ModalContent>
         </ModalOverlay>
+      )}
+
+      {showEditModal && selectedPatient && (
+        <EditPatientModal
+          open={showEditModal}
+          onClose={handleCloseEditModal}
+          onUpdated={handleRefresh}
+          patient={selectedPatient}
+        />
+      )}
+
+      {showDeleteDialog && selectedPatient && (
+        <DeletePatientDialog
+          open={showDeleteDialog}
+          patient={selectedPatient}
+          onClose={handleCloseDeleteDialog}
+          onDeleted={handleRefresh}
+        />
       )}
     </div>
   );

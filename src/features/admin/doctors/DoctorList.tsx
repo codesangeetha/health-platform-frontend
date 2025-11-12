@@ -2,8 +2,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import styled from '@emotion/styled';
 import type { Doctor } from '../../../services/admin/doctors.service';
-import { getDoctors, verifyDoctor, updateDoctorStatus } from '../../../services/admin/doctors.service';
+import { getDoctors, updateDoctorStatus } from '../../../services/admin/doctors.service';
 import { ApiError } from '../../../services/auth/auth.service';
+import { EditDoctorModal } from './components/EditDoctorModal';
+import { DeleteDoctorDialog } from './components/DeleteDoctorDialog';
 
 const TableContainer = styled.div`
   background: #FFFFFF;
@@ -300,10 +302,12 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [verifyingId, setVerifyingId] = useState<string | null>(null);
-  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [deletingDoctor, setDeletingDoctor] = useState<Doctor | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [filters, setFilters] = useState({
     firstName: '',
     lastName: '',
@@ -327,11 +331,11 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
         createdAt: filters.createdAt || undefined
       });
 
-      // Sort doctors by creation date (newest first)
+      // Sort doctors by creation date (oldest first)
       const sortedDoctors = response.data.users.sort((a, b) => {
         const dateA = new Date(a.createdAt).getTime();
         const dateB = new Date(b.createdAt).getTime();
-        return dateB - dateA; // Descending order (newest first)
+        return dateA - dateB; // Ascending order (oldest first)
       });
 
       setDoctors(sortedDoctors);
@@ -378,40 +382,6 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
     fetchDoctorsList(pagination.page);
   }, [pagination.page, fetchDoctorsList, refreshKey]);
 
-  const handleVerify = async (doctorId: string) => {
-    try {
-      setVerifyingId(doctorId);
-      await verifyDoctor(doctorId);
-      await fetchDoctorsList(pagination.page);
-    } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError('Failed to verify doctor');
-      }
-      console.error('Error verifying doctor:', err);
-    } finally {
-      setVerifyingId(null);
-    }
-  };
-
-  const handleToggleStatus = async (doctorId: string, isVerified: boolean) => {
-    try {
-      setStatusUpdatingId(doctorId);
-      await updateDoctorStatus(doctorId, isVerified);
-      await fetchDoctorsList(pagination.page);
-    } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError('Failed to update doctor status');
-      }
-      console.error('Error updating doctor status:', err);
-    } finally {
-      setStatusUpdatingId(null);
-    }
-  };
-
   const handleViewDetails = (doctor: Doctor) => {
     setSelectedDoctor(doctor);
     setShowModal(true);
@@ -420,6 +390,36 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
   const closeModal = () => {
     setShowModal(false);
     setSelectedDoctor(null);
+  };
+
+  const handleEdit = (doctor: Doctor) => {
+    setEditingDoctor(doctor);
+    setShowEditModal(true);
+  };
+
+  const handleDelete = (doctor: Doctor) => {
+    setDeletingDoctor(doctor);
+    setShowDeleteDialog(true);
+  };
+
+  const closeEditModal = () => {
+    setShowEditModal(false);
+    setEditingDoctor(null);
+  };
+
+  const closeDeleteDialog = () => {
+    setShowDeleteDialog(false);
+    setDeletingDoctor(null);
+  };
+
+  const handleUpdated = () => {
+    closeEditModal();
+    fetchDoctorsList(pagination.page);
+  };
+
+  const handleDoctorDeleted = () => {
+    closeDeleteDialog();
+    fetchDoctorsList(pagination.page);
   };
 
   return (
@@ -568,15 +568,26 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                       <ActionButton onClick={() => handleViewDetails(doctor)}>
                         View
                       </ActionButton>
-                      {!doctor.isVerified ? (
-                        <ActionButton onClick={() => handleVerify(doctor.id)} disabled={verifyingId === doctor.id}>
-                          {verifyingId === doctor.id ? 'Verifying...' : 'Verify'}
-                        </ActionButton>
-                      ) : (
-                        <ActionButton onClick={() => handleToggleStatus(doctor.id, false)} disabled={statusUpdatingId === doctor.id}>
-                          {statusUpdatingId === doctor.id ? 'Updating...' : 'Unverify'}
-                        </ActionButton>
-                      )}
+                      <ActionButton onClick={() => handleEdit(doctor)}>
+                        Edit
+                      </ActionButton>
+                      <ActionButton
+                        onClick={() => handleDelete(doctor)}
+                        style={{
+                          borderColor: '#dc3545',
+                          color: '#dc3545'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#dc3545';
+                          e.currentTarget.style.color = '#fff';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent';
+                          e.currentTarget.style.color = '#dc3545';
+                        }}
+                      >
+                        Delete
+                      </ActionButton>
                     </Td>
                   </tr>
                 ))
@@ -692,6 +703,20 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
           </ModalContent>
         </ModalOverlay>
       )}
+      
+      <EditDoctorModal
+        open={showEditModal}
+        onClose={closeEditModal}
+        onUpdated={handleUpdated}
+        doctor={editingDoctor}
+      />
+
+      <DeleteDoctorDialog
+        open={showDeleteDialog}
+        doctor={deletingDoctor}
+        onClose={closeDeleteDialog}
+        onDeleted={handleDoctorDeleted}
+      />
     </div>
   );
 };

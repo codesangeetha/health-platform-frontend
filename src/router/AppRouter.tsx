@@ -18,6 +18,7 @@ import LabTestCategoriesPage from '../features/admin/lab-test-categories/LabTest
 import LabTestsPage from '../features/admin/lab-tests/LabTestsPage';
 import { MedicinesPage } from '../features/admin/medicines';
 import AdminLogin from '../features/auth/AdminLogin';
+import SpecializationsPage from '../features/admin/specializations/SpecializationsPage';
 import { AdminDashboard } from '../features/admin/dashboard/AdminDashboard';
 import PatientsPage from '../features/admin/patients/PatientsPage';
 import { PatientRegister } from '../features/auth/PatientRegister';
@@ -100,18 +101,18 @@ const router = createBrowserRouter([
             path: 'dashboard',
             element: <PatientDashboard />,
           },
-              {
-                path: 'video-call',
-                element: <VideoCall />,
-              },
-              {
-                path: 'video-call/:appointmentId',
-                element: <PatientVideoCallView />,
-              },
-              {
-                path: 'doctor-directory',
-                element: <DoctorDirectory />,
-              },
+          {
+            path: 'video-call',
+            element: <VideoCall />,
+          },
+          {
+            path: 'video-call/:appointmentId',
+            element: <PatientVideoCallView />,
+          },
+          {
+            path: 'doctor-directory',
+            element: <DoctorDirectory />,
+          },
           {
             path: 'doctor/:doctorId/book-appointment',
             element: <BookAppointment />,
@@ -195,6 +196,10 @@ const router = createBrowserRouter([
           {
             path: 'patients',
             element: <PatientsPage />,
+          },
+          {
+            path: 'specializations',
+            element: <SpecializationsPage />,
           },
           {
             path: 'categories',
