@@ -52,6 +52,7 @@ interface GetDoctorsParams {
   email?: string;
   createdAt?: string;
   experience?: string | number;
+  sort?: string;
 }
 
 interface ApiResponse<T> {
@@ -105,18 +106,21 @@ export const verifyDoctor = async (doctorId: string): Promise<VerifyDoctorRespon
 
 export const getDoctors = async (params: GetDoctorsParams = {}): Promise<DoctorsResponse> => {
   try {
-    const { page = 1, limit = 5, specialization, firstName, lastName, email, createdAt, experience } = params;
-    const queryParams = new URLSearchParams({
-      userType: 'doctor',
-      page: page.toString(),
-      limit: limit.toString(),
-      ...(specialization && { specialization }),
-      ...(firstName && { firstName }),
-      ...(lastName && { lastName }),
-      ...(email && { email }),
-      ...(createdAt && { createdAt }),
-      ...(experience && { experience: experience.toString() })
-    });
+    const { page = 1, limit = 5, specialization, firstName, lastName, email, createdAt, experience, sort = '-createdAt' } = params;
+    
+    // Build query parameters in the correct order: userType, sort, then pagination, then filters
+    const queryParams = [
+      `userType=doctor`,
+      `sort=${sort}`,
+      `page=${page.toString()}`,
+      `limit=${limit.toString()}`,
+      ...(specialization ? [`specialization=${encodeURIComponent(specialization)}`] : []),
+      ...(firstName ? [`firstName=${encodeURIComponent(firstName)}`] : []),
+      ...(lastName ? [`lastName=${encodeURIComponent(lastName)}`] : []),
+      ...(email ? [`email=${encodeURIComponent(email)}`] : []),
+      ...(createdAt ? [`createdAt=${encodeURIComponent(createdAt)}`] : []),
+      ...(experience ? [`experience=${experience.toString()}`] : [])
+    ].join('&');
 
     const token = getAuthToken();
     if (!token) {
