@@ -8,6 +8,7 @@ export interface Doctor {
   whatsapp?: string;
   dateOfBirth: string;
   isVerified: boolean;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
   specialization: string;

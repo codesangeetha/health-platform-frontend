@@ -102,6 +102,56 @@ const Select = styled.select`
   }
 `;
 
+const Toggle = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const ToggleSwitch = styled.label<{ active: boolean }>`
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 24px;
+  cursor: pointer;
+`;
+
+const ToggleInput = styled.input`
+  opacity: 0;
+  width: 0;
+  height: 0;
+`;
+
+const ToggleSlider = styled.span<{ active: boolean }>`
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: ${({ active }) => (active ? '#4A90E2' : '#ccc')};
+  transition: 0.4s;
+  border-radius: 24px;
+
+  &:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: ${({ active }) => (active ? '26px' : '3px')};
+    bottom: 3px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+  }
+`;
+
+const ToggleText = styled.span`
+  font-size: 13px;
+  color: #444;
+  font-weight: 500;
+`;
+
 const Label = styled.label`
   display: flex;
   flex-direction: column;
@@ -169,6 +219,7 @@ interface EditFormData {
   hospital: string;
   experience: string;
   consultationFee: string;
+  isActive: boolean;
 }
 
 export function EditDoctorModal({ 
@@ -192,6 +243,7 @@ export function EditDoctorModal({
     hospital: '',
     experience: '',
     consultationFee: '',
+    isActive: true,
   });
   
   const [submitting, setSubmitting] = useState(false);
@@ -215,6 +267,7 @@ export function EditDoctorModal({
         hospital: doctor.hospital || '',
         experience: doctor.experience?.toString() || '',
         consultationFee: doctor.consultationFee?.toString() || '',
+        isActive: doctor.isActive || false,
       });
       setError(null);
       setSuccess(null);
@@ -245,7 +298,7 @@ export function EditDoctorModal({
     }
   }, [open]);
 
-  const setField = (key: keyof EditFormData, value: string) => {
+  const setField = (key: keyof EditFormData, value: string | boolean) => {
     setForm(prev => ({ ...prev, [key]: value }));
     if (fieldErrors[key as string]) {
       setFieldErrors(prev => {
@@ -386,6 +439,16 @@ export function EditDoctorModal({
     }
   };
 
+  const handleToggleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { checked } = e.target;
+    setField('isActive', checked);
+
+    // Clear success message when user starts editing
+    if (success) {
+      setSuccess(null);
+    }
+  };
+
   const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     const key = name as keyof EditFormData;
@@ -436,6 +499,7 @@ export function EditDoctorModal({
         hospital: form.hospital.trim(),
         experience: Number(form.experience),
         consultationFee: Number(form.consultationFee),
+        isActive: form.isActive,
       };
 
       await updateDoctor(doctor.id, payload);
@@ -622,6 +686,19 @@ export function EditDoctorModal({
                   name="consultationFee"
                 />
                 {fieldErrors.consultationFee && <ErrorText>{fieldErrors.consultationFee}</ErrorText>}
+              </Label>
+              <Label>
+                <Toggle>
+                  <ToggleText>Account Active</ToggleText>
+                  <ToggleSwitch active={form.isActive}>
+                    <ToggleInput
+                      type="checkbox"
+                      checked={form.isActive}
+                      onChange={handleToggleChange}
+                    />
+                    <ToggleSlider active={form.isActive} />
+                  </ToggleSwitch>
+                </Toggle>
               </Label>
             </InputRow>
           </Content>
