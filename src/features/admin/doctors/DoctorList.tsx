@@ -331,14 +331,8 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
         createdAt: filters.createdAt || undefined
       });
 
-      // Sort doctors by creation date (oldest first)
-      const sortedDoctors = response.data.users.sort((a, b) => {
-        const dateA = new Date(a.createdAt).getTime();
-        const dateB = new Date(b.createdAt).getTime();
-        return dateA - dateB; // Ascending order (oldest first)
-      });
-
-      setDoctors(sortedDoctors);
+      // Remove client-side sorting since server now handles it
+      setDoctors(response.data.users);
       setPagination(response.data.pagination);
       setError(null);
     } catch (err) {
