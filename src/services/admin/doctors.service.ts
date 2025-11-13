@@ -19,6 +19,7 @@ export interface Doctor {
   phone: string;
   dateOfBirth?: string;
   isVerified: boolean;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
   specialization: string;
@@ -262,6 +263,7 @@ export interface UpdateDoctorPayload {
   hospital?: string;
   experience?: number;
   consultationFee?: number;
+  isActive?: boolean;
 }
 
 export const updateDoctor = async (

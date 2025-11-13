@@ -45,6 +45,15 @@ const StatusBadge = styled.span<{ isVerified: boolean }>`
   color: ${props => props.isVerified ? '#FFFFFF' : '#333333'};
 `;
 
+const ActiveStatusBadge = styled.span<{ isActive: boolean }>`
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  background-color: ${props => props.isActive ? '#28A745' : '#DC3545'};
+  color: ${props => props.isActive ? '#FFFFFF' : '#FFFFFF'};
+`;
+
 const ActionButton = styled.button`
   padding: 6px 12px;
   border-radius: 4px;
@@ -508,7 +517,6 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                 <Th>Specialization</Th>
                 <Th>Experience</Th>
                 <Th>Contact</Th>
-                <Th>Created</Th>
                 <Th>Status</Th>
                 <Th>Actions</Th>
               </tr>
@@ -516,7 +524,7 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7}>
+                  <td colSpan={6}>
                     <LoadingOverlay>
                       <LoadingSpinner />
                       Loading doctors...
@@ -525,7 +533,7 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                 </tr>
               ) : doctors.length === 0 ? (
                 <tr>
-                  <td colSpan={7}>
+                  <td colSpan={6}>
                     <EmptyStateMessage>
                       <EmptyStateText>No doctors found</EmptyStateText>
                       <EmptyStateSubtext>
@@ -551,12 +559,9 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                       {doctor.phone}
                     </Td>
                     <Td>
-                      {doctor.createdAt ? new Date(doctor.createdAt).toLocaleDateString() : '-'}
-                    </Td>
-                    <Td>
-                      <StatusBadge isVerified={doctor.isVerified}>
-                        {doctor.isVerified ? 'Verified' : 'Pending'}
-                      </StatusBadge>
+                      <ActiveStatusBadge isActive={doctor.isActive}>
+                        {doctor.isActive ? 'Active' : 'Inactive'}
+                      </ActiveStatusBadge>
                     </Td>
                     <Td>
                       <ActionButton onClick={() => handleViewDetails(doctor)}>
@@ -656,9 +661,9 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
             <DetailRow>
               <DetailLabel>Status:</DetailLabel>
               <DetailValue>
-                <StatusBadge isVerified={selectedDoctor.isVerified}>
-                  {selectedDoctor.isVerified ? 'Verified' : 'Pending'}
-                </StatusBadge>
+                <ActiveStatusBadge isActive={selectedDoctor.isActive}>
+                  {selectedDoctor.isActive ? 'Active' : 'Inactive'}
+                </ActiveStatusBadge>
               </DetailValue>
             </DetailRow>
             
@@ -678,13 +683,6 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                 {selectedDoctor.availableDays && selectedDoctor.availableDays.length > 0
                   ? selectedDoctor.availableDays.join(', ')
                   : 'Not specified'}
-              </DetailValue>
-            </DetailRow>
-            
-            <DetailRow>
-              <DetailLabel>Created:</DetailLabel>
-              <DetailValue>
-                {selectedDoctor.createdAt && new Date(selectedDoctor.createdAt).toLocaleDateString()}
               </DetailValue>
             </DetailRow>
             
