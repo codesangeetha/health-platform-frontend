@@ -205,4 +205,31 @@ export class DoctorService {
       throw new ApiError('Failed to update appointment status');
     }
   }
+
+  /**
+   * Get current doctor profile
+   */
+  static async getCurrentDoctorProfile(): Promise<any> {
+    try {
+      const response = await fetch(`${API_URL}/doctors/profile`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      if (!response.ok) {
+        await handleApiError(response);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      throw new ApiError('Failed to fetch doctor profile');
+    }
+  }
 }

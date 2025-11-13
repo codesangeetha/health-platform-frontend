@@ -1,6 +1,7 @@
-import { useContext } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { DoctorService } from '../../services/doctor/doctor.service';
 import '../../styles/components/doctor-dashboard.styles.css';
 
 interface DoctorHeaderProps {
@@ -12,11 +13,28 @@ export const DoctorHeader = () => {
   const { authState, logout } = useContext(AuthContext);
   const location = useLocation();
   const navigate = useNavigate();
+  const [doctorProfile, setDoctorProfile] = useState<any>(null);
 
   const handleLogout = () => {
     logout();
     navigate('/', { replace: true });
   };
+
+  // Fetch doctor profile to get the actual name
+  useEffect(() => {
+    const fetchDoctorProfile = async () => {
+      try {
+        const response = await DoctorService.getCurrentDoctorProfile();
+        setDoctorProfile(response.data);
+      } catch (error) {
+        console.warn('Failed to fetch doctor profile:', error);
+      }
+    };
+
+    if (authState?.user?.userType === 'doctor') {
+      fetchDoctorProfile();
+    }
+  }, [authState?.user?.userType]);
 
   // Get current path to determine active link
   const currentPath = location.pathname;
@@ -30,8 +48,20 @@ export const DoctorHeader = () => {
 
   // Get user initials for avatar fallback
   const getUserInitials = () => {
+    // Try to use doctor's actual name from profile
+    if (doctorProfile && (doctorProfile.firstName || doctorProfile.lastName)) {
+      const firstName = doctorProfile.firstName || '';
+      const lastName = doctorProfile.lastName || '';
+      const parts = `${firstName} ${lastName}`.trim().split(/\s+/);
+      if (parts.length >= 2) {
+        return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+      } else if (parts.length === 1) {
+        return parts[0].charAt(0).toUpperCase();
+      }
+    }
+    
+    // Fallback to email
     if (authState.user) {
-      // Try to extract initials from email if no name available
       const email = authState.user.email;
       const emailPrefix = email.split('@')[0];
       const parts = emailPrefix.split(/[._-]/);
@@ -46,6 +76,17 @@ export const DoctorHeader = () => {
 
   // Get user display name
   const getUserDisplayName = () => {
+    // Try to use doctor's actual name from profile
+    if (doctorProfile && (doctorProfile.firstName || doctorProfile.lastName)) {
+      const firstName = doctorProfile.firstName || '';
+      const lastName = doctorProfile.lastName || '';
+      const fullName = `${firstName} ${lastName}`.trim();
+      if (fullName) {
+        return `Dr. ${fullName}`;
+      }
+    }
+    
+    // Fallback to email
     if (authState.user) {
       return authState.user.email;
     }
