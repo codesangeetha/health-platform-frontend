@@ -36,7 +36,7 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const DoctorLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login, googleLogin, authState } = useContext(AuthContext);
+  const { login, googleLogin, authState, clearError } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
   const [submitting, setSubmitting] = useState(false);
@@ -90,27 +90,34 @@ export const DoctorLogin = () => {
   const extractAuthError = (input: unknown): { code?: string; message?: string } | null => {
     if (!input) return null;
 
-    // If login returned a structured result
-    const res = input as any;
-    if (typeof res === 'object' && 'success' in res && res.success === false) {
-      const code = res?.error?.code ?? res?.code;
-      const message = res?.error?.message ?? res?.message;
-      return { code, message };
-    }
-
     // If an exception was thrown
     if (input instanceof Error) {
-      // Try to pull structured info if the error has it
-      const anyErr = input as any;
-      const code = anyErr?.code ?? anyErr?.response?.data?.error ?? anyErr?.response?.data?.code;
-      const message =
-        anyErr?.response?.data?.message ??
-        anyErr?.message ??
-        'Unable to sign in with the provided credentials.';
-      return { code, message };
+      const message = input.message || 'Unable to sign in with the provided credentials.';
+      
+      // Try to determine if this is an inactive account error
+      const isInactiveAccount = /account is inactive|account inactive/i.test(message);
+      
+      return {
+        code: isInactiveAccount ? 'ACCOUNT_INACTIVE' : 'LOGIN_FAILED',
+        message: message
+      };
     }
 
-    // Fallback
+    // If it's a direct response object
+    if (typeof input === 'object' && input !== null) {
+      const res = input as any;
+      const message = res?.message || res?.error?.message || 'Login failed';
+      const code = res?.code || res?.error?.code;
+      
+      // Check if this is an inactive account error
+      const isInactiveAccount = /account is inactive|account inactive/i.test(message);
+      
+      return {
+        code: isInactiveAccount ? 'ACCOUNT_INACTIVE' : (code || 'LOGIN_FAILED'),
+        message: message
+      };
+    }
+
     return null;
   };
 
@@ -163,7 +170,11 @@ export const DoctorLogin = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Clear all previous errors before new attempt
     setFormError(null);
+    setErrors({});
+    clearError();
 
     // Client-side validation
     const isValid = validateForm();
@@ -176,18 +187,20 @@ export const DoctorLogin = () => {
       setSubmitting(true);
       await login(email, password);
 
-      if (authState?.error) {
-        const ctxErr = (authState as any)?.errorCode || (authState as any)?.code || authState.error;
-        if (ctxErr === 'INVALID_CREDENTIALS' || /invalid email or password/i.test(String(authState.error))) {
-          handleInvalidCredentials(typeof authState.error === 'string' ? authState.error : undefined);
-          return;
-        }
-        setFormError(typeof authState.error === 'string' ? authState.error : 'Unable to sign in.');
-        return;
-      }
+      // If we get here, login was successful
+      // No need to check authState.error here since successful login sets isAuthenticated to true
     } catch (error) {
       const authErr = extractAuthError(error);
-      if (authErr?.code === 'INVALID_CREDENTIALS' || /invalid email or password/i.test(authErr?.message ?? '')) {
+      const errorMessage = authErr?.message || '';
+      
+      // Check for inactive account specifically - show as form error
+      if (authErr?.code === 'ACCOUNT_INACTIVE' || /account is inactive/i.test(errorMessage)) {
+        setFormError(errorMessage);
+        return;
+      }
+      
+      // For invalid credentials, show field-level errors
+      if (authErr?.code === 'INVALID_CREDENTIALS' || /invalid email or password/i.test(errorMessage)) {
         handleInvalidCredentials(authErr?.message);
       } else {
         setFormError(authErr?.message || 'Unable to sign in with the provided credentials.');

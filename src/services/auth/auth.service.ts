@@ -77,14 +77,19 @@ export class AuthService {
         body: JSON.stringify({ email, password }),
       });
 
-      if (!response.ok) {
-        throw new Error('Login failed');
-      }
-
+      // Always parse the response to get the actual error message
       const data: LoginResponse = await response.json();
-      
-      if (!data.success) {
-        throw new Error(data.message || 'Login failed');
+       
+      if (!response.ok || !data.success) {
+        // Use the actual API error message instead of a generic one
+        const errorMessage = data.message || 'Login failed';
+        
+        // Enhance error with context for better error handling
+        const enhancedError = new Error(errorMessage);
+        (enhancedError as any).code = data.code || 'LOGIN_FAILED';
+        (enhancedError as any).isInactiveAccount = /account is inactive/i.test(errorMessage);
+        
+        throw enhancedError;
       }
 
       // Store the token and user data

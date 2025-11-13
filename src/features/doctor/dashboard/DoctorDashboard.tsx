@@ -32,6 +32,7 @@ export const DoctorDashboard = () => {
   const navigate = useNavigate();
 
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [doctorProfile, setDoctorProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [recentPatients, setRecentPatients] = useState<Patient[]>([]);
@@ -56,6 +57,15 @@ export const DoctorDashboard = () => {
       // Fetch dashboard data from API
       const dashboardResponse = await DoctorService.getDashboardData();
       setDashboardData(dashboardResponse.data);
+
+      // Fetch doctor's profile to get the actual name
+      try {
+        const profileResponse = await DoctorService.getCurrentDoctorProfile();
+        setDoctorProfile(profileResponse.data);
+      } catch (profileError) {
+        console.warn('Failed to fetch doctor profile, using fallback name:', profileError);
+        // Continue without profile data
+      }
 
       // Keep mock data for other components until we have real APIs
       const today = new Date();
@@ -118,10 +128,21 @@ export const DoctorDashboard = () => {
   }, [appointments]);
 
   const displayName = useMemo(() => {
+    // First try to use doctor's actual name from profile
+    if (doctorProfile && (doctorProfile.firstName || doctorProfile.lastName)) {
+      const firstName = doctorProfile.firstName || '';
+      const lastName = doctorProfile.lastName || '';
+      const fullName = `${firstName} ${lastName}`.trim();
+      if (fullName) {
+        return fullName;
+      }
+    }
+    
+    // Fallback to email prefix if no name available
     const email = authState?.user?.email;
     if (!email) return 'Michael Chen'; // fallback similar to example
     return email.split('@')[0];
-  }, [authState?.user?.email]);
+  }, [authState?.user?.email, doctorProfile]);
 
   // Calendar helpers
   const monthLabel = useMemo(
@@ -183,7 +204,7 @@ export const DoctorDashboard = () => {
 
   return (
     <DoctorLayout
-      pageTitle={`Welcome back, Dr. ${displayName}!`}
+      pageTitle={`Welcome back, Dr. ${displayName}`}
       pageSubtitle="Here's your appointment overview and schedule for today."
       useDoctorContainer={true}
     >

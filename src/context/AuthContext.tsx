@@ -14,6 +14,7 @@ interface AuthState {
 interface AuthContextType {
   authState: AuthState;
   setAuthState: Dispatch<SetStateAction<AuthState>>;
+  clearError: () => void;
   login: (email: string, password: string) => Promise<void>;
   register: (userData: RegisterData) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
@@ -60,6 +61,7 @@ const defaultAuthState: AuthState = {
 export const AuthContext = createContext<AuthContextType>({
   authState: defaultAuthState,
   setAuthState: (() => undefined) as unknown as Dispatch<SetStateAction<AuthState>>,
+  clearError: () => {},
   login: async () => {},
   register: async () => ({ success: false }),
   logout: () => {},
@@ -147,6 +149,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const clearError = () => {
+    setAuthState(prev => ({ ...prev, error: null }));
+  };
+
   const login = async (email: string, password: string) => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
@@ -159,12 +165,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading: false,
         error: null,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.log("error",error);
+      // Extract the actual error message from the API response
+      const errorMessage = error?.message || 'Login failed. Please check your credentials.';
       setAuthState(prev => ({
         ...prev,
         isLoading: false,
-        error: 'Login failed. Please check your credentials.',
+        error: errorMessage,
       }));
     }
   };
@@ -298,7 +306,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ authState, setAuthState, login, register, logout, googleLogin, handleGoogleCallback, forgotPassword, resetPassword, doctorPasswordSet }}>
+    <AuthContext.Provider value={{ authState, setAuthState, clearError, login, register, logout, googleLogin, handleGoogleCallback, forgotPassword, resetPassword, doctorPasswordSet }}>
       {children}
     </AuthContext.Provider>
   );
