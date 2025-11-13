@@ -502,7 +502,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       });
       setFieldErrors({});
       setTouched({});
-      setSuccess('Doctor created successfully!');
+      setSuccess('Doctor created successfully! An email with login credentials has been sent to the doctor.');
 
       // Keep modal open for 2 seconds to show success message, then close
       setTimeout(() => {
