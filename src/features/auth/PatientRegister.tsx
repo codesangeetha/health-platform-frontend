@@ -58,7 +58,6 @@ export const PatientRegister = () => {
   const navigate = useNavigate();
   const [successMessage, setSuccessMessage] = useState<string>('');
   const [showPassword, setShowPassword] = useState(false);
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const [form, setForm] = useState<PatientRegisterData>({
@@ -248,7 +247,6 @@ export const PatientRegister = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSuccessMessage('');
-    if (!acceptedTerms) return; // basic terms enforcement
 
     const isValid = validateForm();
     if (!isValid) {
@@ -617,14 +615,6 @@ export const PatientRegister = () => {
               </div>
             </div>
 
-            {/* Terms & Conditions */}
-            <label className="pr-terms">
-              <input type="checkbox" checked={acceptedTerms} onChange={(e) => setAcceptedTerms(e.target.checked)} />
-              <span>
-                I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
-              </span>
-            </label>
-
             {/* Error / Success */}
             {authState.error && <div style={{ color: '#dc2626', marginTop: 8, fontSize: '0.9rem' }}>{authState.error}</div>}
             {successMessage && <div style={{ color: '#065f46', marginTop: 8, fontSize: '0.9rem' }}>{successMessage}</div>}
@@ -655,7 +645,7 @@ export const PatientRegister = () => {
             )}
 
             {/* Submit */}
-            <button type="submit" className="pr-submit" disabled={authState.isLoading || !acceptedTerms}>
+            <button type="submit" className="pr-submit" disabled={authState.isLoading}>
               {authState.isLoading ? 'Registering…' : 'Register as Patient'}
             </button>
           </form>

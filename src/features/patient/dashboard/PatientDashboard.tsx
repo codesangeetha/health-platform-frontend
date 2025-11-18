@@ -325,60 +325,8 @@ export const PatientDashboard = () => {
 
           {/* Right column: 4 */}
           <aside className="pd-col-4">
-            {/* Quick Actions */}
-            <div className="pd-card">
-              <h6>Quick Actions</h6>
-              <div className="pd-actions">
-                <button 
-                  className="pd-btn pd-btn-primary-light"
-                  onClick={() => navigate('/patient/book-appointment')}
-                >
-                  <span className="pd-btn-icon" style={{ background: 'rgba(0, 123, 255, 0.16)', color: 'var(--color-primary-blue)' }}>＋</span>
-                  Book New Appointment
-                </button>
-                <button className="pd-btn pd-btn-outlined">
-                  <span className="pd-btn-icon" style={{ background: 'var(--color-tertiary-gray)' }}>🔎</span>
-                  Find Doctor
-                </button>
-                <button className="pd-btn pd-btn-outlined" onClick={() => navigate('/patient/video-call')}>
-                  <span className="pd-btn-icon" style={{ background: 'var(--color-tertiary-gray)' }}>📹</span>
-                  Video Call
-                </button>
-                <button className="pd-btn pd-btn-outlined">
-                  <span className="pd-btn-icon" style={{ background: 'var(--color-tertiary-gray)' }}>📋</span>
-                  View Medical History
-                </button>
-              </div>
-            </div>
-
-            {/* Recent Activity */}
-            <div className="pd-card" style={{ marginTop: '24px' }}>
-              <h6>Recent Activity</h6>
-              {appointments.length > 0 ? (
-                <div>
-                  {appointments.slice(0, 2).map((appointment, index) => (
-                    <div key={appointment.id} className="pd-activity-item">
-                      <div className="pd-activity-icon">✓</div>
-                      <div className="pd-activity-text">
-                        Appointment {getStatusText(appointment.status)} - {appointment.reason}
-                      </div>
-                      <div className="pd-activity-time">
-                        {new Date(appointment.updatedAt).toLocaleDateString()}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="pd-activity-item">
-                  <div className="pd-activity-icon">ℹ️</div>
-                  <div className="pd-activity-text">No recent activity</div>
-                  <div className="pd-activity-time">Welcome!</div>
-                </div>
-              )}
-            </div>
-
             {/* Health Tips */}
-            <div className="pd-card" style={{ marginTop: '24px' }}>
+            <div className="pd-card">
               <h6>Health Tips</h6>
               <div className="pd-tip-item">
                 <p className="pd-tip-title">Stay Hydrated</p>
