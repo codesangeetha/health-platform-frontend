@@ -3,10 +3,19 @@ import type { ReactNode, Dispatch, SetStateAction } from 'react';
 import type { AuthResponseData } from '@/types/auth/auth.types';
 import { AuthService } from '@/services/auth/auth.service';
 
-interface AuthState {
+interface UserSession {
   user: AuthResponseData['user'] | null;
   token: string | null;
   isAuthenticated: boolean;
+}
+
+interface AuthState {
+  currentUserType: 'patient' | 'doctor' | 'admin' | null;
+  sessions: {
+    patient: UserSession;
+    doctor: UserSession;
+    admin: UserSession;
+  };
   isLoading: boolean;
   error: string | null;
 }
@@ -15,9 +24,12 @@ interface AuthContextType {
   authState: AuthState;
   setAuthState: Dispatch<SetStateAction<AuthState>>;
   clearError: () => void;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, userType: 'patient' | 'doctor' | 'admin') => Promise<void>;
   register: (userData: RegisterData) => Promise<{ success: boolean; message?: string }>;
-  logout: () => void;
+  logout: (userType?: 'patient' | 'doctor' | 'admin') => void;
+  logoutAll: () => void;
+  switchUser: (userType: 'patient' | 'doctor' | 'admin') => void;
+  getCurrentSession: () => UserSession | null;
   googleLogin: () => Promise<void>;
   handleGoogleCallback: () => Promise<AuthResponseData>;
   forgotPassword: (email: string) => Promise<{ success: boolean; message: string }>;
@@ -50,12 +62,21 @@ interface PatientRegisterData extends RegisterDataBase {
 
 type RegisterData = PatientRegisterData | (RegisterDataBase & { userType: 'doctor' | 'admin'; });
 
-const defaultAuthState: AuthState = {
+const createEmptySession = (): UserSession => ({
   user: null,
   token: null,
   isAuthenticated: false,
+});
+
+const defaultAuthState: AuthState = {
+  currentUserType: null,
+  sessions: {
+    patient: createEmptySession(),
+    doctor: createEmptySession(),
+    admin: createEmptySession(),
+  },
   isLoading: false,
-  error: null
+  error: null,
 };
 
 export const AuthContext = createContext<AuthContextType>({
@@ -65,6 +86,9 @@ export const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   register: async () => ({ success: false }),
   logout: () => {},
+  logoutAll: () => {},
+  switchUser: () => {},
+  getCurrentSession: () => null,
   googleLogin: async () => {},
   handleGoogleCallback: async () => ({ token: '', user: { userId: '', email: '', userType: 'patient' } }),
   forgotPassword: async () => ({ success: false, message: 'Not implemented' }),
@@ -80,45 +104,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         setAuthState(prev => ({ ...prev, isLoading: true }));
 
-        // Check if there's a valid session on the backend
-        const authData = await AuthService.checkAuthStatus();
+        // Initialize sessions from localStorage
+        const userTypes: Array<'patient' | 'doctor' | 'admin'> = ['patient', 'doctor', 'admin'];
+        const newSessions = { ...defaultAuthState.sessions };
+        let firstAuthenticatedUserType: 'patient' | 'doctor' | 'admin' | null = null;
 
-        if (authData) {
-          setAuthState({
-            user: authData.user,
-            token: authData.token,
-            isAuthenticated: true,
-            isLoading: false,
-            error: null,
-          });
-        } else {
-          // No valid session, use local storage as fallback
-          const user = AuthService.getCurrentUser();
-          const token = AuthService.getToken();
-
-          setAuthState({
-            user,
-            token,
-            isAuthenticated: !!user && !!token,
-            isLoading: false,
-            error: null,
-          });
+        for (const userType of userTypes) {
+          const user = AuthService.getCurrentUser(userType);
+          const token = AuthService.getToken(userType);
+          
+          if (user && token) {
+            newSessions[userType] = {
+              user,
+              token,
+              isAuthenticated: true,
+            };
+            
+            if (!firstAuthenticatedUserType) {
+              firstAuthenticatedUserType = userType;
+            }
+          }
         }
-      } catch (error) {
-        console.error('Auth initialization failed:', error);
-        // Fallback to local storage
-        const user = AuthService.getCurrentUser();
-        const token = AuthService.getToken();
 
-        setAuthState({
-          user,
-          token,
-          isAuthenticated: !!user && !!token,
+        setAuthState(prev => ({
+          ...prev,
+          sessions: newSessions,
+          currentUserType: firstAuthenticatedUserType,
           isLoading: false,
           error: null,
-        });
+        }));
+      } catch (error) {
+        console.error('Auth initialization failed:', error);
+        setAuthState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: 'Failed to initialize authentication',
+        }));
       }
     };
+
+    initializeAuth();
 
     // Listen for external auth updates (e.g., from Google OAuth callback)
     const handleGoogleAuthSuccess = (event: CustomEvent) => {
@@ -127,13 +152,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('👤 External auth update - User:', user);
       console.log('🔑 External auth update - Token length:', token?.length || 0);
 
-      setAuthState({
-        user,
-        token,
-        isAuthenticated: true,
+      const userType = user.userType as 'patient' | 'doctor' | 'admin';
+      
+      setAuthState(prev => ({
+        ...prev,
+        sessions: {
+          ...prev.sessions,
+          [userType]: {
+            user,
+            token,
+            isAuthenticated: true,
+          },
+        },
+        currentUserType: userType,
         isLoading: false,
         error: null,
-      });
+      }));
 
       console.log('✅ AuthContext state updated from external event');
     };
@@ -153,20 +187,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthState(prev => ({ ...prev, error: null }));
   };
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, userType: 'patient' | 'doctor' | 'admin') => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
-      const data = await AuthService.login(email, password);
-      console.log("data",data);
-      setAuthState({
-        user: data.user,
-        token: data.token,
-        isAuthenticated: true,
+      const data = await AuthService.login(email, password, userType);
+      console.log("data", data);
+      
+      setAuthState(prev => ({
+        ...prev,
+        sessions: {
+          ...prev.sessions,
+          [userType]: {
+            user: data.user,
+            token: data.token,
+            isAuthenticated: true,
+          },
+        },
+        currentUserType: userType,
         isLoading: false,
         error: null,
-      });
+      }));
     } catch (error: any) {
-      console.log("error",error);
+      console.log("error", error);
       // Extract the actual error message from the API response
       const errorMessage = error?.message || 'Login failed. Please check your credentials.';
       setAuthState(prev => ({
@@ -195,13 +237,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = async () => {
+  const logout = async (userType?: 'patient' | 'doctor' | 'admin') => {
     console.log('🚪 [AUTH_CONTEXT] Logout initiated by user');
+    
+    const targetUserType = userType || authState.currentUserType;
+    if (!targetUserType) return;
 
     try {
       console.log('🔄 [AUTH_CONTEXT] Calling backend logout...');
       // Call backend logout for Google OAuth cleanup
-      await AuthService.logoutFromBackend();
+      await AuthService.logoutFromBackend(targetUserType);
       console.log('✅ [AUTH_CONTEXT] Backend logout completed successfully');
     } catch (error) {
       console.warn('❌ [AUTH_CONTEXT] Backend logout failed:', error);
@@ -210,26 +255,81 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         name: error instanceof Error ? error.name : 'Unknown',
         stack: error instanceof Error ? error.stack : undefined,
       });
-
-      // Check for specific error types
-      if (error instanceof TypeError && error.message.includes('NetworkError')) {
-        console.error('🚫 [AUTH_CONTEXT] Network/CORS error detected in context');
-      }
     }
 
     console.log('🧹 [AUTH_CONTEXT] Clearing local storage and state...');
-    AuthService.logout();
+    AuthService.logout(targetUserType);
+
+    setAuthState(prev => {
+      const newSessions = { ...prev.sessions };
+      newSessions[targetUserType] = createEmptySession();
+      
+      // If logging out the current user, switch to another authenticated user or null
+      let newCurrentUserType = prev.currentUserType;
+      if (prev.currentUserType === targetUserType) {
+        newCurrentUserType = null;
+        // Find another authenticated user
+        for (const type of ['patient', 'doctor', 'admin'] as const) {
+          if (newSessions[type].isAuthenticated) {
+            newCurrentUserType = type;
+            break;
+          }
+        }
+      }
+
+      return {
+        ...prev,
+        sessions: newSessions,
+        currentUserType: newCurrentUserType,
+      };
+    });
 
     // Clear Google OAuth sessions to prevent auto-login
     AuthService.clearGoogleOAuthSession();
 
-    setAuthState(defaultAuthState);
-
-    console.log('🗂️ [AUTH_CONTEXT] Redirecting to home page...');
-    // Use window.location.href for hard navigation to avoid aborting pending requests
-    //window.location.href = '/';
-
     console.log('🎉 [AUTH_CONTEXT] Logout process completed');
+  };
+
+  const logoutAll = async () => {
+    console.log('🚪 [AUTH_CONTEXT] Logging out all users');
+    
+    try {
+      // Call backend logout for all user types
+      for (const userType of ['patient', 'doctor', 'admin'] as const) {
+        if (authState.sessions[userType].isAuthenticated) {
+          try {
+            await AuthService.logoutFromBackend(userType);
+          } catch (error) {
+            console.warn(`Backend logout failed for ${userType}:`, error);
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Backend logout errors:', error);
+    }
+
+    // Clear all local storage
+    AuthService.logout();
+    
+    // Clear Google OAuth sessions
+    AuthService.clearGoogleOAuthSession();
+
+    setAuthState(defaultAuthState);
+    console.log('🎉 [AUTH_CONTEXT] All users logged out');
+  };
+
+  const switchUser = (userType: 'patient' | 'doctor' | 'admin') => {
+    if (authState.sessions[userType].isAuthenticated) {
+      setAuthState(prev => ({
+        ...prev,
+        currentUserType: userType,
+      }));
+    }
+  };
+
+  const getCurrentSession = (): UserSession | null => {
+    if (!authState.currentUserType) return null;
+    return authState.sessions[authState.currentUserType];
   };
 
   const forgotPassword = async (email: string) => {
@@ -290,13 +390,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
       const data = await AuthService.handleGoogleCallback();
-      setAuthState({
-        user: data.user,
-        token: data.token,
-        isAuthenticated: true,
+      const userType = data.user.userType as 'patient' | 'doctor' | 'admin';
+      
+      setAuthState(prev => ({
+        ...prev,
+        sessions: {
+          ...prev.sessions,
+          [userType]: {
+            user: data.user,
+            token: data.token,
+            isAuthenticated: true,
+          },
+        },
+        currentUserType: userType,
         isLoading: false,
         error: null,
-      });
+      }));
+      
       return data;
     } catch (error: any) {
       const message = typeof error?.message === 'string' ? error.message : 'Google login callback failed';
@@ -306,7 +416,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ authState, setAuthState, clearError, login, register, logout, googleLogin, handleGoogleCallback, forgotPassword, resetPassword, doctorPasswordSet }}>
+    <AuthContext.Provider value={{
+      authState,
+      setAuthState,
+      clearError,
+      login,
+      register,
+      logout,
+      logoutAll,
+      switchUser,
+      getCurrentSession,
+      googleLogin,
+      handleGoogleCallback,
+      forgotPassword,
+      resetPassword,
+      doctorPasswordSet
+    }}>
       {children}
     </AuthContext.Provider>
   );

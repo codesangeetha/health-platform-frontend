@@ -15,7 +15,7 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const AdminLogin = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const { login, googleLogin, authState } = useContext(AuthContext);
+    const { login, googleLogin, authState, getCurrentSession } = useContext(AuthContext);
     const navigate = useNavigate();
     const location = useLocation();
     const [submitting, setSubmitting] = useState(false);
@@ -88,7 +88,8 @@ const AdminLogin = () => {
 
         try {
             setSubmitting(true);
-            await login(email, password);
+            await login(email, password, 'admin');
+            
             if (authState?.error) {
                 const ctxErr = (authState as any)?.errorCode || (authState as any)?.code || authState.error;
                 if (ctxErr === 'INVALID_CREDENTIALS' || /invalid email or password/i.test(String(authState.error))) {
@@ -130,13 +131,16 @@ const AdminLogin = () => {
         if (formError) setFormError(null);
     };
 
+    const currentSession = getCurrentSession();
+    const isAdminAuthenticated = authState.sessions.admin?.isAuthenticated;
+
     useEffect(() => {
-        if (authState.isAuthenticated && !authState.isLoading) {
+        if (isAdminAuthenticated && !authState.isLoading) {
             // Get the redirect location from state or default to admin dashboard
             const from = location.state?.from?.pathname || '/admin/dashboard';
             navigate(from, { replace: true });
         }
-    }, [authState.isAuthenticated, authState.isLoading, navigate, location]);
+    }, [isAdminAuthenticated, authState.isLoading, navigate, location]);
 
     // Show loading while checking authentication
     if (authState.isLoading) {
@@ -154,8 +158,8 @@ const AdminLogin = () => {
         );
     }
 
-    // Don't show login form if user is already authenticated
-    if (authState.isAuthenticated) {
+    // Don't show login form if admin user is already authenticated
+    if (isAdminAuthenticated) {
         return (
             <div style={{
                 display: 'flex',

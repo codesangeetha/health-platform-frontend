@@ -71,7 +71,7 @@ export const getLabTests = async (params: GetLabTestsParams = {}): Promise<LabTe
       queryParams.append('createdTo', createdTo);
     }
 
-    const token = getAuthToken();
+    const token = getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }
@@ -103,7 +103,7 @@ export const getLabTests = async (params: GetLabTestsParams = {}): Promise<LabTe
 
 export const getLabTestById = async (testId: string): Promise<LabTestsResponse> => {
   try {
-    const token = getAuthToken();
+    const token = getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }
@@ -135,7 +135,7 @@ export const getLabTestById = async (testId: string): Promise<LabTestsResponse> 
 
 export const createLabTest = async (payload: CreateLabTestPayload): Promise<CreateLabTestResponse> => {
   try {
-    const token = getAuthToken();
+    const token = getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }
@@ -168,7 +168,7 @@ export const createLabTest = async (payload: CreateLabTestPayload): Promise<Crea
 
 export const updateLabTest = async (testId: string, payload: UpdateLabTestPayload): Promise<UpdateLabTestResponse> => {
   try {
-    const token = getAuthToken();
+    const token = getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }
@@ -201,7 +201,7 @@ export const updateLabTest = async (testId: string, payload: UpdateLabTestPayloa
 
 export const deleteLabTest = async (testId: string): Promise<DeleteLabTestResponse> => {
   try {
-    const token = getAuthToken();
+    const token = getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }

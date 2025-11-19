@@ -1,4 +1,5 @@
 import { BASE_URL } from '@/config/constants';
+import { getAuthToken } from '@/services/auth/auth.service';
 import type { DoctorResponse, DoctorFilters } from '@/types/doctor/doctor.types';
 import { ApiError, handleApiError } from '@/services/auth/auth.service';
 
@@ -57,11 +58,16 @@ export class DoctorService {
    */
   static async getDashboardData(): Promise<DashboardResponse> {
     try {
+      const token = getAuthToken('doctor');
+      if (!token) {
+        throw new ApiError('No authentication token found', 401);
+      }
+
       const response = await fetch(`${API_URL}/doctors/dashboard`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
         },
       });
 
@@ -104,11 +110,16 @@ export class DoctorService {
         params.append('availableDays', availableDays);
       }
 
+      const token = getAuthToken('doctor');
+      if (!token) {
+        throw new ApiError('No authentication token found', 401);
+      }
+
       const response = await fetch(`${API_URL}/appointments/doctors?${params.toString()}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
         },
       });
 
@@ -128,11 +139,16 @@ export class DoctorService {
 
   static async getDoctorById(id: string): Promise<any> {
     try {
+      const token = getAuthToken('doctor');
+      if (!token) {
+        throw new ApiError('No authentication token found', 401);
+      }
+
       const response = await fetch(`${API_URL}/appointments/doctor/${id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
         },
       });
 
@@ -159,11 +175,16 @@ export class DoctorService {
         page: page.toString(),
       });
 
+      const token = getAuthToken('doctor');
+      if (!token) {
+        throw new ApiError('No authentication token found', 401);
+      }
+
       const response = await fetch(`${API_URL}/appointments/doctor?${params.toString()}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
         },
       });
 
@@ -183,11 +204,16 @@ export class DoctorService {
 
   static async updateAppointmentStatus(appointmentId: string, data: { status: string; reason: string }): Promise<any> {
     try {
+      const token = getAuthToken('doctor');
+      if (!token) {
+        throw new ApiError('No authentication token found', 401);
+      }
+
       const response = await fetch(`${API_URL}/appointments/${appointmentId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(data),
       });
@@ -211,11 +237,16 @@ export class DoctorService {
    */
   static async getCurrentDoctorProfile(): Promise<any> {
     try {
+      const token = getAuthToken('doctor');
+      if (!token) {
+        throw new ApiError('No authentication token found', 401);
+      }
+
       const response = await fetch(`${API_URL}/doctors/profile`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
         },
       });
 

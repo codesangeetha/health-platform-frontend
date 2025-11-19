@@ -32,7 +32,7 @@ export const PatientProfile = () => {
   const { authState, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const token = useMemo(() => authState.token || AuthService.getToken() || '', [authState.token]);
+  const token = useMemo(() => authState.sessions.patient.token || AuthService.getToken('patient') || '', [authState.sessions.patient.token]);
 
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,8 +42,8 @@ export const PatientProfile = () => {
     if (profile?.firstName || profile?.lastName) {
       return `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim();
     }
-    return authState.user?.email?.split('@')[0] || 'Patient';
-  }, [profile, authState.user?.email]);
+    return authState.sessions.patient.user?.email?.split('@')[0] || 'Patient';
+  }, [profile, authState.sessions.patient.user?.email]);
 
   useEffect(() => {
     let isMounted = true;
@@ -163,7 +163,7 @@ export const PatientProfile = () => {
                   </div>
                   <div>
                     <div className="pd-stat-label">Email</div>
-                    <div style={{ color: 'var(--color-text-dark)' }}>{profile?.email || authState.user?.email}</div>
+                    <div style={{ color: 'var(--color-text-dark)' }}>{profile?.email || authState.sessions.patient.user?.email}</div>
                   </div>
                   <div>
                     <div className="pd-stat-label">Phone</div>
@@ -245,7 +245,7 @@ export const PatientProfile = () => {
               <h6>Account</h6>
               <div>
                 <div className="pd-stat-label">User ID</div>
-                <div style={{ color: 'var(--color-text-light)', fontFamily: 'monospace' }}>{profile?._id || authState.user?.userId || '—'}</div>
+                <div style={{ color: 'var(--color-text-light)', fontFamily: 'monospace' }}>{profile?._id || authState.sessions.patient.user?.userId || '—'}</div>
               </div>
             </div>
           </aside>

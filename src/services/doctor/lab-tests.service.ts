@@ -47,7 +47,7 @@ export const getLabTests = async (params: GetLabTestsParams = {}): Promise<LabTe
       queryParams.append('maxPrice', maxPrice.toString());
     }
 
-    const token = getAuthToken();
+    const token = getAuthToken('doctor');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }
@@ -79,7 +79,7 @@ export const getLabTests = async (params: GetLabTestsParams = {}): Promise<LabTe
 
 export const getLabTestById = async (testId: string): Promise<LabTestsResponse> => {
   try {
-    const token = getAuthToken();
+    const token = getAuthToken('doctor');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }
@@ -138,7 +138,7 @@ interface CreateLabTestOrderResponse {
 
 export const createLabTestOrder = async (payload: CreateLabTestOrderPayload): Promise<CreateLabTestOrderResponse> => {
   try {
-    const token = getAuthToken();
+    const token = getAuthToken('doctor');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }

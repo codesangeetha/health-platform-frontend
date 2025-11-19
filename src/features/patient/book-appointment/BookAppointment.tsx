@@ -56,10 +56,47 @@ export const BookAppointment = () => {
   minDate.setDate(minDate.getDate() + 1);
   const minDateString = minDate.toISOString().split('T')[0];
 
-  // Available time slots
-  const timeSlots = [
-    '9:00 AM', '11:30 AM', '2:00 PM', '3:45 PM'
-  ];
+  // Generate time slots based on doctor's available time
+  const generateTimeSlots = (availableTime: { start: string; end: string }): string[] => {
+    const slots: string[] = [];
+    
+    // Parse start and end times (format: "HH:MM")
+    const [startHour, startMinute] = availableTime.start.split(':').map(Number);
+    const [endHour, endMinute] = availableTime.end.split(':').map(Number);
+    
+    // Convert to minutes from midnight
+    let currentMinutes = startHour * 60 + startMinute;
+    const endMinutes = endHour * 60 + endMinute;
+    
+    // Generate 30-minute slots
+    while (currentMinutes + 30 <= endMinutes) {
+      const hours = Math.floor(currentMinutes / 60);
+      const minutes = currentMinutes % 60;
+      
+      // Convert to 12-hour format
+      const period = hours >= 12 ? 'PM' : 'AM';
+      const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+      const displayMinutes = minutes.toString().padStart(2, '0');
+      
+      // Store in 24-hour format for value (HH:MM)
+      const valueHours = hours.toString().padStart(2, '0');
+      const valueMinutes = minutes.toString().padStart(2, '0');
+      const timeValue = `${valueHours}:${valueMinutes}`;
+      
+      // Display in 12-hour format
+      const timeDisplay = `${displayHours}:${displayMinutes} ${period}`;
+      
+      slots.push(timeValue + '|' + timeDisplay); // Store both value and display
+      currentMinutes += 30;
+    }
+    
+    return slots;
+  };
+
+  // Available time slots based on doctor's schedule
+  const timeSlots = doctor?.availableTime
+    ? generateTimeSlots(doctor.availableTime)
+    : [];
 
   // Validation helpers
   const validateDate = (v: string) => {
@@ -308,9 +345,12 @@ export const BookAppointment = () => {
                       aria-describedby={touched.time && errors.time ? 'time-error' : undefined}
                     >
                       <option value="">Select a time</option>
-                      {timeSlots.map(time => (
-                        <option key={time} value={time}>{time}</option>
-                      ))}
+                      {timeSlots.map(slot => {
+                        const [value, display] = slot.split('|');
+                        return (
+                          <option key={value} value={value}>{display}</option>
+                        );
+                      })}
                     </select>
                     {touched.time && errors.time && (
                       <p className="form-error" id="time-error" role="alert">{errors.time}</p>
@@ -425,7 +465,14 @@ export const BookAppointment = () => {
                 </div>
                 <div className="summary-item">
                   <span className="summary-label">Time:</span>
-                  <span className="summary-value">{formData.time || 'Not selected'}</span>
+                  <span className="summary-value">
+                    {formData.time ? (() => {
+                      const [hours, minutes] = formData.time.split(':').map(Number);
+                      const period = hours >= 12 ? 'PM' : 'AM';
+                      const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+                      return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+                    })() : 'Not selected'}
+                  </span>
                 </div>
                 <div className="summary-item">
                   <span className="summary-label">Type:</span>

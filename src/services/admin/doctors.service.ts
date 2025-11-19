@@ -74,7 +74,7 @@ export type VerifyDoctorResponse = ApiResponse<{
 
 export const verifyDoctor = async (doctorId: string): Promise<VerifyDoctorResponse> => {
   try {
-    const token = getAuthToken();
+    const token = getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }
@@ -123,7 +123,7 @@ export const getDoctors = async (params: GetDoctorsParams = {}): Promise<Doctors
       ...(experience ? [`experience=${experience.toString()}`] : [])
     ].join('&');
 
-    const token = getAuthToken();
+    const token = getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }
@@ -180,7 +180,7 @@ export type CreateDoctorResponse = ApiResponse<{
 
 export const createDoctor = async (payload: CreateDoctorPayload): Promise<CreateDoctorResponse> => {
   try {
-    const token = getAuthToken();
+    const token = getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }
@@ -218,7 +218,7 @@ export const updateDoctorStatus = async (
   isVerified: boolean
 ): Promise<UpdateDoctorStatusResponse> => {
   try {
-    const token = getAuthToken();
+    const token = getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }
@@ -264,6 +264,11 @@ export interface UpdateDoctorPayload {
   experience?: number;
   consultationFee?: number;
   isActive?: boolean;
+  availableDays?: string[];
+  availableTime?: {
+    start: string;
+    end: string;
+  };
 }
 
 export const updateDoctor = async (
@@ -271,7 +276,7 @@ export const updateDoctor = async (
   payload: UpdateDoctorPayload
 ): Promise<UpdateDoctorResponse> => {
   try {
-    const token = getAuthToken();
+    const token = getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }
@@ -309,7 +314,7 @@ export type DeleteDoctorResponse = ApiResponse<{
 
 export const deleteDoctor = async (doctorId: string): Promise<DeleteDoctorResponse> => {
   try {
-    const token = getAuthToken();
+    const token = getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }

@@ -36,7 +36,7 @@ export const PatientLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const { login, googleLogin, authState, setAuthState } = useContext(AuthContext);
+  const { login, googleLogin, authState, setAuthState, getCurrentSession } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
   const [submitting, setSubmitting] = useState(false);
@@ -181,9 +181,7 @@ export const PatientLogin = () => {
 
     try {
       setSubmitting(true);
-      await login(email, password);
-
-
+      await login(email, password, 'patient');
 
       // 2) If the auth context surfaces an error after calling login (no return contract)
       if (authState?.error) {
@@ -210,13 +208,17 @@ export const PatientLogin = () => {
     }
   };
 
+  const currentSession = getCurrentSession();
+  const isPatientAuthenticated = authState.sessions.patient?.isAuthenticated;
+
   useEffect(() => {
-    if (authState.isAuthenticated && !authState.isLoading) {
+    if (isPatientAuthenticated && !authState.isLoading) {
       // Get the redirect location from state or default to patient dashboard
       const from = location.state?.from?.pathname || '/patient/dashboard';
       navigate(from, { replace: true });
     }
-  }, [authState.isAuthenticated, authState.isLoading, navigate, location]);
+  }, [isPatientAuthenticated, authState.isLoading, navigate, location]);
+  
   // Show loading while checking authentication
   if (authState.isLoading) {
     return (
@@ -233,8 +235,8 @@ export const PatientLogin = () => {
     );
   }
 
-  // Don't show login form if user is already authenticated
-  if (authState.isAuthenticated) {
+  // Don't show login form if patient user is already authenticated
+  if (isPatientAuthenticated) {
     return (
       <div style={{
         display: 'flex',

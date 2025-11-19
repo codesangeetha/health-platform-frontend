@@ -44,11 +44,11 @@ export const AdminDashboard = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const role = authState?.user && (authState.user as any)?.role;
+    const role = authState.sessions.admin.user && (authState.sessions.admin.user as any)?.role;
     if (role && role !== 'admin') {
       navigate('/', { replace: true });
     }
-  }, [authState?.user, navigate]);
+  }, [authState.sessions.admin.user, navigate]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -67,10 +67,10 @@ export const AdminDashboard = () => {
       }
     };
 
-    if (authState?.token) {
+    if (authState.sessions.admin.token) {
       fetchDashboardData();
     }
-  }, [authState?.token]);
+  }, [authState.sessions.admin.token]);
 
   const handleLogout = () => {
     logout();

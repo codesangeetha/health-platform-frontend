@@ -1,6 +1,6 @@
 import { BASE_URL } from '@/config/constants';
 import type { AppointmentResponse, AppointmentData } from '@/types/appointment/appointment.types';
-import { ApiError, handleApiError } from '@/services/auth/auth.service';
+import { ApiError, handleApiError, getAuthToken } from '@/services/auth/auth.service';
 
 const API_URL = `${BASE_URL}/api/v1`;
 
@@ -11,7 +11,7 @@ export class AppointmentService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${getAuthToken('patient')}`,
         },
         body: JSON.stringify(appointmentData),
       });
@@ -46,7 +46,7 @@ export class AppointmentService {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${getAuthToken('patient')}`,
         },
       });
 
@@ -70,7 +70,7 @@ export class AppointmentService {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${getAuthToken('patient')}`,
         },
       });
 
@@ -94,7 +94,7 @@ export class AppointmentService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${getAuthToken('patient')}`,
         },
       });
 
@@ -118,7 +118,7 @@ export class AppointmentService {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${getAuthToken('patient')}`,
         },
         body: JSON.stringify(rescheduleData),
       });
@@ -143,7 +143,7 @@ export class AppointmentService {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${getAuthToken('patient')}`,
         },
         body: JSON.stringify(statusData),
       });

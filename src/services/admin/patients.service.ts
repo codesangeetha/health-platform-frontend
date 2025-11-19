@@ -74,7 +74,7 @@ export const getPatients = async (params: GetPatientsParams = {}): Promise<Patie
       ...(createdAt && { createdAt })
     });
 
-    const token = getAuthToken();
+    const token = getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }
@@ -106,7 +106,7 @@ export const getPatients = async (params: GetPatientsParams = {}): Promise<Patie
 
 export const updatePatient = async (patientId: string, data: Partial<Patient>): Promise<Patient> => {
   try {
-    const token = getAuthToken();
+    const token = getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }
@@ -139,7 +139,7 @@ export const updatePatient = async (patientId: string, data: Partial<Patient>): 
 
 export const deletePatient = async (patientId: string): Promise<void> => {
   try {
-    const token = getAuthToken();
+    const token = getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }
