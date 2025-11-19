@@ -328,9 +328,10 @@ const ErrorMessage = styled.div`
 interface LabTestListProps {
   refreshKey?: number;
   categories?: { categoryId: string; name: string }[];
+  filters?: import('../../../types/lab-test/lab-test.types').LabTestFilters;
 }
 
-export const LabTestList = ({ refreshKey = 0, categories = [] }: LabTestListProps) => {
+export const LabTestList = ({ refreshKey = 0, categories = [], filters = {} }: LabTestListProps) => {
   const [labTests, setLabTests] = useState<LabTest[]>([]);
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -356,7 +357,8 @@ export const LabTestList = ({ refreshKey = 0, categories = [] }: LabTestListProp
       const response = await getLabTests({
         page,
         limit: 10,
-        isActive: true
+        ...filters,
+        isActive: filters.isActive !== undefined ? filters.isActive : true
       });
 
       // Sort lab tests by creation date (newest first)
@@ -379,12 +381,18 @@ export const LabTestList = ({ refreshKey = 0, categories = [] }: LabTestListProp
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [filters]);
 
 
+  // Effect for filters and refresh changes - fetch from page 1
+  useEffect(() => {
+    fetchLabTestsList(1);
+  }, [refreshKey, filters]);
+
+  // Effect for pagination changes only
   useEffect(() => {
     fetchLabTestsList(pagination.currentPage);
-  }, [pagination.currentPage, fetchLabTestsList, refreshKey]);
+  }, [pagination.currentPage, fetchLabTestsList]);
 
   const handleViewDetails = (labTest: LabTest) => {
     setSelectedLabTest(labTest);
@@ -446,6 +454,7 @@ export const LabTestList = ({ refreshKey = 0, categories = [] }: LabTestListProp
               <tr>
                 <Th>Name</Th>
                 <Th>Description</Th>
+                <Th>Price</Th>
                 <Th>Status</Th>
                 <Th>Created</Th>
                 <Th>Actions</Th>
@@ -454,7 +463,7 @@ export const LabTestList = ({ refreshKey = 0, categories = [] }: LabTestListProp
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={6}>
                     <LoadingOverlay>
                       <LoadingSpinner />
                       Loading lab tests...
@@ -470,6 +479,7 @@ export const LabTestList = ({ refreshKey = 0, categories = [] }: LabTestListProp
                         ? `${labTest.description.substring(0, 50)}...`
                         : labTest.description}
                     </Td>
+                    <Td>${labTest.price.toFixed(2)}</Td>
                     <Td>
                       <StatusBadge status={labTest.isActive}>
                         {labTest.isActive ? 'Active' : 'Inactive'}
@@ -538,6 +548,11 @@ export const LabTestList = ({ refreshKey = 0, categories = [] }: LabTestListProp
             <DetailRow>
               <DetailLabel>Description:</DetailLabel>
               <DetailValue>{selectedLabTest.description}</DetailValue>
+            </DetailRow>
+
+            <DetailRow>
+              <DetailLabel>Price:</DetailLabel>
+              <DetailValue>${selectedLabTest.price.toFixed(2)}</DetailValue>
             </DetailRow>
 
             <DetailRow>

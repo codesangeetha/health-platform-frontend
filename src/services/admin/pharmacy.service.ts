@@ -207,6 +207,18 @@ interface SearchMedicinesParams {
    limit?: number;
 }
 
+interface AdvancedSearchParams {
+   name?: string;
+   genericName?: string;
+   priceMin?: number;
+   priceMax?: number;
+   createdDateFrom?: string;
+   sortBy?: string;
+   sortOrder?: 'asc' | 'desc';
+   page?: number;
+   limit?: number;
+}
+
 export const searchMedicines = async (params: SearchMedicinesParams = {}): Promise<MedicinesResponse> => {
    try {
      const { query = '', page = 1, limit = 10 } = params;
@@ -246,6 +258,63 @@ export const searchMedicines = async (params: SearchMedicinesParams = {}): Promi
        throw error;
      }
      throw new ApiError('Failed to search medicines', 500);
+   }
+};
+
+export const advancedSearchMedicines = async (params: AdvancedSearchParams = {}): Promise<MedicinesResponse> => {
+   try {
+     const {
+       name,
+       genericName,
+       priceMin,
+       priceMax,
+       createdDateFrom,
+       sortBy = 'createdAt',
+       sortOrder = 'desc',
+       page = 1,
+       limit = 10
+     } = params;
+     
+     const queryParams = new URLSearchParams({
+       page: page.toString(),
+       limit: limit.toString(),
+       sortBy,
+       sortOrder
+     });
+
+     if (name) queryParams.append('name', name);
+     if (genericName) queryParams.append('genericName', genericName);
+     if (priceMin !== undefined) queryParams.append('priceMin', priceMin.toString());
+     if (priceMax !== undefined) queryParams.append('priceMax', priceMax.toString());
+     if (createdDateFrom) queryParams.append('createdDateFrom', createdDateFrom);
+
+     const token = getAuthToken();
+     if (!token) {
+       throw new ApiError('No authentication token found', 401);
+     }
+
+     const response = await fetch(
+       `${BASE_URL}${MEDICINES_ENDPOINTS.SEARCH_MEDICINES}?${queryParams}`,
+       {
+         method: 'GET',
+         headers: {
+           'Content-Type': 'application/json',
+           'Authorization': `Bearer ${token}`
+         }
+       }
+     );
+
+     if (!response.ok) {
+       await handleApiError(response);
+     }
+
+     const data = await response.json();
+     return data;
+   } catch (error) {
+     if (error instanceof ApiError) {
+       throw error;
+     }
+     throw new ApiError('Failed to search medicines with advanced filters', 500);
    }
 };
 

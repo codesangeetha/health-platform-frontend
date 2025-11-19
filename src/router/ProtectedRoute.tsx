@@ -11,7 +11,23 @@ export function ProtectedRoute({ requiredRole, children }: ProtectedRouteProps =
   const { authState } = useAuth();
   const location = useLocation();
 
-  // If user is not authenticated (either not loading or loading but no token), redirect to login
+  // If still loading (including initial load), show loading state to prevent flicker
+  if (authState.isLoading) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        fontSize: '18px',
+        color: '#666'
+      }}>
+        Loading...
+      </div>
+    );
+  }
+
+  // Only redirect to login after loading is complete and user is not authenticated
   if (!authState.isAuthenticated || !authState.token) {
     // Determine the appropriate login page based on the current path
     let loginPath = '/';
@@ -26,22 +42,6 @@ export function ProtectedRoute({ requiredRole, children }: ProtectedRouteProps =
 
     // Save the current location to redirect back after login
     return <Navigate to={loginPath} state={{ from: location }} replace />;
-  }
-
-  // If still loading but user is authenticated, show loading state
-  if (authState.isLoading) {
-    return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        fontSize: '18px',
-        color: '#666'
-      }}>
-        Loading...
-      </div>
-    );
   }
 
   // Check role-based access control

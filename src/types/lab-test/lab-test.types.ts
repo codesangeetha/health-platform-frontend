@@ -89,6 +89,10 @@ export interface GetLabTestsParams {
   isActive?: boolean;
   minPrice?: number;
   maxPrice?: number;
+  name?: string;
+  description?: string;
+  createdFrom?: string;
+  createdTo?: string;
   sortBy?: 'name' | 'price' | 'createdAt';
   sortOrder?: 'asc' | 'desc';
   page?: number;
@@ -100,6 +104,10 @@ export interface LabTestFilters {
   isActive?: boolean;
   minPrice?: number;
   maxPrice?: number;
+  name?: string;
+  description?: string;
+  createdFrom?: string;
+  createdTo?: string;
   sortBy?: 'name' | 'price' | 'createdAt';
   sortOrder?: 'asc' | 'desc';
 }

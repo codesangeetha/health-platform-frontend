@@ -22,6 +22,10 @@ export const getLabTests = async (params: GetLabTestsParams = {}): Promise<LabTe
       isActive,
       minPrice,
       maxPrice,
+      name,
+      description,
+      createdFrom,
+      createdTo,
       sortBy = 'createdAt',
       sortOrder = 'desc',
       page = 1,
@@ -49,6 +53,22 @@ export const getLabTests = async (params: GetLabTestsParams = {}): Promise<LabTe
 
     if (maxPrice !== undefined) {
       queryParams.append('maxPrice', maxPrice.toString());
+    }
+
+    if (name) {
+      queryParams.append('name', name);
+    }
+
+    if (description) {
+      queryParams.append('description', description);
+    }
+
+    if (createdFrom) {
+      queryParams.append('createdFrom', createdFrom);
+    }
+
+    if (createdTo) {
+      queryParams.append('createdTo', createdTo);
     }
 
     const token = getAuthToken();

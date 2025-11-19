@@ -138,6 +138,38 @@ const AdminLogin = () => {
         }
     }, [authState.isAuthenticated, authState.isLoading, navigate, location]);
 
+    // Show loading while checking authentication
+    if (authState.isLoading) {
+        return (
+            <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100vh',
+                fontSize: '18px',
+                color: '#666'
+            }}>
+                Loading...
+            </div>
+        );
+    }
+
+    // Don't show login form if user is already authenticated
+    if (authState.isAuthenticated) {
+        return (
+            <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100vh',
+                fontSize: '18px',
+                color: '#666'
+            }}>
+                Redirecting to dashboard...
+            </div>
+        );
+    }
+
     return (
         <div>
             <header className={`hc-header ${scrolled ? 'scrolled' : ''}`}>

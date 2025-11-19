@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import styled from '@emotion/styled';
 import type { Medicine } from '../../../types/medicine/medicine.types';
-import { getMedicines, deleteMedicine } from '../../../services/admin/pharmacy.service';
+import { getMedicines, deleteMedicine, advancedSearchMedicines } from '../../../services/admin/pharmacy.service';
 import { ApiError } from '../../../services/auth/auth.service';
 import { EditMedicineModal } from './components/EditMedicineModal';
 
@@ -351,6 +351,115 @@ const ErrorMessage = styled.div`
   border: 1px solid #FFCDD2;
 `;
 
+const FilterContainer = styled.div`
+  background: #FFFFFF;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+`;
+
+const FilterRow = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+`;
+
+const FilterGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+const FilterLabel = styled.label`
+  font-size: 14px;
+  font-weight: 500;
+  color: #333333;
+`;
+
+const FilterInput = styled.input`
+  padding: 8px 12px;
+  border: 1px solid #E0E0E0;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+  
+  &:focus {
+    outline: none;
+    border-color: #4A90E2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+  }
+  
+  &::placeholder {
+    color: #999999;
+  }
+`;
+
+const FilterSelect = styled.select`
+  padding: 8px 12px;
+  border: 1px solid #E0E0E0;
+  border-radius: 4px;
+  font-size: 14px;
+  background: #FFFFFF;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+  
+  &:focus {
+    outline: none;
+    border-color: #4A90E2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+  }
+`;
+
+const FilterActions = styled.div`
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 8px;
+  }
+`;
+
+const FilterButton = styled.button<{ variant?: 'primary' | 'secondary' }>`
+  padding: 8px 16px;
+  border: 1px solid ${props => props.variant === 'primary' ? '#4A90E2' : '#E0E0E0'};
+  background: ${props => props.variant === 'primary' ? '#4A90E2' : '#FFFFFF'};
+  color: ${props => props.variant === 'primary' ? '#FFFFFF' : '#4A90E2'};
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: ${props => props.variant === 'primary' ? '#3a78c3' : '#F8F9FA'};
+    border-color: ${props => props.variant === 'primary' ? '#3a78c3' : '#CCCCCC'};
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+interface FilterState {
+  name: string;
+  genericName: string;
+  priceMin: string;
+  priceMax: string;
+  createdDateFrom: string;
+  sortBy: string;
+  sortOrder: 'asc' | 'desc';
+}
+
 export const MedicineList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [pagination, setPagination] = useState({
@@ -368,6 +477,18 @@ export const MedicineList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
   const [deletingMedicine, setDeletingMedicine] = useState<Medicine | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isLoadingFiltered, setIsLoadingFiltered] = useState(false);
+  
+  // Filter state
+  const [filters, setFilters] = useState<FilterState>({
+    name: '',
+    genericName: '',
+    priceMin: '',
+    priceMax: '',
+    createdDateFrom: '',
+    sortBy: 'createdAt',
+    sortOrder: 'desc'
+  });
 
   const fetchMedicinesList = useCallback(async (page: number = 1) => {
     try {
@@ -399,9 +520,57 @@ export const MedicineList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
     }
   }, [pagination.limit]);
 
+  const fetchFilteredMedicines = useCallback(async (page: number = 1) => {
+    try {
+      setLoading(true);
+      setIsLoadingFiltered(true);
+      
+      // Convert filter values, only include non-empty ones
+      const searchParams: any = {
+        page,
+        limit: pagination.limit,
+        sortBy: filters.sortBy,
+        sortOrder: filters.sortOrder
+      };
+
+      if (filters.name) searchParams.name = filters.name;
+      if (filters.genericName) searchParams.genericName = filters.genericName;
+      if (filters.priceMin) searchParams.priceMin = parseFloat(filters.priceMin);
+      if (filters.priceMax) searchParams.priceMax = parseFloat(filters.priceMax);
+      if (filters.createdDateFrom) searchParams.createdDateFrom = filters.createdDateFrom;
+
+      const response = await advancedSearchMedicines(searchParams);
+
+      setMedicines(response.data.medicines);
+      setPagination(response.data.pagination);
+      setError(null);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError('Failed to fetch filtered medicines list');
+      }
+      console.error('Error fetching filtered medicines:', err);
+    } finally {
+      setLoading(false);
+      setIsLoadingFiltered(false);
+    }
+  }, [pagination.limit, filters]);
+
+  // Check if any filters are active (excluding default sort values)
+  const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
+    if (key === 'sortBy' && value === 'createdAt') return false;
+    if (key === 'sortOrder' && value === 'desc') return false;
+    return value !== '';
+  });
+
   useEffect(() => {
-    fetchMedicinesList(pagination.page);
-  }, [pagination.page, fetchMedicinesList, refreshKey]);
+    if (hasActiveFilters) {
+      fetchFilteredMedicines(pagination.page);
+    } else {
+      fetchMedicinesList(pagination.page);
+    }
+  }, [pagination.page, fetchMedicinesList, fetchFilteredMedicines, refreshKey, hasActiveFilters]);
 
   const handleViewDetails = (medicine: Medicine) => {
     setSelectedMedicine(medicine);
@@ -425,7 +594,11 @@ export const MedicineList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
 
   const handleMedicineUpdated = () => {
     closeEditModal();
-    fetchMedicinesList(pagination.page);
+    if (hasActiveFilters) {
+      fetchFilteredMedicines(pagination.page);
+    } else {
+      fetchMedicinesList(pagination.page);
+    }
   };
 
   const handleDeleteMedicine = (medicine: Medicine) => {
@@ -439,7 +612,11 @@ export const MedicineList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
     try {
       setDeletingId(deletingMedicine.id);
       await deleteMedicine(deletingMedicine.id);
-      await fetchMedicinesList(pagination.page);
+      if (hasActiveFilters) {
+        await fetchFilteredMedicines(pagination.page);
+      } else {
+        await fetchMedicinesList(pagination.page);
+      }
       closeDeleteModal();
     } catch (err) {
       if (err instanceof ApiError) {
@@ -458,6 +635,28 @@ export const MedicineList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
     setDeletingMedicine(null);
   };
 
+  const handleFilterChange = (field: keyof FilterState, value: string) => {
+    setFilters(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleFilterSearch = () => {
+    setPagination(prev => ({ ...prev, page: 1 }));
+    // Component will auto-detect through useEffect
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      name: '',
+      genericName: '',
+      priceMin: '',
+      priceMax: '',
+      createdDateFrom: '',
+      sortBy: 'createdAt',
+      sortOrder: 'desc'
+    });
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
   if (error) {
     return (
       <ErrorMessage>
@@ -468,6 +667,105 @@ export const MedicineList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
 
   return (
     <div>
+      <FilterContainer>
+        <FilterRow>
+          <FilterGroup>
+            <FilterLabel htmlFor="name">Name</FilterLabel>
+            <FilterInput
+              id="name"
+              type="text"
+              placeholder="Search by name..."
+              value={filters.name}
+              onChange={(e) => handleFilterChange('name', e.target.value)}
+            />
+          </FilterGroup>
+
+          <FilterGroup>
+            <FilterLabel htmlFor="genericName">Generic Name</FilterLabel>
+            <FilterInput
+              id="genericName"
+              type="text"
+              placeholder="Search by generic name..."
+              value={filters.genericName}
+              onChange={(e) => handleFilterChange('genericName', e.target.value)}
+            />
+          </FilterGroup>
+
+          <FilterGroup>
+            <FilterLabel htmlFor="priceMin">Min Price ($)</FilterLabel>
+            <FilterInput
+              id="priceMin"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0.00"
+              value={filters.priceMin}
+              onChange={(e) => handleFilterChange('priceMin', e.target.value)}
+            />
+          </FilterGroup>
+
+          <FilterGroup>
+            <FilterLabel htmlFor="priceMax">Max Price ($)</FilterLabel>
+            <FilterInput
+              id="priceMax"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="999.99"
+              value={filters.priceMax}
+              onChange={(e) => handleFilterChange('priceMax', e.target.value)}
+            />
+          </FilterGroup>
+
+          <FilterGroup>
+            <FilterLabel htmlFor="createdDateFrom">Created After</FilterLabel>
+            <FilterInput
+              id="createdDateFrom"
+              type="date"
+              value={filters.createdDateFrom}
+              onChange={(e) => handleFilterChange('createdDateFrom', e.target.value)}
+            />
+          </FilterGroup>
+
+          <FilterGroup>
+            <FilterLabel htmlFor="sortBy">Sort By</FilterLabel>
+            <FilterSelect
+              id="sortBy"
+              value={filters.sortBy}
+              onChange={(e) => handleFilterChange('sortBy', e.target.value)}
+            >
+              <option value="name">Name</option>
+              <option value="genericName">Generic Name</option>
+              <option value="price">Price</option>
+              <option value="createdAt">Created Date</option>
+            </FilterSelect>
+          </FilterGroup>
+
+          <FilterGroup>
+            <FilterLabel htmlFor="sortOrder">Sort Order</FilterLabel>
+            <FilterSelect
+              id="sortOrder"
+              value={filters.sortOrder}
+              onChange={(e) => handleFilterChange('sortOrder', e.target.value as 'asc' | 'desc')}
+            >
+              <option value="desc">Descending</option>
+              <option value="asc">Ascending</option>
+            </FilterSelect>
+          </FilterGroup>
+        </FilterRow>
+
+        <FilterActions>
+          {hasActiveFilters && (
+            <FilterButton variant="secondary" onClick={handleClearFilters}>
+              Clear Filters
+            </FilterButton>
+          )}
+          <FilterButton variant="primary" onClick={handleFilterSearch}>
+            {isLoadingFiltered ? 'Filtering...' : 'Search'}
+          </FilterButton>
+        </FilterActions>
+      </FilterContainer>
+
       <TableContainer>
         <ScrollContainer>
           <Table>
@@ -488,7 +786,7 @@ export const MedicineList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                   <td colSpan={7}>
                     <LoadingOverlay>
                       <LoadingSpinner />
-                      Loading medicines...
+                      {isLoadingFiltered ? 'Filtering medicines...' : 'Loading medicines...'}
                     </LoadingOverlay>
                   </td>
                 </tr>
@@ -541,7 +839,7 @@ export const MedicineList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
 
         <PaginationContainer>
           <PageInfo>
-            Showing {medicines.length} of {pagination.total} medicines
+            Showing {medicines.length} of {pagination.total} medicines{hasActiveFilters ? ' (filtered)' : ''}
           </PageInfo>
           <PaginationControls>
             <PaginationButton

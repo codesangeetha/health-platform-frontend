@@ -29,6 +29,9 @@ import { ResetPassword } from '../features/auth/ResetPassword';
 import { SetDoctorPassword } from '../features/auth/SetDoctorPassword';
 import GoogleCallback from '../features/auth/GoogleCallback';
 import { LandingPage } from '../pages/LandingPage';
+import { ServicesPage } from '../pages/ServicesPage';
+import { AboutPage } from '../pages/AboutPage';
+import { ContactPage } from '../pages/ContactPage';
 import { PatientDashboard } from '../features/patient/dashboard/PatientDashboard';
 import VideoCall from '../components/VideoCall/VideoCall';
 import { PatientProfileEdit } from '../features/patient/profile/PatientProfileEdit';
@@ -96,6 +99,18 @@ const router = createBrowserRouter([
       {
         path: 'home',
         element: <LandingPage />,
+      },
+      {
+        path: 'services',
+        element: <ServicesPage />,
+      },
+      {
+        path: 'about',
+        element: <AboutPage />,
+      },
+      {
+        path: 'contact',
+        element: <ContactPage />,
       },
       {
         path: 'patient',
