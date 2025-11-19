@@ -34,7 +34,7 @@ export const getSpecializations = async (params: GetSpecializationsParams = {}):
       ...(createdAt && { createdAt })
     });
 
-    const token = getAuthToken();
+    const token = getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }
@@ -66,7 +66,7 @@ export const getSpecializations = async (params: GetSpecializationsParams = {}):
 
 export const createSpecialization = async (payload: CreateSpecializationRequest): Promise<CreateSpecializationResponse> => {
   try {
-    const token = getAuthToken();
+    const token = getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }
@@ -99,7 +99,7 @@ export const createSpecialization = async (payload: CreateSpecializationRequest)
 
 export const deleteSpecialization = async (specializationId: string): Promise<DeleteSpecializationResponse> => {
   try {
-    const token = getAuthToken();
+    const token = getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }
@@ -131,7 +131,7 @@ export const deleteSpecialization = async (specializationId: string): Promise<De
 
 export const updateSpecialization = async (specializationId: string, payload: UpdateSpecializationRequest): Promise<UpdateSpecializationResponse> => {
   try {
-    const token = getAuthToken();
+    const token = getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }

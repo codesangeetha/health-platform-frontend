@@ -3,16 +3,48 @@ import { BASE_URL } from '../../config/constants';
 
 const API_URL = `${BASE_URL}/api/v1`;
 
-export const getAuthToken = (): string | null => {
-  return localStorage.getItem('token');
+// User type specific storage keys
+const STORAGE_KEYS = {
+  patient: {
+    user: 'patient',
+    token: 'patient_token'
+  },
+  doctor: {
+    user: 'doctor',
+    token: 'doctor_token'
+  },
+  admin: {
+    user: 'admin',
+    token: 'admin_token'
+  },
+  // Legacy keys for backward compatibility
+  legacy: {
+    user: 'user',
+    token: 'token'
+  }
 };
 
-export const setAuthToken = (token: string): void => {
-  localStorage.setItem('token', token);
+export const getAuthToken = (userType?: 'patient' | 'doctor' | 'admin'): string | null => {
+  if (userType && STORAGE_KEYS[userType]) {
+    return localStorage.getItem(STORAGE_KEYS[userType].token);
+  }
+  // Fallback to legacy key for backward compatibility
+  return localStorage.getItem(STORAGE_KEYS.legacy.token);
 };
 
-export const removeAuthToken = (): void => {
-  localStorage.removeItem('token');
+export const setAuthToken = (token: string, userType: 'patient' | 'doctor' | 'admin'): void => {
+  localStorage.setItem(STORAGE_KEYS[userType].token, token);
+};
+
+export const removeAuthToken = (userType?: 'patient' | 'doctor' | 'admin'): void => {
+  if (userType && STORAGE_KEYS[userType]) {
+    localStorage.removeItem(STORAGE_KEYS[userType].token);
+  } else {
+    // Remove all tokens
+    Object.values(STORAGE_KEYS).forEach(keys => {
+      localStorage.removeItem(keys.token);
+    });
+  }
 };
 
 export class ApiError extends Error {
@@ -67,7 +99,7 @@ interface PatientRegisterData extends RegisterDataBase {
 export type RegisterData = PatientRegisterData | (RegisterDataBase & { userType: 'doctor' | 'admin'; });
 
 export class AuthService {
-  static async login(email: string, password: string): Promise<AuthResponseData> {
+  static async login(email: string, password: string, userType?: 'patient' | 'doctor' | 'admin'): Promise<AuthResponseData> {
     try {
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
@@ -83,18 +115,19 @@ export class AuthService {
       if (!response.ok || !data.success) {
         // Use the actual API error message instead of a generic one
         const errorMessage = data.message || 'Login failed';
-        
+         
         // Enhance error with context for better error handling
         const enhancedError = new Error(errorMessage);
         (enhancedError as any).code = data.code || 'LOGIN_FAILED';
         (enhancedError as any).isInactiveAccount = /account is inactive/i.test(errorMessage);
-        
+         
         throw enhancedError;
       }
 
-      // Store the token and user data
-      localStorage.setItem('token', data.data.token);
-      localStorage.setItem('user', JSON.stringify(data.data.user));
+      // Store the token and user data with user-type specific keys
+      const actualUserType = data.data.user.userType as 'patient' | 'doctor' | 'admin';
+      localStorage.setItem(STORAGE_KEYS[actualUserType].token, data.data.token);
+      localStorage.setItem(STORAGE_KEYS[actualUserType].user, JSON.stringify(data.data.user));
 
       return data.data;
     } catch (error) {
@@ -196,8 +229,24 @@ export class AuthService {
     }
   }
 
-  static getCurrentUser() {
-    const userStr = localStorage.getItem('user');
+  static getCurrentUser(userType?: 'patient' | 'doctor' | 'admin') {
+    let userStr: string | null = null;
+    
+    if (userType && STORAGE_KEYS[userType]) {
+      userStr = localStorage.getItem(STORAGE_KEYS[userType].user);
+    } else {
+      // Try to get user from any of the user type keys
+      for (const key of ['patient', 'doctor', 'admin']) {
+        userStr = localStorage.getItem(STORAGE_KEYS[key as keyof typeof STORAGE_KEYS].user);
+        if (userStr) break;
+      }
+      
+      // Fallback to legacy key
+      if (!userStr) {
+        userStr = localStorage.getItem(STORAGE_KEYS.legacy.user);
+      }
+    }
+    
     console.log('User data from localStorage:', userStr);
     if (userStr) {
       try {
@@ -205,16 +254,26 @@ export class AuthService {
       } catch (error) {
         console.error('Error parsing user data:', error);
         // Remove invalid data from localStorage
-        localStorage.removeItem('user');
+        if (userType && STORAGE_KEYS[userType]) {
+          localStorage.removeItem(STORAGE_KEYS[userType].user);
+        }
         return null;
       }
     }
     return null;
   }
 
-  static logout(): void {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+  static logout(userType?: 'patient' | 'doctor' | 'admin'): void {
+    if (userType && STORAGE_KEYS[userType]) {
+      localStorage.removeItem(STORAGE_KEYS[userType].token);
+      localStorage.removeItem(STORAGE_KEYS[userType].user);
+    } else {
+      // Clear all user tokens and data
+      Object.values(STORAGE_KEYS).forEach(keys => {
+        localStorage.removeItem(keys.token);
+        localStorage.removeItem(keys.user);
+      });
+    }
     // Do not navigate here; let the UI handle routing after logout
   }
 
@@ -274,13 +333,14 @@ export class AuthService {
     }
   }
 
-  static getToken(): string | null {
-    return localStorage.getItem('token');
+  static getToken(userType?: 'patient' | 'doctor' | 'admin'): string | null {
+    return getAuthToken(userType);
   }
 
   static setUserData(user: AuthResponseData['user'], token: string): void {
-    localStorage.setItem('user', JSON.stringify(user));
-    localStorage.setItem('token', token);
+    const userType = user.userType as 'patient' | 'doctor' | 'admin';
+    localStorage.setItem(STORAGE_KEYS[userType].user, JSON.stringify(user));
+    localStorage.setItem(STORAGE_KEYS[userType].token, token);
   }
 
   static async googleLogin(): Promise<void> {
@@ -315,7 +375,7 @@ export class AuthService {
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // Include cookies for OAuth
+        credentials: 'include' as RequestCredentials, // Include cookies for OAuth
       });
 
       if (!response.ok) {
@@ -328,9 +388,10 @@ export class AuthService {
         throw new Error(data.message || 'Google login failed');
       }
 
-      // Store the token and user data
-      localStorage.setItem('token', data.data.token);
-      localStorage.setItem('user', JSON.stringify(data.data.user));
+      // Store the token and user data with user-type specific keys
+      const actualUserType = data.data.user.userType as 'patient' | 'doctor' | 'admin';
+      localStorage.setItem(STORAGE_KEYS[actualUserType].token, data.data.token);
+      localStorage.setItem(STORAGE_KEYS[actualUserType].user, JSON.stringify(data.data.user));
 
       // Mark as Google OAuth user for proper logout handling
       localStorage.setItem('google_auth', 'true');
@@ -341,7 +402,7 @@ export class AuthService {
     }
   }
 
-  static async logoutFromBackend(): Promise<void> {
+  static async logoutFromBackend(userType?: 'patient' | 'doctor' | 'admin'): Promise<void> {
     try {
       console.log('🔄 [LOGOUT] Starting logout request...');
       console.log('🔄 [LOGOUT] API_URL:', API_URL);
@@ -349,7 +410,7 @@ export class AuthService {
       console.log('🔄 [LOGOUT] User agent:', navigator.userAgent);
 
       // Check if this is a Google OAuth logout by looking for Google-related data
-      const currentUser = this.getCurrentUser();
+      const currentUser = this.getCurrentUser(userType);
       const isGoogleUser = currentUser?.email?.includes('@gmail.com') ||
                           localStorage.getItem('google_auth') === 'true';
 
@@ -361,19 +422,6 @@ export class AuthService {
 
       console.log('🔄 [LOGOUT] Using logout endpoint:', logoutEndpoint);
       console.log('🔄 [LOGOUT] Full URL:', fullUrl);
-/* 
-      // Test backend connectivity first
-      console.log('🔄 [LOGOUT] Testing backend connectivity...');
-      try {
-        const testResponse = await fetch(fullUrl, {
-          method: 'OPTIONS',
-        });
-        console.log('🔄 [LOGOUT] Backend connectivity test - Status:', testResponse.status);
-        console.log('🔄 [LOGOUT] Backend connectivity test - OK:', testResponse.ok);
-      } catch (testError) {
-        console.warn('⚠️ [LOGOUT] Backend connectivity test failed:', testError);
-        console.warn('⚠️ [LOGOUT] This suggests the backend server might not be running');
-      } */
 
       const requestOptions: RequestInit = {
         method: 'POST',
@@ -450,9 +498,9 @@ export class AuthService {
     }
   }
 
-  static async checkAuthStatus(): Promise<AuthResponseData | null> {
+  static async checkAuthStatus(userType?: 'patient' | 'doctor' | 'admin'): Promise<AuthResponseData | null> {
     try {
-      const token = this.getToken();
+      const token = this.getToken(userType);
       if (!token) {
         return null;
       }
@@ -467,21 +515,21 @@ export class AuthService {
 
       if (!response.ok) {
         // If token is invalid, clear it
-        this.logout();
+        this.logout(userType);
         return null;
       }
 
       const data = await response.json();
 
       if (!data.success) {
-        this.logout();
+        this.logout(userType);
         return null;
       }
 
       return data.data;
     } catch (error) {
       console.error('Auth status check failed:', error);
-      this.logout();
+      this.logout(userType);
       return null;
     }
   }

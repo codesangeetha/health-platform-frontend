@@ -9,6 +9,7 @@ export const DoctorDirectory = () => {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [totalPages, setTotalPages] = useState<number>(0);
   const [filters, setFilters] = useState<DoctorFilters>({
     limit: 5,
     page: 1,
@@ -29,6 +30,7 @@ export const DoctorDirectory = () => {
       
       const response = await DoctorService.getDoctors(filters);
       setDoctors(response.data.doctors);
+      setTotalPages(response.data.pagination.totalPages);
       
       // Extract unique specializations for filter dropdown
       const uniqueSpecializations = Array.from(
@@ -171,11 +173,6 @@ export const DoctorDirectory = () => {
                         </Link>
                       </div>
                       
-                      {!doctor.isVerified && (
-                        <div className="verification-badge">
-                          Pending Verification
-                        </div>
-                      )}
                     </div>
                   </div>
                 ))}
@@ -193,13 +190,25 @@ export const DoctorDirectory = () => {
                   Previous
                 </button>
                 <span className="page-number">{filters.page}</span>
-                <button
-                  onClick={() => handlePageChange(filters.page! + 1)}
-                  disabled={doctors.length < (filters.limit || 5)}
-                  className="pagination-button"
-                >
-                  Next
-                </button>
+                {filters.page! < totalPages && (
+                  <button
+                    onClick={() => handlePageChange(filters.page! + 1)}
+                    disabled={doctors.length < (filters.limit || 5)}
+                    className="pagination-button"
+                    style={{
+                      backgroundColor: '#007bff',
+                      color: 'white',
+                      border: '2px solid #007bff',
+                      padding: '12px 24px',
+                      fontWeight: 'bold',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '14px'
+                    }}
+                  >
+                    Next
+                  </button>
+                )}
               </div>
             )}
           </>

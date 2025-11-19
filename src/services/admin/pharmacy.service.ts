@@ -55,7 +55,7 @@ export const getCategories = async (params: GetCategoriesParams = {}): Promise<C
       ...(createdAt && { createdAt })
     });
 
-    const token = getAuthToken();
+    const token = getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }
@@ -97,7 +97,7 @@ export type CreateCategoryResponse = ApiResponse<{
 
 export const createCategory = async (payload: CreateCategoryPayload): Promise<CreateCategoryResponse> => {
   try {
-    const token = getAuthToken();
+    const token = getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }
@@ -171,7 +171,7 @@ export const getMedicines = async (params: GetMedicinesParams = {}): Promise<Med
        limit: limit.toString()
      });
 
-     const token = getAuthToken();
+     const token = getAuthToken('admin');
      if (!token) {
        throw new ApiError('No authentication token found', 401);
      }
@@ -207,6 +207,18 @@ interface SearchMedicinesParams {
    limit?: number;
 }
 
+interface AdvancedSearchParams {
+   name?: string;
+   genericName?: string;
+   priceMin?: number;
+   priceMax?: number;
+   createdDateFrom?: string;
+   sortBy?: string;
+   sortOrder?: 'asc' | 'desc';
+   page?: number;
+   limit?: number;
+}
+
 export const searchMedicines = async (params: SearchMedicinesParams = {}): Promise<MedicinesResponse> => {
    try {
      const { query = '', page = 1, limit = 10 } = params;
@@ -219,7 +231,7 @@ export const searchMedicines = async (params: SearchMedicinesParams = {}): Promi
        queryParams.append('query', query);
      }
 
-     const token = getAuthToken();
+     const token = getAuthToken('admin');
      if (!token) {
        throw new ApiError('No authentication token found', 401);
      }
@@ -246,6 +258,63 @@ export const searchMedicines = async (params: SearchMedicinesParams = {}): Promi
        throw error;
      }
      throw new ApiError('Failed to search medicines', 500);
+   }
+};
+
+export const advancedSearchMedicines = async (params: AdvancedSearchParams = {}): Promise<MedicinesResponse> => {
+   try {
+     const {
+       name,
+       genericName,
+       priceMin,
+       priceMax,
+       createdDateFrom,
+       sortBy = 'createdAt',
+       sortOrder = 'desc',
+       page = 1,
+       limit = 10
+     } = params;
+     
+     const queryParams = new URLSearchParams({
+       page: page.toString(),
+       limit: limit.toString(),
+       sortBy,
+       sortOrder
+     });
+
+     if (name) queryParams.append('name', name);
+     if (genericName) queryParams.append('genericName', genericName);
+     if (priceMin !== undefined) queryParams.append('priceMin', priceMin.toString());
+     if (priceMax !== undefined) queryParams.append('priceMax', priceMax.toString());
+     if (createdDateFrom) queryParams.append('createdDateFrom', createdDateFrom);
+
+     const token = getAuthToken('admin');
+     if (!token) {
+       throw new ApiError('No authentication token found', 401);
+     }
+
+     const response = await fetch(
+       `${BASE_URL}${MEDICINES_ENDPOINTS.SEARCH_MEDICINES}?${queryParams}`,
+       {
+         method: 'GET',
+         headers: {
+           'Content-Type': 'application/json',
+           'Authorization': `Bearer ${token}`
+         }
+       }
+     );
+
+     if (!response.ok) {
+       await handleApiError(response);
+     }
+
+     const data = await response.json();
+     return data;
+   } catch (error) {
+     if (error instanceof ApiError) {
+       throw error;
+     }
+     throw new ApiError('Failed to search medicines with advanced filters', 500);
    }
 };
 
@@ -278,7 +347,7 @@ export type CreateMedicineResponse = ApiResponse<{
 
 export const createMedicine = async (payload: CreateMedicinePayload): Promise<CreateMedicineResponse> => {
   try {
-    const token = getAuthToken();
+    const token = getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }
@@ -336,7 +405,7 @@ export type UpdateMedicineResponse = ApiResponse<{
 
 export const updateMedicine = async (medicineId: string, payload: UpdateMedicinePayload): Promise<UpdateMedicineResponse> => {
   try {
-    const token = getAuthToken();
+    const token = getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }
@@ -375,7 +444,7 @@ export type DeleteMedicineResponse = ApiResponse<{
 
 export const deleteMedicine = async (medicineId: string): Promise<DeleteMedicineResponse> => {
   try {
-    const token = getAuthToken();
+    const token = getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }
@@ -424,7 +493,7 @@ export type UploadPrescriptionResponse = ApiResponse<PrescriptionUploadResponse>
 
 export const uploadPrescription = async (payload: PrescriptionUploadPayload): Promise<UploadPrescriptionResponse> => {
   try {
-    const token = getAuthToken();
+    const token = getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }
@@ -493,7 +562,7 @@ export type OrderMedicineResponse = ApiResponse<PlaceOrderResponse>;
 
 export const placeOrder = async (payload: PlaceOrderPayload): Promise<OrderMedicineResponse> => {
   try {
-    const token = getAuthToken();
+    const token = getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }

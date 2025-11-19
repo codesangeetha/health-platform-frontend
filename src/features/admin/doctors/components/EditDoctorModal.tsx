@@ -220,6 +220,9 @@ interface EditFormData {
   experience: string;
   consultationFee: string;
   isActive: boolean;
+  availableDays: string[];
+  availableTimeStart: string;
+  availableTimeEnd: string;
 }
 
 export function EditDoctorModal({ 
@@ -244,6 +247,9 @@ export function EditDoctorModal({
     experience: '',
     consultationFee: '',
     isActive: true,
+    availableDays: [],
+    availableTimeStart: '09:00',
+    availableTimeEnd: '17:00',
   });
   
   const [submitting, setSubmitting] = useState(false);
@@ -268,6 +274,9 @@ export function EditDoctorModal({
         experience: doctor.experience?.toString() || '',
         consultationFee: doctor.consultationFee?.toString() || '',
         isActive: doctor.isActive || false,
+        availableDays: doctor.availableDays || [],
+        availableTimeStart: doctor.availableTime?.start || '09:00',
+        availableTimeEnd: doctor.availableTime?.end || '17:00',
       });
       setError(null);
       setSuccess(null);
@@ -298,7 +307,7 @@ export function EditDoctorModal({
     }
   }, [open]);
 
-  const setField = (key: keyof EditFormData, value: string | boolean) => {
+  const setField = (key: keyof EditFormData, value: string | boolean | string[]) => {
     setForm(prev => ({ ...prev, [key]: value }));
     if (fieldErrors[key as string]) {
       setFieldErrors(prev => {
@@ -377,17 +386,35 @@ export function EditDoctorModal({
     return undefined;
   };
 
-  const validateField = (name: keyof EditFormData, value: string): string | undefined => {
+  const validateAvailableTimeStart = (v: string) => {
+    if (!v) return 'Start time is required.';
+    return undefined;
+  };
+
+  const validateAvailableTimeEnd = (v: string) => {
+    if (!v) return 'End time is required.';
+    return undefined;
+  };
+
+  const validateAvailableDays = (v: string[]) => {
+    if (!v || v.length === 0) return 'At least one day must be selected.';
+    return undefined;
+  };
+
+  const validateField = (name: keyof EditFormData, value: string | string[]): string | undefined => {
     switch (name) {
-      case 'email': return validateEmail(value);
-      case 'firstName': return validateFirstName(value);
-      case 'lastName': return validateLastName(value);
-      case 'phone': return validatePhone(value);
-      case 'specialization': return validateSpecialization(value);
-      case 'qualification': return validateQualification(value);
-      case 'hospital': return validateHospital(value);
-      case 'experience': return validateExperience(value);
-      case 'consultationFee': return validateConsultationFee(value);
+      case 'email': return validateEmail(value as string);
+      case 'firstName': return validateFirstName(value as string);
+      case 'lastName': return validateLastName(value as string);
+      case 'phone': return validatePhone(value as string);
+      case 'specialization': return validateSpecialization(value as string);
+      case 'qualification': return validateQualification(value as string);
+      case 'hospital': return validateHospital(value as string);
+      case 'experience': return validateExperience(value as string);
+      case 'consultationFee': return validateConsultationFee(value as string);
+      case 'availableTimeStart': return validateAvailableTimeStart(value as string);
+      case 'availableTimeEnd': return validateAvailableTimeEnd(value as string);
+      case 'availableDays': return validateAvailableDays(value as string[]);
       default: return undefined;
     }
   };
@@ -403,6 +430,9 @@ export function EditDoctorModal({
       hospital: validateHospital(form.hospital) || '',
       experience: validateExperience(form.experience) || '',
       consultationFee: validateConsultationFee(form.consultationFee) || '',
+      availableTimeStart: validateAvailableTimeStart(form.availableTimeStart) || '',
+      availableTimeEnd: validateAvailableTimeEnd(form.availableTimeEnd) || '',
+      availableDays: validateAvailableDays(form.availableDays) || '',
     };
 
     setFieldErrors(errors);
@@ -482,6 +512,9 @@ export function EditDoctorModal({
         hospital: true,
         experience: true,
         consultationFee: true,
+        availableTimeStart: true,
+        availableTimeEnd: true,
+        availableDays: true,
       });
       setError('Please fix the highlighted fields');
       return;
@@ -500,6 +533,11 @@ export function EditDoctorModal({
         experience: Number(form.experience),
         consultationFee: Number(form.consultationFee),
         isActive: form.isActive,
+        availableDays: form.availableDays,
+        availableTime: {
+          start: form.availableTimeStart,
+          end: form.availableTimeEnd,
+        },
       };
 
       await updateDoctor(doctor.id, payload);
@@ -699,6 +737,50 @@ export function EditDoctorModal({
                     <ToggleSlider active={form.isActive} />
                   </ToggleSwitch>
                 </Toggle>
+              </Label>
+            </InputRow>
+
+            <InputRow>
+              <Label>
+                Available Days
+                <Select
+                  multiple
+                  value={form.availableDays}
+                  onChange={(e) => {
+                    const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+                    setField('availableDays', selectedOptions);
+                  }}
+                  name="availableDays"
+                  style={{ height: '80px' }}
+                >
+                  <option value="Monday">Monday</option>
+                  <option value="Tuesday">Tuesday</option>
+                  <option value="Wednesday">Wednesday</option>
+                  <option value="Thursday">Thursday</option>
+                  <option value="Friday">Friday</option>
+                  <option value="Saturday">Saturday</option>
+                  <option value="Sunday">Sunday</option>
+                </Select>
+              </Label>
+              <Label>
+                Available Time
+                <InputRow style={{ margin: 0, gap: '8px' }}>
+                  <Input
+                    type="time"
+                    value={form.availableTimeStart}
+                    onChange={(e) => setField('availableTimeStart', e.target.value)}
+                    name="availableTimeStart"
+                    style={{ minWidth: '120px' }}
+                  />
+                  <span style={{ alignSelf: 'center', color: '#666' }}>to</span>
+                  <Input
+                    type="time"
+                    value={form.availableTimeEnd}
+                    onChange={(e) => setField('availableTimeEnd', e.target.value)}
+                    name="availableTimeEnd"
+                    style={{ minWidth: '120px' }}
+                  />
+                </InputRow>
               </Label>
             </InputRow>
           </Content>

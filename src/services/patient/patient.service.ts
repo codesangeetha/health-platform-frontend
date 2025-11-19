@@ -1,4 +1,5 @@
 import { BASE_URL } from '../../config/constants';
+import { getAuthToken } from '../auth/auth.service';
 import type { PatientOrdersResponse, PatientOrdersRequest } from '../../types/order/order.types';
 
 // Dashboard data interface
@@ -82,7 +83,7 @@ export class PatientService {
    */
   static async getDashboardData(): Promise<DashboardResponse> {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken('patient');
       if (!token) {
         throw new Error('No authentication token found');
       }
@@ -113,7 +114,7 @@ export class PatientService {
    */
   static async getAppointments(page = 1, limit = 5): Promise<AppointmentsResponse> {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken('patient');
       if (!token) {
         throw new Error('No authentication token found');
       }
@@ -148,7 +149,7 @@ export class PatientService {
    */
   static async getDoctorDetails(doctorId: string): Promise<DoctorDetailsResponse> {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken('patient');
       if (!token) {
         throw new Error('No authentication token found');
       }
@@ -179,7 +180,7 @@ export class PatientService {
    */
   static async getPatientOrders(params: PatientOrdersRequest = {}): Promise<PatientOrdersResponse> {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken('patient');
       if (!token) {
         throw new Error('No authentication token found');
       }
@@ -220,7 +221,7 @@ export class PatientService {
    */
   static async getOrderById(orderId: string): Promise<ApiResponse<any>> {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken('patient');
       if (!token) {
         throw new Error('No authentication token found');
       }
@@ -251,7 +252,7 @@ export class PatientService {
    */
   static async cancelOrder(orderId: string, reason?: string): Promise<ApiResponse<any>> {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken('patient');
       if (!token) {
         throw new Error('No authentication token found');
       }

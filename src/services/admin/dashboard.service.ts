@@ -26,7 +26,7 @@ export type DashboardCountsResponse = ApiResponse<DashboardCounts>;
 
 export const getDashboardCounts = async (): Promise<DashboardCountsResponse> => {
   try {
-    const token = getAuthToken();
+    const token = getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }

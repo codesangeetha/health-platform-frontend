@@ -526,7 +526,7 @@ export const PatientList = () => {
                     <Td>{patient.bloodGroup || '-'}</Td>
                     <Td>
                       {patient.email}<br />
-                      {patient.phone}
+                      {patient.phone && patient.phone !== '0000000000' ? patient.phone : ''}
                     </Td>
                     <Td>
                       {patient.createdAt ? new Date(patient.createdAt).toLocaleDateString() : '-'}
@@ -605,7 +605,11 @@ export const PatientList = () => {
             
             <DetailRow>
               <DetailLabel>Phone:</DetailLabel>
-              <DetailValue>{selectedPatient?.phone || 'N/A'}</DetailValue>
+              <DetailValue>
+                {selectedPatient?.phone && selectedPatient.phone !== '0000000000'
+                  ? selectedPatient.phone
+                  : ''}
+              </DetailValue>
             </DetailRow>
             
             <DetailRow>
@@ -652,17 +656,8 @@ export const PatientList = () => {
               <DetailLabel>Emergency Contact:</DetailLabel>
               <DetailValue>
                 {selectedPatient?.emergencyContact?.name
-                  ? `${selectedPatient.emergencyContact.name} (${selectedPatient.emergencyContact.relationship}) - ${selectedPatient.emergencyContact.phone}`
+                  ? `${selectedPatient.emergencyContact.name} (${selectedPatient.emergencyContact.relationship}) - ${selectedPatient.emergencyContact.phone && selectedPatient.emergencyContact.phone !== '0000000000' ? selectedPatient.emergencyContact.phone : ''}`
                   : 'Not specified'}
-              </DetailValue>
-            </DetailRow>
-            
-            <DetailRow>
-              <DetailLabel>Status:</DetailLabel>
-              <DetailValue>
-                <StatusBadge isVerified={selectedPatient?.isVerified || false}>
-                  {selectedPatient?.isVerified ? 'Verified' : 'Pending'}
-                </StatusBadge>
               </DetailValue>
             </DetailRow>
             

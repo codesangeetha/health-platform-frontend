@@ -8,27 +8,13 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ requiredRole, children }: ProtectedRouteProps = {}) {
-  const { authState } = useAuth();
+  const { authState, getCurrentSession } = useAuth();
   const location = useLocation();
 
-  // If user is not authenticated (either not loading or loading but no token), redirect to login
-  if (!authState.isAuthenticated || !authState.token) {
-    // Determine the appropriate login page based on the current path
-    let loginPath = '/';
+  // Get the current session
+  const currentSession = getCurrentSession();
 
-    if (location.pathname.startsWith('/admin')) {
-      loginPath = '/admin/login';
-    } else if (location.pathname.startsWith('/doctor')) {
-      loginPath = '/doctor/login';
-    } else if (location.pathname.startsWith('/patient')) {
-      loginPath = '/patient/login';
-    }
-
-    // Save the current location to redirect back after login
-    return <Navigate to={loginPath} state={{ from: location }} replace />;
-  }
-
-  // If still loading but user is authenticated, show loading state
+  // If still loading (including initial load), show loading state to prevent flicker
   if (authState.isLoading) {
     return (
       <div style={{
@@ -44,13 +30,51 @@ export function ProtectedRoute({ requiredRole, children }: ProtectedRouteProps =
     );
   }
 
+  // Get the appropriate session based on requiredRole or current path
+  let targetUserType: 'patient' | 'doctor' | 'admin' | null = null;
+  let targetSession = currentSession;
+
+  if (requiredRole) {
+    targetUserType = requiredRole;
+    targetSession = authState.sessions[requiredRole];
+  } else {
+    // Determine user type from path
+    if (location.pathname.startsWith('/admin')) {
+      targetUserType = 'admin';
+      targetSession = authState.sessions.admin;
+    } else if (location.pathname.startsWith('/doctor')) {
+      targetUserType = 'doctor';
+      targetSession = authState.sessions.doctor;
+    } else if (location.pathname.startsWith('/patient')) {
+      targetUserType = 'patient';
+      targetSession = authState.sessions.patient;
+    }
+  }
+
+  // Only redirect to login after loading is complete and user is not authenticated
+  if (!targetSession?.isAuthenticated || !targetSession?.token) {
+    // Determine the appropriate login page based on the current path or required role
+    let loginPath = '/';
+    
+    if (targetUserType === 'admin' || location.pathname.startsWith('/admin')) {
+      loginPath = '/admin/login';
+    } else if (targetUserType === 'doctor' || location.pathname.startsWith('/doctor')) {
+      loginPath = '/doctor/login';
+    } else if (targetUserType === 'patient' || location.pathname.startsWith('/patient')) {
+      loginPath = '/patient/login';
+    }
+
+    // Save the current location to redirect back after login
+    return <Navigate to={loginPath} state={{ from: location }} replace />;
+  }
+
   // Check role-based access control
-  if (requiredRole && authState.user?.userType !== requiredRole) {
-    console.warn(`Access denied: User role '${authState.user?.userType}' cannot access '${requiredRole}' routes`);
+  if (requiredRole && targetSession.user?.userType !== requiredRole) {
+    console.warn(`Access denied: User role '${targetSession.user?.userType}' cannot access '${requiredRole}' routes`);
     
     // Redirect to appropriate dashboard based on user role
     let redirectPath = '/';
-    switch (authState.user?.userType) {
+    switch (targetSession.user?.userType) {
       case 'admin':
         redirectPath = '/admin/dashboard';
         break;

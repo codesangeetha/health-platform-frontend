@@ -32,7 +32,7 @@ export const DoctorProfile = () => {
   const { authState, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const token = useMemo(() => authState.token || AuthService.getToken() || '', [authState.token]);
+  const token = useMemo(() => authState.sessions.doctor.token || AuthService.getToken('doctor') || '', [authState.sessions.doctor.token]);
 
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,8 +42,8 @@ export const DoctorProfile = () => {
     if (profile?.firstName || profile?.lastName) {
       return `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim();
     }
-    return authState.user?.email?.split('@')[0] || 'Doctor';
-  }, [profile, authState.user?.email]);
+    return authState.sessions.doctor.user?.email?.split('@')[0] || 'Doctor';
+  }, [profile, authState.sessions.doctor.user?.email]);
 
   useEffect(() => {
     let isMounted = true;
@@ -169,7 +169,7 @@ export const DoctorProfile = () => {
                 </div>
                 <div>
                   <div className="pd-stat-label">Email</div>
-                  <div style={{ color: 'var(--color-text-dark)' }}>{profile?.email || authState.user?.email}</div>
+                  <div style={{ color: 'var(--color-text-dark)' }}>{profile?.email || authState.sessions.doctor.user?.email}</div>
                 </div>
                 <div>
                   <div className="pd-stat-label">Phone</div>
@@ -257,7 +257,7 @@ export const DoctorProfile = () => {
                 </div>
                 <div>
                   <div className="pd-stat-label">Email</div>
-                  <div style={{ color: 'var(--color-text-dark)' }}>{profile?.email || authState.user?.email || '—'}</div>
+                  <div style={{ color: 'var(--color-text-dark)' }}>{profile?.email || authState.sessions.doctor.user?.email || '—'}</div>
                 </div>
               </div>
             )}
