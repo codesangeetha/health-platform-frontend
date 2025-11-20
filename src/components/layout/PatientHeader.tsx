@@ -1,5 +1,6 @@
 import { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
+import { usePatient } from '../../context/PatientContext';
 import { Link, useLocation } from 'react-router-dom';
 import '../../styles/components/patient-dashboard.styles.css';
 
@@ -10,6 +11,7 @@ interface PatientHeaderProps {
 
 export const PatientHeader = () => {
   const { authState, logout } = useContext(AuthContext);
+  const { getDisplayName } = usePatient();
   const location = useLocation();
 
   const handleLogout = () => {
@@ -29,9 +31,19 @@ export const PatientHeader = () => {
 
   // Get user initials for avatar fallback
   const getUserInitials = () => {
-    if (authState.user) {
-      // Try to extract initials from email if no name available
-      const email = authState.user.email;
+    const currentSession = authState.sessions[authState.currentUserType || 'patient'];
+    if (currentSession?.user) {
+      const displayName = getDisplayName();
+      if (displayName !== 'Patient') {
+        const parts = displayName.split(' ');
+        if (parts.length >= 2) {
+          return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+        } else {
+          return parts[0].charAt(0).toUpperCase();
+        }
+      }
+      // Fallback to email if no name available
+      const email = currentSession.user.email;
       const emailPrefix = email.split('@')[0];
       const parts = emailPrefix.split(/[._-]/);
       if (parts.length >= 2) {
@@ -45,10 +57,13 @@ export const PatientHeader = () => {
 
   // Get user display name
   const getUserDisplayName = () => {
-    if (authState.user) {
-      return authState.user.email;
+    const displayName = getDisplayName();
+    if (displayName !== 'Patient') {
+      return displayName;
     }
-    return 'User';
+    // Fallback to email
+    const currentSession = authState.sessions[authState.currentUserType || 'patient'];
+    return currentSession?.user?.email || 'User';
   };
 
   return (

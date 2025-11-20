@@ -1,6 +1,7 @@
 import { useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../context/AuthContext';
+import { usePatient } from '../../../context/PatientContext';
 import { PatientService } from '../../../services/patient/patient.service';
 import '../../../styles/components/patient-dashboard.styles.css';
 
@@ -31,6 +32,7 @@ interface DoctorDetails {
 
 export const PatientDashboard = () => {
   const { authState } = useContext(AuthContext);
+  const { getDisplayName, fetchPatientProfile } = usePatient();
   const navigate = useNavigate();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -41,7 +43,7 @@ export const PatientDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  const displayName = authState.user?.email?.split('@')[0] || 'Patient';
+  const displayName = getDisplayName();
 
   const fetchDashboardData = async () => {
     try {
@@ -108,6 +110,8 @@ export const PatientDashboard = () => {
   };
 
   useEffect(() => {
+    // Fetch patient profile first
+    fetchPatientProfile();
     fetchDashboardData();
     fetchAppointments();
   }, []);

@@ -384,20 +384,14 @@ export const CancelAppointment = () => {
         padding: '2rem'
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          {/* Back Link */}
+          {/* Page Title */}
           <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            fontSize: '1.5rem',
-            fontWeight: '600',
-            marginBottom: '0.5rem',
-            cursor: 'pointer',
             color: '#1F2937',
-            textDecoration: 'none',
-            width: 'fit-content'
-          }} onClick={() => navigate('/patient/my-appointments')}>
-            ← Cancel Appointment
+            fontSize: '1.875rem',
+            fontWeight: '700',
+            marginBottom: '0.5rem'
+          }}>
+            Cancel Appointment
           </div>
 
           {/* Subtitle */}
@@ -407,6 +401,25 @@ export const CancelAppointment = () => {
             marginBottom: '2rem'
           }}>
             Please provide a reason for cancelling your appointment
+          </div>
+
+          {/* Back Link */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            fontSize: '0.875rem',
+            color: '#6B7280',
+            marginBottom: '1.5rem',
+            cursor: 'pointer',
+            textDecoration: 'none',
+            width: 'fit-content',
+            transition: 'color 0.2s'
+          }}
+          onClick={() => navigate('/patient/my-appointments')}
+          onMouseEnter={(e) => e.currentTarget.style.color = '#1F2937'}
+          onMouseLeave={(e) => e.currentTarget.style.color = '#6B7280'}>
+            ← Back to Appointments
           </div>
 
           {/* Form Container */}
