@@ -37,6 +37,53 @@ export const DoctorLayout = ({
             )}
             {children}
           </div>
+          
+          {/* Doctor Dashboard Footer */}
+          <footer className="dd-footer" role="contentinfo">
+            <div className="dd-footer-inner">
+              <div className="dd-footer-grid">
+                <div className="dd-footer-section">
+                  <div className="dd-footer-brand">
+                    <span className="dd-footer-logo" aria-hidden="true" />
+                    <div>
+                      <h6>HealthCare+ Doctors</h6>
+                      <p>Professional healthcare management platform</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="dd-footer-section">
+                  <h6>Quick Links</h6>
+                  <ul className="dd-footer-links">
+                    <li>Dashboard</li>
+                    <li>Appointments</li>
+                    <li>Patients</li>
+                    <li>Schedule</li>
+                    <li>Profile</li>
+                  </ul>
+                </div>
+                <div className="dd-footer-section">
+                  <h6>Tools</h6>
+                  <ul className="dd-footer-links">
+                    <li>Prescriptions</li>
+                    <li>Lab Orders</li>
+                    <li>Medical Records</li>
+                    <li>Reports</li>
+                    <li>Settings</li>
+                  </ul>
+                </div>
+                <div className="dd-footer-section">
+                  <h6>Support</h6>
+                  <ul className="dd-footer-info">
+                    <li>Medical Support</li>
+                    <li>Technical Help</li>
+                    <li>Training Resources</li>
+                    <li>doctor-support@example.com</li>
+                  </ul>
+                </div>
+              </div>
+              <div className="dd-footer-copy">© 2025 HealthCare+ Doctors. All rights reserved.</div>
+            </div>
+          </footer>
         </div>
       ) : (
         // For pages that use patient-style layout (like profile pages)
@@ -49,6 +96,52 @@ export const DoctorLayout = ({
             </section>
           )}
           {children}
+          
+          {/* Footer for non-dashboard pages */}
+          <footer className="pd-footer">
+            <div className="pd-footer-inner">
+              <div className="pd-footer-grid">
+                <div className="pd-footer-section">
+                  <div className="pd-footer-brand">
+                    <span className="pd-footer-logo" aria-hidden="true" />
+                    <div>
+                      <h6>HealthCare+ Doctors</h6>
+                      <p>Professional healthcare platform</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="pd-footer-section">
+                  <h6>Quick Links</h6>
+                  <ul className="pd-footer-links">
+                    <li>Find Doctors</li>
+                    <li>Book Appointment</li>
+                    <li>My Appointments</li>
+                    <li>Health Records</li>
+                    <li>Support</li>
+                  </ul>
+                </div>
+                <div className="pd-footer-section">
+                  <h6>Support</h6>
+                  <ul className="pd-footer-links">
+                    <li>Help Center</li>
+                    <li>Contact Us</li>
+                    <li>Privacy Policy</li>
+                    <li>Terms of Service</li>
+                    <li>Medical Disclaimer</li>
+                  </ul>
+                </div>
+                <div className="pd-footer-section">
+                  <h6>Contact</h6>
+                  <ul className="pd-footer-info">
+                    <li>support@example.com</li>
+                    <li>1-800-HEALTHCARE</li>
+                    <li>Available 24/7</li>
+                  </ul>
+                </div>
+              </div>
+              <div className="pd-footer-copy">© 2025 HealthCare+. All rights reserved.</div>
+            </div>
+          </footer>
         </main>
       )}
     </>
