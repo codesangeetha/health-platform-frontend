@@ -87,12 +87,15 @@ export class DoctorService {
 
   static async getDoctors(filters: DoctorFilters = {}, userType: 'patient' | 'doctor' | 'admin' = 'doctor'): Promise<DoctorResponse> {
     try {
-      const { limit = 5, page = 1, specialization, search, searchName, availableDays } = filters;
+      const { limit = 6, page = 1, specialization, search, searchName, availableDays, sort } = filters;
       
       const params = new URLSearchParams({
         limit: limit.toString(),
         page: page.toString(),
       });
+      
+      // Add sort parameter, defaulting to descending order by creation date
+      params.append('sort', sort || 'createdAt:desc');
       
       if (specialization) {
         params.append('specialization', specialization);

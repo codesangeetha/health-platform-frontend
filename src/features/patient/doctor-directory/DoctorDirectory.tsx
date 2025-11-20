@@ -11,7 +11,7 @@ export const DoctorDirectory = () => {
   const [error, setError] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState<number>(0);
   const [filters, setFilters] = useState<DoctorFilters>({
-    limit: 5,
+    limit: 6,
     page: 1,
     specialization: '',
     searchName: '',
@@ -189,26 +189,43 @@ export const DoctorDirectory = () => {
                 >
                   Previous
                 </button>
-                <span className="page-number">{filters.page}</span>
-                {filters.page! < totalPages && (
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                   <button
-                    onClick={() => handlePageChange(filters.page! + 1)}
-                    disabled={doctors.length < (filters.limit || 5)}
-                    className="pagination-button"
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`pagination-button ${filters.page === page ? 'active' : ''}`}
                     style={{
-                      backgroundColor: '#007bff',
-                      color: 'white',
+                      backgroundColor: filters.page === page ? '#007bff' : 'white',
+                      color: filters.page === page ? 'white' : '#007bff',
                       border: '2px solid #007bff',
-                      padding: '12px 24px',
-                      fontWeight: 'bold',
-                      borderRadius: '6px',
+                      padding: '8px 16px',
+                      fontWeight: filters.page === page ? 'bold' : 'normal',
+                      borderRadius: '4px',
                       cursor: 'pointer',
-                      fontSize: '14px'
+                      fontSize: '14px',
+                      margin: '0 4px'
                     }}
                   >
-                    Next
+                    {page}
                   </button>
-                )}
+                ))}
+                <button
+                  onClick={() => handlePageChange(filters.page! + 1)}
+                  disabled={filters.page === totalPages}
+                  className="pagination-button"
+                  style={{
+                    backgroundColor: filters.page === totalPages ? '#ccc' : '#007bff',
+                    color: filters.page === totalPages ? '#999' : 'white',
+                    border: '2px solid #007bff',
+                    padding: '8px 16px',
+                    fontWeight: 'bold',
+                    borderRadius: '4px',
+                    cursor: filters.page === totalPages ? 'not-allowed' : 'pointer',
+                    fontSize: '14px'
+                  }}
+                >
+                  Next
+                </button>
               </div>
             )}
           </>
