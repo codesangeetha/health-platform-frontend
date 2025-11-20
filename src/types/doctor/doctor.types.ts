@@ -48,4 +48,5 @@ export interface DoctorFilters {
   search?: string;
   searchName?: string;
   availableDays?: string;
+  sort?: string;
 }
