@@ -293,20 +293,8 @@ export const PatientDashboard = () => {
                         </div>
                       </div>
                       <div className="pd-appointment-actions">
-                        {appointment.status === 'pending' && (
-                          <>
-                            <span className="pd-chip">Reschedule</span>
-                            <span className="pd-chip pd-chip-primary">View Details</span>
-                          </>
-                        )}
                         {appointment.status === 'confirmed' && (
-                          <>
-                            <span className="pd-chip pd-chip-primary">Join Call</span>
-                            <span className="pd-chip">View Details</span>
-                          </>
-                        )}
-                        {appointment.status === 'completed' && (
-                          <span className="pd-chip pd-chip-primary">View Details</span>
+                          <span className="pd-chip pd-chip-primary">Join Call</span>
                         )}
                       </div>
                     </div>

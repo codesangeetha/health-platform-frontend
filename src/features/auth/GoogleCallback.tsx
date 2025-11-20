@@ -37,10 +37,6 @@ const GoogleCallback = () => {
 
         console.log('✅ Valid OAuth callback parameters received');
 
-        // Store token in localStorage (matching your existing pattern)
-        localStorage.setItem('token', token);
-        console.log('💾 Token stored in localStorage');
-
         // Decode token to get user information (simple JWT decode)
         const tokenParts = token.split('.');
         if (tokenParts.length !== 3) {
@@ -58,9 +54,21 @@ const GoogleCallback = () => {
 
         console.log('👤 Extracted user information:', user);
 
-        // Store user data in localStorage
-        localStorage.setItem('user', JSON.stringify(user));
-        console.log('💾 User data stored in localStorage');
+        // Store token in localStorage with user-type specific key
+        const userType = user.userType as 'patient' | 'doctor' | 'admin';
+        const storageKeys: Record<'patient' | 'doctor' | 'admin', { user: string; token: string }> = {
+          patient: { user: 'patient', token: 'patient_token' },
+          doctor: { user: 'doctor', token: 'doctor_token' },
+          admin: { user: 'admin', token: 'admin_token' }
+        };
+
+        // Store token in localStorage (matching your existing pattern)
+        localStorage.setItem(storageKeys[userType].token, token);
+        console.log('💾 Token stored in localStorage as:', storageKeys[userType].token);
+
+        // Store user data in localStorage with user-type specific key
+        localStorage.setItem(storageKeys[userType].user, JSON.stringify(user));
+        console.log('💾 User data stored in localStorage as:', storageKeys[userType].user);
 
         // Mark as processed to prevent double execution
         hasProcessed.current = true;
@@ -102,6 +110,13 @@ const GoogleCallback = () => {
         // Clear any partial auth data
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        // Also clear user-type specific keys that might have been partially set
+        localStorage.removeItem('patient_token');
+        localStorage.removeItem('patient');
+        localStorage.removeItem('doctor_token');
+        localStorage.removeItem('doctor');
+        localStorage.removeItem('admin_token');
+        localStorage.removeItem('admin');
         console.log('🗑️ Cleared partial auth data due to error');
 
         // Mark as processed even on error to prevent loops
