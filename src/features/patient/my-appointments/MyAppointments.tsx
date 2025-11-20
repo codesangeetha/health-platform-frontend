@@ -618,56 +618,30 @@ export const MyAppointments = () => {
                           </button>
                         )}
                         {appointment.status === 'pending' && (
-                          <>
-                            <button
-                              onClick={() => navigate(`/patient/reschedule-appointment/${appointment.id}`)}
-                              style={{
-                                padding: '0.5rem 1rem',
-                                backgroundColor: 'transparent',
-                                color: DESIGN_SYSTEM.colors.text_light,
-                                border: `1px solid ${DESIGN_SYSTEM.colors.border}`,
-                                borderRadius: '0.5rem',
-                                fontSize: DESIGN_SYSTEM.typography.body.fontSize,
-                                fontWeight: '500',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s'
-                              }}
-                              onMouseOver={(e) => {
-                                e.currentTarget.style.backgroundColor = '#F9FAFB';
-                                e.currentTarget.style.color = DESIGN_SYSTEM.colors.text_dark;
-                              }}
-                              onMouseOut={(e) => {
-                                e.currentTarget.style.backgroundColor = 'transparent';
-                                e.currentTarget.style.color = DESIGN_SYSTEM.colors.text_light;
-                              }}
-                            >
-                              Reschedule
-                            </button>
-                            <button
-                              onClick={() => navigate(`/patient/cancel-appointment/${appointment.id}`)}
-                              style={{
-                                padding: '0.5rem 1rem',
-                                backgroundColor: 'transparent',
-                                color: DESIGN_SYSTEM.colors.status_cancelled,
-                                border: `1px solid ${DESIGN_SYSTEM.colors.status_cancelled}40`,
-                                borderRadius: '0.5rem',
-                                fontSize: DESIGN_SYSTEM.typography.body.fontSize,
-                                fontWeight: '500',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s'
-                              }}
-                              onMouseOver={(e) => {
-                                e.currentTarget.style.backgroundColor = '#FEE2E2';
-                                e.currentTarget.style.color = '#991B1B';
-                              }}
-                              onMouseOut={(e) => {
-                                e.currentTarget.style.backgroundColor = 'transparent';
-                                e.currentTarget.style.color = DESIGN_SYSTEM.colors.status_cancelled;
-                              }}
-                            >
-                              Cancel
-                            </button>
-                          </>
+                          <button
+                            onClick={() => navigate(`/patient/cancel-appointment/${appointment.id}`)}
+                            style={{
+                              padding: '0.5rem 1rem',
+                              backgroundColor: 'transparent',
+                              color: DESIGN_SYSTEM.colors.status_cancelled,
+                              border: `1px solid ${DESIGN_SYSTEM.colors.status_cancelled}40`,
+                              borderRadius: '0.5rem',
+                              fontSize: DESIGN_SYSTEM.typography.body.fontSize,
+                              fontWeight: '500',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s'
+                            }}
+                            onMouseOver={(e) => {
+                              e.currentTarget.style.backgroundColor = '#FEE2E2';
+                              e.currentTarget.style.color = '#991B1B';
+                            }}
+                            onMouseOut={(e) => {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                              e.currentTarget.style.color = DESIGN_SYSTEM.colors.status_cancelled;
+                            }}
+                          >
+                            Cancel
+                          </button>
                         )}
                       </div>
                     </div>

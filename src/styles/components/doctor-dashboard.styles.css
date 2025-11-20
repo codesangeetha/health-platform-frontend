@@ -811,3 +811,220 @@
     text-align: center;
   }
 }
+
+/* Appointment Details Popup Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background: var(--ds-surface);
+  border-radius: var(--ds-radius);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 600px;
+  width: 90vw;
+  max-height: 80vh;
+  overflow: hidden;
+  transform: scale(0.9);
+  animation: modalSlideIn 0.2s ease-out forwards;
+}
+
+@keyframes modalSlideIn {
+  to {
+    transform: scale(1);
+  }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--ds-space-l);
+  border-bottom: var(--ds-border-width) solid var(--ds-border-color);
+  background: var(--ds-bg-light);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: var(--ds-h2-size);
+  font-weight: var(--ds-h2-weight);
+  color: var(--ds-text-dark);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--ds-text-muted);
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+  background: var(--ds-border-color);
+  color: var(--ds-text-dark);
+}
+
+.modal-body {
+  padding: var(--ds-space-l);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* Appointment List Styles */
+.appointment-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-m);
+}
+
+.appointment-item {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: var(--ds-space-m);
+  padding: var(--ds-space-m);
+  border: var(--ds-border-width) solid var(--ds-border-color);
+  border-radius: 12px;
+  background: var(--ds-bg-light);
+  transition: all 0.2s ease;
+}
+
+.appointment-item:hover {
+  box-shadow: var(--ds-shadow);
+  border-color: var(--ds-primary);
+  background: var(--ds-surface);
+}
+
+.appointment-time {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ds-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--ds-space-s);
+  background: var(--ds-surface);
+  border-radius: 8px;
+  border: 1px solid var(--ds-primary);
+}
+
+.appointment-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-s);
+}
+
+.patient-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ds-text-dark);
+  margin-bottom: 4px;
+}
+
+.appointment-type {
+  font-size: 14px;
+  color: var(--ds-text-muted);
+  margin-bottom: 8px;
+}
+
+.appointment-status {
+  display: flex;
+  align-items: center;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.status-pending {
+  background: rgba(255, 165, 0, 0.1);
+  color: #FFA500;
+  border: 1px solid rgba(255, 165, 0, 0.2);
+}
+
+.status-badge.status-confirmed {
+  background: rgba(74, 144, 226, 0.1);
+  color: var(--ds-primary);
+  border: 1px solid rgba(74, 144, 226, 0.2);
+}
+
+.status-badge.status-completed {
+  background: rgba(40, 167, 69, 0.1);
+  color: #28A745;
+  border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.status-badge.status-cancelled {
+  background: rgba(220, 53, 69, 0.1);
+  color: #DC3545;
+  border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+.no-appointments {
+  text-align: center;
+  padding: var(--ds-space-xl);
+  color: var(--ds-text-muted);
+}
+
+.no-appointments p {
+  margin: 0;
+  font-size: 16px;
+}
+
+/* Responsive Modal Styles */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95vw;
+    margin: var(--ds-space-m);
+  }
+  
+  .appointment-item {
+    grid-template-columns: 1fr;
+    gap: var(--ds-space-s);
+  }
+  
+  .appointment-time {
+    justify-content: flex-start;
+  }
+  
+  .modal-header {
+    padding: var(--ds-space-m);
+  }
+  
+  .modal-body {
+    padding: var(--ds-space-m);
+  }
+}

@@ -1,8 +1,13 @@
 import { BASE_URL } from '@/config/constants';
-import { ApiError, handleApiError } from '@/services/auth/auth.service';
+import { ApiError, handleApiError, getAuthToken } from '@/services/auth/auth.service';
 import type { MedicineSearchResponse, PrescriptionData, PrescriptionResponse, PharmacyOrderData, PharmacyOrderResponse } from '@/types/medicine/medicine.types';
 
 const API_URL = `${BASE_URL}/api/v1`;
+
+// Helper function to get the appropriate token for doctor requests
+const getDoctorToken = (): string | null => {
+  return getAuthToken('doctor');
+};
 
 export class PharmacyService {
   static async searchMedicines(searchQuery?: string, page: number = 1, limit: number = 10): Promise<MedicineSearchResponse> {
@@ -16,11 +21,16 @@ export class PharmacyService {
         params.append('search', searchQuery.trim());
       }
 
+      const token = getDoctorToken();
+      if (!token) {
+        throw new ApiError('Doctor authentication required', 401);
+      }
+
       const response = await fetch(`${API_URL}/pharmacy/medicines/search?${params.toString()}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
         },
       });
 
@@ -40,11 +50,16 @@ export class PharmacyService {
 
   static async createPrescription(prescriptionData: PrescriptionData): Promise<PrescriptionResponse> {
     try {
+      const token = getDoctorToken();
+      if (!token) {
+        throw new ApiError('Doctor authentication required', 401);
+      }
+
       const response = await fetch(`${API_URL}/prescriptions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(prescriptionData),
       });
@@ -65,11 +80,16 @@ export class PharmacyService {
 
   static async getMedicineById(medicineId: string): Promise<any> {
     try {
+      const token = getDoctorToken();
+      if (!token) {
+        throw new ApiError('Doctor authentication required', 401);
+      }
+
       const response = await fetch(`${API_URL}/pharmacy/medicines/${medicineId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
         },
       });
 
@@ -89,11 +109,16 @@ export class PharmacyService {
 
   static async getAppointmentDetails(appointmentId: string): Promise<any> {
     try {
+      const token = getDoctorToken();
+      if (!token) {
+        throw new ApiError('Doctor authentication required', 401);
+      }
+
       const response = await fetch(`${API_URL}/appointments/${appointmentId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
         },
       });
 
@@ -113,11 +138,16 @@ export class PharmacyService {
 
   static async createPharmacyOrder(orderData: PharmacyOrderData): Promise<PharmacyOrderResponse> {
     try {
+      const token = getDoctorToken();
+      if (!token) {
+        throw new ApiError('Doctor authentication required', 401);
+      }
+
       const response = await fetch(`${API_URL}/pharmacy/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(orderData),
       });
@@ -138,11 +168,16 @@ export class PharmacyService {
 
   static async updateAppointmentStatus(appointmentId: string, data: { status: string; reason: string }): Promise<any> {
     try {
+      const token = getDoctorToken();
+      if (!token) {
+        throw new ApiError('Doctor authentication required', 401);
+      }
+
       const response = await fetch(`${API_URL}/appointments/${appointmentId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(data),
       });

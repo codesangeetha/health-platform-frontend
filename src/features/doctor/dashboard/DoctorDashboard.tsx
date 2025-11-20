@@ -75,6 +75,11 @@ export const DoctorDashboard = () => {
   const [calendarData, setCalendarData] = useState<CalendarData | null>(null);
   const [isCalendarLoading, setIsCalendarLoading] = useState(false);
 
+  // Appointment popup state
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [isPopupVisible, setIsPopupVisible] = useState(false);
+  const [selectedDateAppointments, setSelectedDateAppointments] = useState<any[]>([]);
+
   // Optional: role-based guard to keep doctors on the correct dashboard
   useEffect(() => {
     const currentSession = authState?.currentUserType && authState.sessions[authState.currentUserType];
@@ -278,6 +283,30 @@ export const DoctorDashboard = () => {
     setViewDate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1));
   };
 
+  // Handle calendar cell click to show appointment details
+  const handleCalendarCellClick = (day: {
+    date: Date;
+    iso: string;
+    inMonth: boolean;
+    isToday: boolean;
+    hasAppointments: boolean;
+    appointmentCount: number;
+    bookingData?: CalendarBooking;
+  }) => {
+    if (day.inMonth) {
+      setSelectedDate(day.date);
+      setSelectedDateAppointments(day.bookingData?.bookings || []);
+      setIsPopupVisible(true);
+    }
+  };
+
+  // Close popup
+  const closePopup = () => {
+    setIsPopupVisible(false);
+    setSelectedDate(null);
+    setSelectedDateAppointments([]);
+  };
+
   const navItems = [
     { label: 'Dashboard', to: '/doctor/dashboard' },
     { label: 'Appointments', to: '/doctor/appointments' },
@@ -391,6 +420,8 @@ export const DoctorDashboard = () => {
                   role="gridcell"
                   aria-selected={d.isToday}
                   aria-label={`${new Date(d.iso).toDateString()}${d.hasAppointments ? `, ${d.appointmentCount} appointment${d.appointmentCount > 1 ? 's' : ''}` : ''}`}
+                  onClick={() => handleCalendarCellClick(d)}
+                  style={{ cursor: d.inMonth ? 'pointer' : 'default' }}
                 >
                   {new Date(d.iso).getDate()}
                   {d.hasAppointments && d.bookingData && (
@@ -447,6 +478,58 @@ export const DoctorDashboard = () => {
         <div style={{ display: 'grid', gap: 20 }}>
         </div>
       </section>
+
+      {/* Appointment Details Popup */}
+      {isPopupVisible && selectedDate && (
+        <div className="modal-overlay" onClick={closePopup}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Appointments for {selectedDate.toLocaleDateString()}</h3>
+              <button
+                className="modal-close"
+                onClick={closePopup}
+                aria-label="Close popup"
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              {selectedDateAppointments.length > 0 ? (
+                <div className="appointment-list">
+                  {selectedDateAppointments.map((appointment, index) => (
+                    <div key={index} className="appointment-item">
+                      <div className="appointment-time">
+                        {appointment.time || 'Time not specified'}
+                      </div>
+                      <div className="appointment-details">
+                        <div className="patient-name">
+                          <strong>
+                            {appointment.patient?.firstName && appointment.patient?.lastName
+                              ? `${appointment.patient.firstName} ${appointment.patient.lastName}`
+                              : appointment.patientName || 'Unknown Patient'}
+                          </strong>
+                        </div>
+                        <div className="appointment-type">
+                          {appointment.type || appointment.appointmentType || 'General Consultation'}
+                        </div>
+                        <div className="appointment-status">
+                          <span className={`status-badge status-${appointment.status || 'pending'}`}>
+                            {appointment.status || 'Pending'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="no-appointments">
+                  <p>No appointments scheduled for this date.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </DoctorLayout>
   );
 };
