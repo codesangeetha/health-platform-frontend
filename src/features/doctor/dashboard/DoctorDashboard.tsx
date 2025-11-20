@@ -43,11 +43,13 @@ export const DoctorDashboard = () => {
 
   // Optional: role-based guard to keep doctors on the correct dashboard
   useEffect(() => {
-    const role = authState?.user && (authState.user as any)?.role;
+    const currentSession = authState?.currentUserType && authState.sessions[authState.currentUserType];
+    const user = currentSession?.user;
+    const role = user && (user as any)?.userType;
     if (role && role !== 'doctor') {
       navigate('/', { replace: true });
     }
-  }, [authState?.user, navigate]);
+  }, [authState, navigate]);
 
   const fetchDashboardData = async () => {
     try {
@@ -139,10 +141,12 @@ export const DoctorDashboard = () => {
     }
     
     // Fallback to email prefix if no name available
-    const email = authState?.user?.email;
+    const currentSession = authState?.currentUserType && authState.sessions[authState.currentUserType];
+    const user = currentSession?.user;
+    const email = user && (user as any)?.email;
     if (!email) return 'Michael Chen'; // fallback similar to example
     return email.split('@')[0];
-  }, [authState?.user?.email, doctorProfile]);
+  }, [authState, doctorProfile]);
 
   // Calendar helpers
   const monthLabel = useMemo(
@@ -318,118 +322,8 @@ export const DoctorDashboard = () => {
           </div>
         </div>
 
-        {/* Right column stack */}
+        {/* Right column stack - now empty */}
         <div style={{ display: 'grid', gap: 20 }}>
-          {/* Quick Actions */}
-          <div className="dd-card">
-            <div className="card-header">
-              <h3>Quick Actions</h3>
-            </div>
-            <div className="dd-actions">
-              <button
-                type="button"
-                className="dd-button"
-                onClick={() => navigate('/doctor/appointments/new')}
-                aria-label="Create new appointment"
-              >
-                Create Appointment
-              </button>
-              <button
-                type="button"
-                className="dd-button"
-                onClick={() => navigate('/doctor/patients')}
-                aria-label="View patients"
-              >
-                View Patients
-              </button>
-              <button
-                type="button"
-                className="dd-button"
-                onClick={() => navigate('/doctor/messages')}
-                aria-label="Open messages"
-              >
-                Messages
-              </button>
-              <button
-                type="button"
-                className="dd-button"
-                onClick={() => navigate('/doctor/video-call')}
-                aria-label="Start video call"
-              >
-                Video Call
-              </button>
-            </div>
-          </div>
-
-          {/* Today's Schedule */}
-          <div className="dd-card schedule-card">
-            <div className="card-header">
-              <h3>Today's Schedule</h3>
-              <button className="dd-button" onClick={() => navigate('/doctor/schedule')}>View Full Schedule</button>
-            </div>
-            <div className="schedule-body">
-              {isLoading ? (
-                <div className="schedule-item">
-                  <div className="bullet" />
-                  <div className="content"><p>Loading…</p></div>
-                </div>
-              ) : todaysSchedule.length === 0 ? (
-                <div className="schedule-item">
-                  <div className="bullet" />
-                  <div className="content"><p>No appointments today</p></div>
-                </div>
-              ) : (
-                todaysSchedule.map((appt) => (
-                  <div key={appt.id} className="schedule-item">
-                    <div className="bullet" />
-                    <div className="content">
-                      <h4>{appt.patientName}</h4>
-                      <p>
-                        {appt.type} • {appt.time}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Recent Patients */}
-          <div className="dd-card">
-            <div className="card-header">
-              <h3>Recent Patients</h3>
-            </div>
-            <div className="schedule-body">
-              {isLoading ? (
-                <div className="schedule-item">
-                  <div className="bullet" />
-                  <div className="content"><p>Loading…</p></div>
-                </div>
-              ) : recentPatients.length === 0 ? (
-                <div className="schedule-item">
-                  <div className="bullet" />
-                  <div className="content"><p>No recent patients</p></div>
-                </div>
-              ) : (
-                recentPatients.map((p) => (
-                  <div key={p.id} className="schedule-item">
-                    <div className="bullet" />
-                    <div className="content">
-                      <h4>{p.name}</h4>
-                      <p>
-                        Last visit •{' '}
-                        {new Date(p.lastVisit).toLocaleDateString(undefined, {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric'
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
         </div>
       </section>
     </DoctorLayout>

@@ -14,6 +14,7 @@ export const DoctorHeader = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [doctorProfile, setDoctorProfile] = useState<any>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -23,18 +24,34 @@ export const DoctorHeader = () => {
   // Fetch doctor profile to get the actual name
   useEffect(() => {
     const fetchDoctorProfile = async () => {
+      const currentUser = authState.sessions[authState.currentUserType || 'doctor']?.user;
+      
+      if (!currentUser || currentUser.userType !== 'doctor') {
+        return;
+      }
+
       try {
+        setProfileLoading(true);
         const response = await DoctorService.getCurrentDoctorProfile();
-        setDoctorProfile(response.data);
+        console.log('Doctor profile fetched:', response);
+        
+        // Handle different response structures
+        const profileData = response?.data || response;
+        setDoctorProfile(profileData);
       } catch (error) {
         console.warn('Failed to fetch doctor profile:', error);
+        // Set a basic profile from auth state as fallback
+        setDoctorProfile({
+          firstName: currentUser.email?.split('@')[0] || 'Doctor',
+          lastName: ''
+        });
+      } finally {
+        setProfileLoading(false);
       }
     };
 
-    if (authState?.user?.userType === 'doctor') {
-      fetchDoctorProfile();
-    }
-  }, [authState?.user?.userType]);
+    fetchDoctorProfile();
+  }, [authState.currentUserType, authState.sessions.doctor?.user?.email]);
 
   // Get current path to determine active link
   const currentPath = location.pathname;
@@ -61,8 +78,9 @@ export const DoctorHeader = () => {
     }
     
     // Fallback to email
-    if (authState.user) {
-      const email = authState.user.email;
+    const currentUser = authState.sessions[authState.currentUserType || 'doctor']?.user;
+    if (currentUser) {
+      const email = currentUser.email;
       const emailPrefix = email.split('@')[0];
       const parts = emailPrefix.split(/[._-]/);
       if (parts.length >= 2) {
@@ -87,8 +105,9 @@ export const DoctorHeader = () => {
     }
     
     // Fallback to email
-    if (authState.user) {
-      return authState.user.email;
+    const currentUser = authState.sessions[authState.currentUserType || 'doctor']?.user;
+    if (currentUser) {
+      return currentUser.email;
     }
     return 'User';
   };

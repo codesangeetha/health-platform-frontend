@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { AppointmentService } from '../../../services/appointment/appointment.service';
 import { DoctorService } from '../../../services/doctor/doctor.service';
+import { PatientHeader } from '../../../components/layout/PatientHeader';
 import type { Appointment } from '../../../types/appointment/appointment.types';
 import type { Doctor } from '../../../types/doctor/doctor.types';
 import '../../../styles/components/patient-dashboard.styles.css';
@@ -198,38 +199,8 @@ export const CancelAppointment = () => {
   if (loading) {
     return (
       <>
-        {/* Top Navigation */}
-        <header className="pd-top-nav">
-          <div className="pd-top-nav-inner">
-            <div className="pd-brand">
-              <Link to="/patient/dashboard" className="hc-logo" aria-label="HealthCare+ Home">
-                <span className="hc-logo__mark">+</span>
-                <span>HealthCare+</span>
-              </Link>
-            </div>
-            <nav className="pd-nav-links" aria-label="Primary">
-              <Link to="/patient/dashboard">Dashboard</Link>
-              <Link to="/patient/doctor-directory">Doctor Directory</Link>
-              <Link to="/patient/my-appointments">My Appointments</Link>
-              <Link to="/patient/profile">Profile</Link>
-              <a href="#">Settings</a>
-            </nav>
-            <div className="pd-nav-right">
-              <div className="pd-bell" title="Notifications" aria-label="Notifications">🔔</div>
-              <div className="pd-avatar" aria-label="Profile" />
-              <button
-                className="pd-logout-link"
-                onClick={() => {
-                  localStorage.removeItem('token');
-                  window.location.href = '/patient/login';
-                }}
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </header>
-
+        <PatientHeader />
+        
         {/* Container */}
         <main className="pd-container">
           <div className="pd-card">
@@ -243,38 +214,8 @@ export const CancelAppointment = () => {
   if (error) {
     return (
       <>
-        {/* Top Navigation */}
-        <header className="pd-top-nav">
-          <div className="pd-top-nav-inner">
-            <div className="pd-brand">
-              <Link to="/patient/dashboard" className="hc-logo" aria-label="HealthCare+ Home">
-                <span className="hc-logo__mark">+</span>
-                <span>HealthCare+</span>
-              </Link>
-            </div>
-            <nav className="pd-nav-links" aria-label="Primary">
-              <Link to="/patient/dashboard">Dashboard</Link>
-              <Link to="/patient/doctor-directory">Doctor Directory</Link>
-              <Link to="/patient/my-appointments">My Appointments</Link>
-              <Link to="/patient/profile">Profile</Link>
-              <a href="#">Settings</a>
-            </nav>
-            <div className="pd-nav-right">
-              <div className="pd-bell" title="Notifications" aria-label="Notifications">🔔</div>
-              <div className="pd-avatar" aria-label="Profile" />
-              <button
-                className="pd-logout-link"
-                onClick={() => {
-                  localStorage.removeItem('token');
-                  window.location.href = '/patient/login';
-                }}
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </header>
-
+        <PatientHeader />
+        
         {/* Container */}
         <main className="pd-container">
           <div className="pd-card" style={{ color: '#e63946' }}>
@@ -291,38 +232,8 @@ export const CancelAppointment = () => {
   if (success) {
     return (
       <>
-        {/* Top Navigation */}
-        <header className="pd-top-nav">
-          <div className="pd-top-nav-inner">
-            <div className="pd-brand">
-              <Link to="/patient/dashboard" className="hc-logo" aria-label="HealthCare+ Home">
-                <span className="hc-logo__mark">+</span>
-                <span>HealthCare+</span>
-              </Link>
-            </div>
-            <nav className="pd-nav-links" aria-label="Primary">
-              <Link to="/patient/dashboard">Dashboard</Link>
-              <Link to="/patient/doctor-directory">Doctor Directory</Link>
-              <Link to="/patient/my-appointments">My Appointments</Link>
-              <Link to="/patient/profile">Profile</Link>
-              <a href="#">Settings</a>
-            </nav>
-            <div className="pd-nav-right">
-              <div className="pd-bell" title="Notifications" aria-label="Notifications">🔔</div>
-              <div className="pd-avatar" aria-label="Profile" />
-              <button
-                className="pd-logout-link"
-                onClick={() => {
-                  localStorage.removeItem('token');
-                  window.location.href = '/patient/login';
-                }}
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </header>
-
+        <PatientHeader />
+        
         {/* Container */}
         <main className="pd-container">
           <div className="pd-card" style={{ textAlign: 'center', padding: '40px' }}>
@@ -345,37 +256,7 @@ export const CancelAppointment = () => {
 
   return (
     <>
-      {/* Top Navigation */}
-      <header className="pd-top-nav">
-        <div className="pd-top-nav-inner">
-          <div className="pd-brand">
-            <Link to="/patient/dashboard" className="hc-logo" aria-label="HealthCare+ Home">
-              <span className="hc-logo__mark">+</span>
-              <span>HealthCare+</span>
-            </Link>
-          </div>
-          <nav className="pd-nav-links" aria-label="Primary">
-            <Link to="/patient/dashboard">Dashboard</Link>
-            <Link to="/patient/doctor-directory">Doctor Directory</Link>
-            <Link to="/patient/my-appointments">My Appointments</Link>
-            <Link to="/patient/profile">Profile</Link>
-            <a href="#">Settings</a>
-          </nav>
-          <div className="pd-nav-right">
-            <div className="pd-bell" title="Notifications" aria-label="Notifications">🔔</div>
-            <div className="pd-avatar" aria-label="Profile" />
-            <button
-              className="pd-logout-link"
-              onClick={() => {
-                localStorage.removeItem('token');
-                window.location.href = '/patient/login';
-              }}
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
+      <PatientHeader />
 
       {/* Main Content Area */}
       <main style={{
@@ -384,20 +265,14 @@ export const CancelAppointment = () => {
         padding: '2rem'
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          {/* Back Link */}
+          {/* Page Title */}
           <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            fontSize: '1.5rem',
-            fontWeight: '600',
-            marginBottom: '0.5rem',
-            cursor: 'pointer',
             color: '#1F2937',
-            textDecoration: 'none',
-            width: 'fit-content'
-          }} onClick={() => navigate('/patient/my-appointments')}>
-            ← Cancel Appointment
+            fontSize: '1.875rem',
+            fontWeight: '700',
+            marginBottom: '0.5rem'
+          }}>
+            Cancel Appointment
           </div>
 
           {/* Subtitle */}
@@ -407,6 +282,25 @@ export const CancelAppointment = () => {
             marginBottom: '2rem'
           }}>
             Please provide a reason for cancelling your appointment
+          </div>
+
+          {/* Back Link */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            fontSize: '0.875rem',
+            color: '#6B7280',
+            marginBottom: '1.5rem',
+            cursor: 'pointer',
+            textDecoration: 'none',
+            width: 'fit-content',
+            transition: 'color 0.2s'
+          }}
+          onClick={() => navigate('/patient/my-appointments')}
+          onMouseEnter={(e) => e.currentTarget.style.color = '#1F2937'}
+          onMouseLeave={(e) => e.currentTarget.style.color = '#6B7280'}>
+            ← Back to Appointments
           </div>
 
           {/* Form Container */}

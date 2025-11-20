@@ -278,4 +278,35 @@ export class PatientService {
       throw error;
     }
   }
+
+  /**
+   * Get current patient profile
+   */
+  static async getCurrentPatient(): Promise<ApiResponse<any>> {
+    try {
+      const token = getAuthToken('patient');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(`${BASE_URL}/api/v1/patients/profile`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const data: ApiResponse<any> = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching current patient profile:', error);
+      throw error;
+    }
+  }
 }
