@@ -279,6 +279,19 @@ const AdminLogin = () => {
                     </section>
                 </div>
             </main>
+
+            {/* Footer */}
+            <footer className="hc-footer" role="contentinfo">
+                <div className="hc-container">
+                    <div className="hc-footer__top">
+                        <div>
+                            <h4>HealthCare+</h4>
+                            <p>Your trusted healthcare platform for quality medical care.</p>
+                        </div>
+                    </div>
+                    <div className="hc-footer__bottom">© 2025 HealthCare+. All rights reserved.</div>
+                </div>
+            </footer>
         </div>
     );
 };
