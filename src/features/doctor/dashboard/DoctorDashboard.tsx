@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../context/AuthContext';
 import { DoctorLayout } from '../../../components/layout/DoctorLayout';
 import { DoctorService } from '../../../services/doctor/doctor.service';
+import { AppointmentService } from '../../../services/appointment/appointment.service';
 import '../../../styles/components/doctor-dashboard.styles.css';
 import '../../../styles/components/patient-dashboard.styles.css';
 
@@ -12,12 +13,43 @@ type Appointment = {
   type: string;
   date: string; // ISO date for the day: YYYY-MM-DD
   time: string; // e.g., "10:00 AM"
+  status?: string;
+  appointmentType?: string;
 };
 
 type Patient = {
   id: string;
   name: string;
   lastVisit: string; // ISO string
+};
+
+type CalendarBooking = {
+  date: string;
+  day: number;
+  dayName: string;
+  bookings: any[];
+  totalBookings: number;
+  confirmedBookings: number;
+  pendingBookings: number;
+  completedBookings: number;
+};
+
+type CalendarData = {
+  year: number;
+  month: number;
+  calendar: {
+    monthName: string;
+    daysInMonth: number;
+    firstDayOfWeek: number;
+    bookingsByDate: CalendarBooking[];
+  };
+  monthlyStats: {
+    totalBookings: number;
+    confirmedBookings: number;
+    pendingBookings: number;
+    completedBookings: number;
+    cancelledBookings: number;
+  };
 };
 
 interface DashboardData {
@@ -40,6 +72,8 @@ export const DoctorDashboard = () => {
 
   // Calendar state (month navigation)
   const [viewDate, setViewDate] = useState<Date>(() => new Date());
+  const [calendarData, setCalendarData] = useState<CalendarData | null>(null);
+  const [isCalendarLoading, setIsCalendarLoading] = useState(false);
 
   // Optional: role-based guard to keep doctors on the correct dashboard
   useEffect(() => {
@@ -105,6 +139,24 @@ export const DoctorDashboard = () => {
     }
   };
 
+  const fetchCalendarData = async (year: number, month: number) => {
+    try {
+      setIsCalendarLoading(true);
+      const response = await AppointmentService.getCalendarData(year, month);
+      if (response.success) {
+        setCalendarData(response.data);
+      } else {
+        console.error('Failed to fetch calendar data:', response.message);
+        setError('Failed to load calendar data');
+      }
+    } catch (error) {
+      console.error('Error fetching calendar data:', error);
+      setError('Failed to load calendar data');
+    } finally {
+      setIsCalendarLoading(false);
+    }
+  };
+
   useEffect(() => {
     let mounted = true;
     fetchDashboardData();
@@ -113,6 +165,13 @@ export const DoctorDashboard = () => {
       mounted = false;
     };
   }, []);
+
+  // Fetch calendar data when view date changes
+  useEffect(() => {
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth() + 1; // JavaScript months are 0-based, API expects 1-based
+    fetchCalendarData(year, month);
+  }, [viewDate]);
 
   const handleLogout = () => {
     logout();
@@ -174,7 +233,17 @@ export const DoctorDashboard = () => {
       inMonth: boolean;
       isToday: boolean;
       hasAppointments: boolean;
+      appointmentCount: number;
+      bookingData?: CalendarBooking;
     }[] = [];
+
+    // Create a map of date strings to booking data for quick lookup
+    const bookingsMap = new Map<string, CalendarBooking>();
+    if (calendarData?.calendar.bookingsByDate) {
+      calendarData.calendar.bookingsByDate.forEach(booking => {
+        bookingsMap.set(booking.date, booking);
+      });
+    }
 
     for (let i = 0; i < 42; i++) {
       const d = new Date(gridStart);
@@ -183,12 +252,23 @@ export const DoctorDashboard = () => {
       const inMonth = d >= startOfMonth && d <= endOfMonth;
       const todayIso = new Date().toISOString().slice(0, 10);
       const isToday = iso === todayIso;
-      const hasAppointments = appointments.some((a) => a.date === iso);
-      days.push({ date: d, iso, inMonth, isToday, hasAppointments });
+      const bookingData = bookingsMap.get(iso);
+      const hasAppointments = bookingData ? bookingData.totalBookings > 0 : false;
+      const appointmentCount = bookingData?.totalBookings || 0;
+      
+      days.push({ 
+        date: d, 
+        iso, 
+        inMonth, 
+        isToday, 
+        hasAppointments, 
+        appointmentCount,
+        bookingData 
+      });
     }
 
     return days;
-  }, [viewDate, appointments]);
+  }, [viewDate, calendarData]);
 
   const gotoPrevMonth = () => {
     setViewDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1));
@@ -289,7 +369,9 @@ export const DoctorDashboard = () => {
             <h3>Calendar</h3>
             <div className="calendar-nav" aria-label="Calendar Navigation">
               <button aria-label="Previous month" onClick={gotoPrevMonth}>‹</button>
-              <div className="calendar-month" aria-live="polite">{monthLabel}</div>
+              <div className="calendar-month" aria-live="polite">
+                {isCalendarLoading ? 'Loading...' : monthLabel}
+              </div>
               <button aria-label="Next month" onClick={gotoNextMonth}>›</button>
             </div>
           </div>
@@ -308,17 +390,56 @@ export const DoctorDashboard = () => {
                   }
                   role="gridcell"
                   aria-selected={d.isToday}
-                  aria-label={`${new Date(d.iso).toDateString()}${d.hasAppointments ? ', has appointments' : ''}`}
+                  aria-label={`${new Date(d.iso).toDateString()}${d.hasAppointments ? `, ${d.appointmentCount} appointment${d.appointmentCount > 1 ? 's' : ''}` : ''}`}
                 >
                   {new Date(d.iso).getDate()}
-                  {d.hasAppointments && <span className="dot" />}
+                  {d.hasAppointments && d.bookingData && (
+                    <div className="appointment-indicators">
+                      {/* Show individual dots for each appointment based on their status */}
+                      {d.bookingData.bookings.map((booking, index) => (
+                        <span
+                          key={`${d.iso}-${index}`}
+                          className={`dot status-${booking.status}`}
+                          title={`${booking.status} - ${booking.patient?.firstName} ${booking.patient?.lastName} at ${booking.time}`}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
             <div className="calendar-legend" aria-label="Legend">
-              <div className="legend-item"><span className="legend-dot" /> Has Appointments</div>
-              <div className="legend-item"><span className="legend-today" /> Today</div>
+              <div className="legend-item">
+                <span className="legend-today" /> Today
+              </div>
+              <div className="legend-item">
+                <span className="legend-dot status-pending" /> Pending
+              </div>
+              <div className="legend-item">
+                <span className="legend-dot status-confirmed" /> Confirmed
+              </div>
+              <div className="legend-item">
+                <span className="legend-dot status-completed" /> Completed
+              </div>
+              <div className="legend-item">
+                <span className="legend-dot status-cancelled" /> Cancelled
+              </div>
             </div>
+            {/* Monthly Stats */}
+            {calendarData && (
+              <div className="monthly-stats" style={{ marginTop: '16px', padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+                <h4 style={{ margin: '0 0 8px 0', fontSize: '14px' }}>
+                  {calendarData.calendar.monthName} {calendarData.year} Stats
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px', fontSize: '12px' }}>
+                  <div>Total: {calendarData.monthlyStats.totalBookings}</div>
+                  <div>Pending: {calendarData.monthlyStats.pendingBookings}</div>
+                  <div>Confirmed: {calendarData.monthlyStats.confirmedBookings}</div>
+                  <div>Completed: {calendarData.monthlyStats.completedBookings}</div>
+                  <div>Cancelled: {calendarData.monthlyStats.cancelledBookings}</div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

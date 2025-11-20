@@ -28,7 +28,7 @@ export const DoctorDirectory = () => {
       setLoading(true);
       setError(null);
       
-      const response = await DoctorService.getDoctors(filters);
+      const response = await DoctorService.getDoctors(filters, 'patient');
       setDoctors(response.data.doctors);
       setTotalPages(response.data.pagination.totalPages);
       

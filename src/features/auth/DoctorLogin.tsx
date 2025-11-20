@@ -232,9 +232,9 @@ export const DoctorLogin = () => {
           </Link>
           <nav className="hc-nav" aria-label="Primary">
             <Link to="/">Home</Link>
-            <a href="#services">Services</a>
-            <a href="#about">About Us</a>
-            <a href="#contact">Contact</a>
+            <Link to="/services">Services</Link>
+            <Link to="/about">About Us</Link>
+            <Link to="/contact">Contact</Link>
           </nav>
 
         </div>

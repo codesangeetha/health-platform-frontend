@@ -157,7 +157,7 @@ export const BookAppointment = () => {
         setLoading(true);
         setError(null);
         
-        const response = await DoctorService.getDoctorById(doctorId);
+        const response = await DoctorService.getDoctorById(doctorId, 'patient');
         setDoctor(response.data);
       } catch (err: any) {
         setError(err.message || 'Failed to fetch doctor details');
@@ -168,8 +168,6 @@ export const BookAppointment = () => {
     
     fetchDoctorDetails();
   }, [doctorId]);
-
-
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;

@@ -360,6 +360,209 @@
   background: var(--ds-primary);
 }
 
+/* Appointment status indicators */
+.appointment-indicators {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+
+.appointment-indicators .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  position: relative;
+  bottom: 0;
+  left: 0;
+  transform: none;
+}
+
+.appointment-indicators .dot.pending {
+  background: #FFA500; /* Orange for pending */
+}
+
+.appointment-indicators .dot.confirmed {
+  background: #4A90E2; /* Blue for confirmed */
+}
+
+.appointment-indicators .dot.completed {
+  background: #28A745; /* Green for completed */
+}
+
+.appointment-indicators .dot.cancelled {
+  background: #DC3545; /* Red for cancelled */
+}
+
+/* Enhanced tooltip styles for better visibility */
+.calendar-cell[title] {
+  position: relative;
+}
+
+.calendar-cell[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  z-index: 10;
+  margin-bottom: 4px;
+}
+
+.calendar-cell[title]:hover::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.8);
+  z-index: 10;
+}
+
+/* Loading state for calendar */
+.calendar-body .loading {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--ds-text-muted);
+  font-style: italic;
+}
+
+/* Calendar Legend Status Dots - Fixed Color Coding */
+.calendar-legend .legend-item .dot.pending {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #FFA500 !important; /* Orange for pending */
+  display: inline-block;
+  margin-right: 4px;
+}
+
+.calendar-legend .legend-item .dot.confirmed {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4A90E2 !important; /* Blue for confirmed */
+  display: inline-block;
+  margin-right: 4px;
+}
+
+.calendar-legend .legend-item .dot.completed {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #28A745 !important; /* Green for completed */
+  display: inline-block;
+  margin-right: 4px;
+}
+
+.calendar-legend .legend-item .dot.cancelled {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #DC3545 !important; /* Red for cancelled */
+  display: inline-block;
+  margin-right: 4px;
+}
+
+/* Ensure the base legend-dot class also has proper styling */
+.calendar-legend .legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ds-primary);
+  display: inline-block;
+  margin-right: 4px;
+}
+
+/* Individual appointment status dots in calendar cells */
+.appointment-indicators .dot.status-pending {
+  background: #FFA500 !important; /* Orange for pending */
+  width: 6px !important;
+  height: 6px !important;
+}
+
+.appointment-indicators .dot.status-confirmed {
+  background: #4A90E2 !important; /* Blue for confirmed */
+  width: 6px !important;
+  height: 6px !important;
+}
+
+.appointment-indicators .dot.status-completed {
+  background: #28A745 !important; /* Green for completed */
+  width: 6px !important;
+  height: 6px !important;
+}
+
+.appointment-indicators .dot.status-cancelled {
+  background: #DC3545 !important; /* Red for cancelled */
+  width: 6px !important;
+  height: 6px !important;
+}
+
+/* Calendar legend status dots with new naming convention */
+.calendar-legend .legend-item .legend-dot.status-pending {
+  background-color: #FFA500 !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  display: inline-block !important;
+}
+
+.calendar-legend .legend-item .legend-dot.status-confirmed {
+  background-color: #4A90E2 !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  display: inline-block !important;
+}
+
+.calendar-legend .legend-item .legend-dot.status-completed {
+  background-color: #28A745 !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  display: inline-block !important;
+}
+
+.calendar-legend .legend-item .legend-dot.status-cancelled {
+  background-color: #DC3545 !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  display: inline-block !important;
+}
+
+/* Force inline-block display for all legend dots */
+.calendar-legend .dot,
+.calendar-legend .legend-dot {
+  display: inline-block !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  margin-right: 4px !important;
+  vertical-align: middle !important;
+}
+
+/* Today indicator in legend */
+.calendar-legend .legend-today {
+  width: 12px !important;
+  height: 12px !important;
+  border-radius: 50% !important;
+  background: var(--ds-primary) !important;
+  display: inline-block !important;
+  margin-right: 4px !important;
+}
+
 /* Schedule List */
 .schedule-card .schedule-body {
   padding: 0;

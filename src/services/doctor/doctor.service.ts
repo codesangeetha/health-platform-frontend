@@ -85,7 +85,7 @@ export class DoctorService {
     }
   }
 
-  static async getDoctors(filters: DoctorFilters = {}): Promise<DoctorResponse> {
+  static async getDoctors(filters: DoctorFilters = {}, userType: 'patient' | 'doctor' | 'admin' = 'doctor'): Promise<DoctorResponse> {
     try {
       const { limit = 5, page = 1, specialization, search, searchName, availableDays } = filters;
       
@@ -110,7 +110,7 @@ export class DoctorService {
         params.append('availableDays', availableDays);
       }
 
-      const token = getAuthToken('doctor');
+      const token = getAuthToken(userType);
       if (!token) {
         throw new ApiError('No authentication token found', 401);
       }
@@ -137,9 +137,9 @@ export class DoctorService {
     }
   }
 
-  static async getDoctorById(id: string): Promise<any> {
+  static async getDoctorById(id: string, userType: 'patient' | 'doctor' | 'admin' = 'doctor'): Promise<any> {
     try {
-      const token = getAuthToken('doctor');
+      const token = getAuthToken(userType);
       if (!token) {
         throw new ApiError('No authentication token found', 401);
       }
