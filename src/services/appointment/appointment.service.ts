@@ -161,4 +161,28 @@ export class AppointmentService {
       throw new ApiError('Failed to update appointment status');
     }
   }
+
+  static async getCalendarData(year: number, month: number): Promise<any> {
+    try {
+      const response = await fetch(`${API_URL}/appointments/calendar?year=${year}&month=${month}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getAuthToken('doctor')}`,
+        },
+      });
+
+      if (!response.ok) {
+        await handleApiError(response);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      throw new ApiError('Failed to fetch calendar data');
+    }
+  }
 }
