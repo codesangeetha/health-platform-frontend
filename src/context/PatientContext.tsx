@@ -111,16 +111,22 @@ export function PatientProvider({ children }: { children: ReactNode }) {
   // Listen for patient authentication and logout events
   useEffect(() => {
     const handlePatientAuthSuccess = () => {
-      console.log('Patient auth success detected, fetching profile...');
-      fetchPatientProfile();
+      console.log('Patient auth success detected, fetching profile after delay...');
+      // Add delay to ensure auth token is properly set up
+      setTimeout(() => {
+        fetchPatientProfile();
+      }, 800);
     };
 
     const handleGoogleAuthSuccess = (event: Event) => {
       const customEvent = event as CustomEvent;
       const { user } = customEvent.detail;
       if (user?.userType === 'patient') {
-        console.log('Google patient auth success detected, fetching profile...');
-        fetchPatientProfile();
+        console.log('Google patient auth success detected, fetching profile after delay...');
+        // Add delay for OAuth flows
+        setTimeout(() => {
+          fetchPatientProfile();
+        }, 1000);
       }
     };
 
