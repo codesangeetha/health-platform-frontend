@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
+import { InstagramLoginButton } from '../../components/auth/InstagramLoginButton';
 import '../../styles/landing-page.css';
 import '../../styles/components/patient-login.styles.css';
 
@@ -392,6 +393,12 @@ export const PatientLogin = () => {
                 <GoogleIcon />
                 {authState.isLoading ? 'Connecting...' : 'Continue with Google'}
               </button>
+
+              <InstagramLoginButton
+                className="pl-btn pl-btn--secondary"
+                disabled={authState.isLoading}
+                isLoading={authState.isLoading}
+              />
 
               <Link to="/patient/register" className="pl-btn pl-btn--secondary" role="button">Create New Account</Link>
             </form>
