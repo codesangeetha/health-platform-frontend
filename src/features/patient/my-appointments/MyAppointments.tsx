@@ -617,6 +617,33 @@ export const MyAppointments = () => {
                             📹 Join Video Call
                           </button>
                         )}
+                        {/* Reschedule button for pending appointments */}
+                        {appointment.status === 'pending' && (
+                          <button
+                            onClick={() => navigate(`/patient/reschedule-appointment/${appointment.id}`)}
+                            style={{
+                              padding: '0.5rem 1rem',
+                              backgroundColor: 'transparent',
+                              color: DESIGN_SYSTEM.colors.primary,
+                              border: `1px solid ${DESIGN_SYSTEM.colors.primary}40`,
+                              borderRadius: '0.5rem',
+                              fontSize: DESIGN_SYSTEM.typography.body.fontSize,
+                              fontWeight: '500',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s'
+                            }}
+                            onMouseOver={(e) => {
+                              e.currentTarget.style.backgroundColor = '#DBEAFE';
+                              e.currentTarget.style.color = '#1D4ED8';
+                            }}
+                            onMouseOut={(e) => {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                              e.currentTarget.style.color = DESIGN_SYSTEM.colors.primary;
+                            }}
+                          >
+                            Reschedule
+                          </button>
+                        )}
                         {appointment.status === 'pending' && (
                           <button
                             onClick={() => navigate(`/patient/cancel-appointment/${appointment.id}`)}
