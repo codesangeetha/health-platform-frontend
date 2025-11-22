@@ -8,6 +8,8 @@ export interface LoginResponse {
       userId: string;
       email: string;
       userType: 'patient' | 'doctor' | 'admin';
+      firstName: string;
+      lastName: string;
     };
   };
   timestamp: string;
@@ -19,6 +21,8 @@ export interface AuthResponseData {
     userId: string;
     email: string;
     userType: 'patient' | 'doctor' | 'admin';
+    firstName: string;
+    lastName: string;
   };
 }
 

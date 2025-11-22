@@ -1,24 +1,71 @@
+import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../../../../context/AuthContext';
 
 const TopBar = ({ onLogout }: { onLogout: () => void }) => {
   const navigate = useNavigate();
+  const { authState } = useContext(AuthContext);
 
   const handleLogout = () => {
     onLogout();
     navigate('/admin/login', { replace: true });
   };
 
+  // Get user initials for avatar fallback
+  const getUserInitials = () => {
+    const currentSession = authState.sessions[authState.currentUserType || 'admin'];
+    if (currentSession?.user?.firstName || currentSession?.user?.lastName) {
+      const firstName = currentSession.user.firstName || '';
+      const lastName = currentSession.user.lastName || '';
+      const parts = `${firstName} ${lastName}`.trim().split(/\s+/);
+      if (parts.length >= 2) {
+        return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+      } else if (parts.length === 1) {
+        return parts[0].charAt(0).toUpperCase();
+      }
+    }
+    
+    // Fallback to email
+    const email = currentSession?.user?.email || '';
+    if (email) {
+      const emailPrefix = email.split('@')[0];
+      const parts = emailPrefix.split(/[._-]/);
+      if (parts.length >= 2) {
+        return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+      } else {
+        return email.charAt(0).toUpperCase();
+      }
+    }
+    return 'A';
+  };
+
+  // Get user display name
+  const getUserDisplayName = () => {
+    const currentSession = authState.sessions[authState.currentUserType || 'admin'];
+    if (currentSession?.user?.firstName || currentSession?.user?.lastName) {
+      const firstName = currentSession.user.firstName || '';
+      const lastName = currentSession.user.lastName || '';
+      const fullName = `${firstName} ${lastName}`.trim();
+      if (fullName) {
+        return fullName;
+      }
+    }
+    
+    // Fallback to email
+    return currentSession?.user?.email || 'Admin';
+  };
+
   const TopBarContainer = {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     padding: '0 32px',
     backgroundColor: '#FFFFFF',
     boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
     position: 'fixed',
     top: '0',
     right: '0',
-    left: '0',
+    left: '240px',
     height: '64px',
     zIndex: '90',
     borderBottom: '1px solid #E0E0E0',
@@ -35,12 +82,19 @@ const TopBar = ({ onLogout }: { onLogout: () => void }) => {
     width: '40px',
     height: '40px',
     borderRadius: '50%',
-    objectFit: 'cover',
+    backgroundColor: '#3B82F6',
+    color: 'white',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontFamily: 'Inter, sans-serif',
+    fontSize: '0.875rem',
+    fontWeight: '500',
   };
 
-  const UserInfo = {
+  const UserInfo: React.CSSProperties = {
     display: 'flex',
-    flexDirection: 'column',
+    flexDirection: 'column' as const,
   };
 
   const UserName = {
@@ -71,13 +125,20 @@ const TopBar = ({ onLogout }: { onLogout: () => void }) => {
   return (
     <div style={TopBarContainer as React.CSSProperties}>
       <div style={ProfileSection}>
-        <button
-          style={LogoutButton}
-          onClick={handleLogout}
-        >
-          Logout
-        </button>
+        <div style={Avatar} title={getUserDisplayName()}>
+          {getUserInitials()}
+        </div>
+        <div style={UserInfo}>
+          <span style={UserName}>{getUserDisplayName()}</span>
+          <span style={UserRole}>Administrator</span>
+        </div>
       </div>
+      <button
+        style={LogoutButton}
+        onClick={handleLogout}
+      >
+        Logout
+      </button>
     </div>
   );
 };
