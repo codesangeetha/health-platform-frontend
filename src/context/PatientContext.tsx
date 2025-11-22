@@ -130,6 +130,18 @@ export function PatientProvider({ children }: { children: ReactNode }) {
       }
     };
 
+    const handleInstagramAuthSuccess = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { user } = customEvent.detail;
+      if (user?.userType === 'patient') {
+        console.log('Instagram patient auth success detected, fetching profile after delay...');
+        // Add longer delay for Instagram OAuth flows (they can be slower)
+        setTimeout(() => {
+          fetchPatientProfile();
+        }, 1200);
+      }
+    };
+
     const handlePatientLogout = () => {
       console.log('Patient logout detected, clearing profile data...');
       clearPatientData();
@@ -137,11 +149,13 @@ export function PatientProvider({ children }: { children: ReactNode }) {
 
     window.addEventListener('patient-auth-success', handlePatientAuthSuccess);
     window.addEventListener('google-auth-success', handleGoogleAuthSuccess);
+    window.addEventListener('instagram-auth-success', handleInstagramAuthSuccess);
     window.addEventListener('patient-logout', handlePatientLogout);
 
     return () => {
       window.removeEventListener('patient-auth-success', handlePatientAuthSuccess);
       window.removeEventListener('google-auth-success', handleGoogleAuthSuccess);
+      window.removeEventListener('instagram-auth-success', handleInstagramAuthSuccess);
       window.removeEventListener('patient-logout', handlePatientLogout);
     };
   }, []);

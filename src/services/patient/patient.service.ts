@@ -280,33 +280,68 @@ export class PatientService {
   }
 
   /**
-   * Get current patient profile
+   * Get current patient profile with retry mechanism for 401 errors
    */
-  static async getCurrentPatient(): Promise<ApiResponse<any>> {
-    try {
-      const token = getAuthToken('patient');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
+  static async getCurrentPatient(maxRetries = 3): Promise<ApiResponse<any>> {
+    let lastError: any;
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const token = getAuthToken('patient');
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
 
-      const response = await fetch(`${BASE_URL}/api/v1/patients/profile`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+        console.log(`🔄 Attempting to fetch patient profile (attempt ${attempt + 1}/${maxRetries + 1})`);
+        
+        const response = await fetch(`${BASE_URL}/api/v1/patients/profile`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
 
-      if (!response.ok) {
+        if (response.ok) {
+          const data: ApiResponse<any> = await response.json();
+          console.log('✅ Successfully fetched patient profile');
+          return data;
+        }
+
+        // Handle 401 errors with retry
+        if (response.status === 401 && attempt < maxRetries) {
+          console.warn(`⚠️ 401 Unauthorized on attempt ${attempt + 1}, retrying...`);
+          
+          // Exponential backoff: 1s, 2s, 4s delays
+          const delay = Math.pow(2, attempt) * 1000;
+          console.log(`⏳ Waiting ${delay}ms before retry...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+
+        // Non-401 errors or max retries exceeded
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        
+      } catch (error) {
+        lastError = error;
+        console.error(`❌ Attempt ${attempt + 1} failed:`, error);
+        
+        // If it's the last attempt, throw the error
+        if (attempt === maxRetries) {
+          break;
+        }
+        
+        // For network errors or other issues, also retry with exponential backoff
+        if (attempt < maxRetries) {
+          const delay = Math.pow(2, attempt) * 1000;
+          console.log(`⏳ Network error, waiting ${delay}ms before retry...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
       }
-
-      const data: ApiResponse<any> = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error fetching current patient profile:', error);
-      throw error;
     }
+    
+    console.error('🚫 All retry attempts failed for patient profile fetch');
+    throw lastError;
   }
 }
