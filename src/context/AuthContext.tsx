@@ -90,7 +90,16 @@ export const AuthContext = createContext<AuthContextType>({
   switchUser: () => {},
   getCurrentSession: () => null,
   googleLogin: async () => {},
-  handleGoogleCallback: async () => ({ token: '', user: { userId: '', email: '', userType: 'patient' } }),
+  handleGoogleCallback: async () => ({
+    token: '',
+    user: {
+      userId: '',
+      email: '',
+      userType: 'patient',
+      firstName: '',
+      lastName: ''
+    }
+  }),
   forgotPassword: async () => ({ success: false, message: 'Not implemented' }),
   resetPassword: async () => ({ success: false, message: 'Not implemented' }),
   doctorPasswordSet: async () => ({ success: false, message: 'Not implemented' })
@@ -207,6 +216,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading: false,
         error: null,
       }));
+
+      // For patient login, trigger profile fetch
+      if (userType === 'patient') {
+        // Dispatch custom event to PatientContext to fetch profile
+        const event = new CustomEvent('patient-auth-success', {
+          detail: { token: data.token }
+        });
+        window.dispatchEvent(event);
+      }
     } catch (error: any) {
       console.log("error", error);
       // Extract the actual error message from the API response
@@ -287,6 +305,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Clear Google OAuth sessions to prevent auto-login
     AuthService.clearGoogleOAuthSession();
 
+    // Clear patient-specific data if logging out a patient
+    if (targetUserType === 'patient') {
+      const event = new CustomEvent('patient-logout');
+      window.dispatchEvent(event);
+    }
+
     console.log('🎉 [AUTH_CONTEXT] Logout process completed');
   };
 
@@ -315,6 +339,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     AuthService.clearGoogleOAuthSession();
 
     setAuthState(defaultAuthState);
+
+    // Clear patient-specific data
+    const event = new CustomEvent('patient-logout');
+    window.dispatchEvent(event);
+
     console.log('🎉 [AUTH_CONTEXT] All users logged out');
   };
 

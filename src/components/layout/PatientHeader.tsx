@@ -1,5 +1,6 @@
 import { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
+import { PatientContext } from '../../context/PatientContext';
 import { Link, useLocation } from 'react-router-dom';
 import '../../styles/components/patient-dashboard.styles.css';
 
@@ -10,6 +11,7 @@ interface PatientHeaderProps {
 
 export const PatientHeader = () => {
   const { authState, logout } = useContext(AuthContext);
+  const { getDisplayName: getPatientDisplayName } = useContext(PatientContext);
   const location = useLocation();
 
   const handleLogout = () => {
@@ -55,8 +57,15 @@ export const PatientHeader = () => {
     return 'U';
   };
 
-  // Get user display name
+  // Get user display name - use patient profile API first, then fallback to auth context
   const getUserDisplayName = () => {
+    // First try to get from patient profile API
+    const patientName = getPatientDisplayName();
+    if (patientName && patientName !== 'Patient') {
+      return patientName;
+    }
+    
+    // Fallback to auth context user data
     const currentSession = authState.sessions[authState.currentUserType || 'patient'];
     if (currentSession?.user?.firstName || currentSession?.user?.lastName) {
       const firstName = currentSession.user.firstName || '';
@@ -67,7 +76,7 @@ export const PatientHeader = () => {
       }
     }
     
-    // Fallback to email
+    // Final fallback to email
     return currentSession?.user?.email || 'User';
   };
 
