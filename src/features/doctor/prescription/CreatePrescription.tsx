@@ -57,6 +57,9 @@ export const CreatePrescription = () => {
   const [searching, setSearching] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [medicineAddedMessage, setMedicineAddedMessage] = useState<string | null>(null);
+  const [labTestAddedMessage, setLabTestAddedMessage] = useState<string | null>(null);
 
   // Form state
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -112,6 +115,19 @@ export const CreatePrescription = () => {
 
     return () => clearTimeout(debounceTimer);
   }, [labTestSearchQuery]);
+
+  // Auto-dismiss success message after 5 seconds
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage(null);
+        // Navigate after auto-dismiss
+        navigate('/doctor/appointments');
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage, navigate]);
 
   const fetchAppointmentDetails = async () => {
     if (!appointmentId) return;
@@ -179,6 +195,10 @@ export const CreatePrescription = () => {
       mealTime: 'before meal'
     };
     setSelectedMedicines(prev => [...prev, newPrescriptionMedicine]);
+    
+    // Show notification that medicine was added
+    setMedicineAddedMessage(`"${medicine.name}" added to prescription`);
+    setTimeout(() => setMedicineAddedMessage(null), 3000);
   };
 
   const removeMedicineFromPrescription = (index: number) => {
@@ -245,6 +265,11 @@ export const CreatePrescription = () => {
       if (isAlreadySelected) {
         return prev; // Don't add duplicate
       }
+      
+      // Show notification that lab test was added
+      setLabTestAddedMessage(`"${labTest.name}" added to prescription`);
+      setTimeout(() => setLabTestAddedMessage(null), 3000);
+      
       return [...prev, newPrescriptionLabTest];
     });
   };
@@ -324,10 +349,10 @@ export const CreatePrescription = () => {
         }
       }
 
-      // 3. Create pharmacy order
+      // 3. Create pharmacy order with calculated quantity based on timing and duration
       const orderItems = selectedMedicines.map(med => ({
         medicineId: med.medicineId,
-        quantity: med.duration // Using duration as quantity for now
+        quantity: med.duration * med.timing.length // Calculate: duration × number of timings per day
       }));
 
       const orderData = {
@@ -355,14 +380,18 @@ export const CreatePrescription = () => {
         reason: 'completed'
       });
 
-      // Navigate back to appointments with success message
+      // Show success message to the doctor
       const successMessage = selectedLabTests.length > 0
-        ? 'Prescription created, medicines and lab tests ordered successfully'
-        : 'Prescription created and medicines ordered successfully';
+        ? 'Prescription created, medicines and lab tests ordered successfully!'
+        : 'Prescription created and medicines ordered successfully!';
 
-      navigate('/doctor/appointments', {
-        state: { message: successMessage }
-      });
+      setSuccessMessage(successMessage);
+
+      // Clear form after successful submission
+      setSelectedMedicines([]);
+      setSelectedLabTests([]);
+      setDiagnosis('');
+      setNotes('');
 
     } catch (err: any) {
       setError(err.message || 'Failed to complete prescription process');
@@ -404,6 +433,201 @@ export const CreatePrescription = () => {
               {error}
             </div>
           )}
+
+          {successMessage && (
+            <div style={{
+              backgroundColor: '#F0FDF4',
+              border: `1px solid #BBF7D0`,
+              color: '#166534',
+              padding: '1rem',
+              borderRadius: '0.5rem',
+              marginBottom: '1rem',
+              position: 'fixed',
+              top: '20px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 9999,
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+              animation: 'slideDown 0.3s ease-out',
+              maxWidth: '600px',
+              width: '90%'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{
+                    backgroundColor: '#10B981',
+                    color: 'white',
+                    borderRadius: '50%',
+                    width: '24px',
+                    height: '24px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 'bold',
+                    fontSize: '14px'
+                  }}>
+                    ✓
+                  </div>
+                  <span style={{ fontWeight: '600' }}>{successMessage}</span>
+                </div>
+                <button
+                  onClick={() => setSuccessMessage(null)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#166534',
+                    cursor: 'pointer',
+                    fontSize: '18px',
+                    fontWeight: 'bold',
+                    padding: '0',
+                    width: '24px',
+                    height: '24px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  aria-label="Close notification"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          )}
+
+          {medicineAddedMessage && (
+            <div style={{
+              backgroundColor: '#EFF6FF',
+              border: `1px solid #93C5FD`,
+              color: '#1E40AF',
+              padding: '1rem',
+              borderRadius: '0.5rem',
+              marginBottom: '1rem',
+              position: 'fixed',
+              top: '80px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 9998,
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+              animation: 'slideDown 0.3s ease-out',
+              maxWidth: '400px',
+              width: '90%'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{
+                    backgroundColor: '#3B82F6',
+                    color: 'white',
+                    borderRadius: '50%',
+                    width: '20px',
+                    height: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 'bold',
+                    fontSize: '12px'
+                  }}>
+                    +
+                  </div>
+                  <span style={{ fontWeight: '500', fontSize: '0.875rem' }}>{medicineAddedMessage}</span>
+                </div>
+                <button
+                  onClick={() => setMedicineAddedMessage(null)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#1E40AF',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    padding: '0',
+                    width: '20px',
+                    height: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  aria-label="Close notification"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          )}
+
+          {labTestAddedMessage && (
+            <div style={{
+              backgroundColor: '#F0F9FF',
+              border: `1px solid #7DD3FC`,
+              color: '#0C4A6E',
+              padding: '1rem',
+              borderRadius: '0.5rem',
+              marginBottom: '1rem',
+              position: 'fixed',
+              top: '140px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 9997,
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+              animation: 'slideDown 0.3s ease-out',
+              maxWidth: '400px',
+              width: '90%'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{
+                    backgroundColor: '#0EA5E9',
+                    color: 'white',
+                    borderRadius: '50%',
+                    width: '20px',
+                    height: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 'bold',
+                    fontSize: '12px'
+                  }}>
+                    🧪
+                  </div>
+                  <span style={{ fontWeight: '500', fontSize: '0.875rem' }}>{labTestAddedMessage}</span>
+                </div>
+                <button
+                  onClick={() => setLabTestAddedMessage(null)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#0C4A6E',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    padding: '0',
+                    width: '20px',
+                    height: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  aria-label="Close notification"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          )}
+
+          <style>
+            {`
+              @keyframes slideDown {
+                from {
+                  opacity: 0;
+                  transform: translateX(-50%) translateY(-10px);
+                }
+                to {
+                  opacity: 1;
+                  transform: translateX(-50%) translateY(0);
+                }
+              }
+            `}
+          </style>
 
           <form onSubmit={handleSubmit}>
             {/* Appointment Details */}
@@ -810,7 +1034,7 @@ export const CreatePrescription = () => {
                                     {labTest.description}
                                   </div>
                                   <div style={{ fontSize: '0.875rem', color: DESIGN_SYSTEM.colors.text_light }}>
-                                    ₹{labTest.price} • Category: {labTest.categoryId}
+                                    ₹{labTest.price}
                                   </div>
                                 </div>
                               </div>
@@ -886,9 +1110,6 @@ export const CreatePrescription = () => {
                                 <div style={{ flex: 1 }}>
                                   <div style={{ fontWeight: '600', color: DESIGN_SYSTEM.colors.primary }}>
                                     {labTest.name}
-                                  </div>
-                                  <div style={{ fontSize: '0.875rem', color: DESIGN_SYSTEM.colors.text_light, marginBottom: '0.25rem' }}>
-                                    {labTest.categoryId}
                                   </div>
                                   <div style={{ fontSize: '0.875rem', color: DESIGN_SYSTEM.colors.text_light }}>
                                     ₹{labTest.price}

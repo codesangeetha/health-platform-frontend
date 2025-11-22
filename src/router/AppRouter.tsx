@@ -20,6 +20,8 @@ import AdminLogin from '../features/auth/AdminLogin';
 import SpecializationsPage from '../features/admin/specializations/SpecializationsPage';
 import { AdminDashboard } from '../features/admin/dashboard/AdminDashboard';
 import PatientsPage from '../features/admin/patients/PatientsPage';
+import LabTestOrdersPage from '../features/admin/lab-test-orders/LabTestOrdersPage';
+import PharmacyOrdersPage from '../features/admin/pharmacy-orders/PharmacyOrdersPage';
 import { PatientRegister } from '../features/auth/PatientRegister';
 import { RootLayout } from '../components/layout/RootLayout';
 import { PatientLogin } from '../features/auth/PatientLogin';
@@ -32,6 +34,7 @@ import { LandingPage } from '../pages/LandingPage';
 import { ServicesPage } from '../pages/ServicesPage';
 import { AboutPage } from '../pages/AboutPage';
 import { ContactPage } from '../pages/ContactPage';
+import { PrivacyPolicyPage } from '../pages/PrivacyPolicyPage';
 import { PatientDashboard } from '../features/patient/dashboard/PatientDashboard';
 import VideoCall from '../components/VideoCall/VideoCall';
 import { PatientProfileEdit } from '../features/patient/profile/PatientProfileEdit';
@@ -111,6 +114,10 @@ const router = createBrowserRouter([
       {
         path: 'contact',
         element: <ContactPage />,
+      },
+      {
+        path: 'privacy',
+        element: <PrivacyPolicyPage />,
       },
       {
         path: 'patient',
@@ -231,6 +238,14 @@ const router = createBrowserRouter([
           {
             path: 'medicines',
             element: <MedicinesPage />,
+          },
+          {
+            path: 'lab-test-orders',
+            element: <LabTestOrdersPage />,
+          },
+          {
+            path: 'pharmacy-orders',
+            element: <PharmacyOrdersPage />,
           }
         ]
       }

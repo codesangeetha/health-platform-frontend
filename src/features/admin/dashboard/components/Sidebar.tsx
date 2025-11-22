@@ -85,6 +85,8 @@ const Sidebar = () => {
       { label: 'Lab Test Categories', icon: '🧪', path: '/admin/lab-test-categories' },
       { label: 'Lab Tests', icon: '🔬', path: '/admin/lab-tests' },
       { label: 'Medicines', icon: '💊', path: '/admin/medicines' },
+      { label: 'Lab Test Orders', icon: '🧪📋', path: '/admin/lab-test-orders' },
+      { label: 'Pharmacy Orders', icon: '💊📋', path: '/admin/pharmacy-orders' },
     ],
     management: [],
   };

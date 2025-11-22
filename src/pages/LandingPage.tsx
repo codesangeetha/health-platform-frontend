@@ -298,6 +298,7 @@ export const LandingPage = () => {
             <div>
               <h4>About Us</h4>
               <ul>
+                <li><Link to="/privacy">Privacy Policy</Link></li>
                 <li><a href="#">Company</a></li>
                 <li><a href="#">Careers</a></li>
               </ul>
