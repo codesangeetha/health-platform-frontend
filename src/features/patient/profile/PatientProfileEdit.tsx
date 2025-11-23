@@ -52,7 +52,7 @@ type FieldKey =
 export const PatientProfileEdit = () => {
   const { authState, logout } = useContext(AuthContext);
   const navigate = useNavigate();
-  const token = useMemo(() => authState.token || AuthService.getToken() || '', [authState.token]);
+  const token = useMemo(() => authState.sessions.patient.token || AuthService.getToken('patient') || '', [authState.sessions.patient.token]);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -98,8 +98,8 @@ export const PatientProfileEdit = () => {
 
   const displayName = useMemo(() => {
     const name = `${form.firstName} ${form.lastName}`.trim();
-    return name || authState.user?.email?.split('@')[0] || 'Patient';
-  }, [form.firstName, form.lastName, authState.user?.email]);
+    return name || authState.sessions.patient.user?.email?.split('@')[0] || 'Patient';
+  }, [form.firstName, form.lastName, authState.sessions.patient.user?.email]);
 
   useEffect(() => {
     let isMounted = true;
