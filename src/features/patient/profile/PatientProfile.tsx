@@ -120,6 +120,12 @@ export const PatientProfile = () => {
 
   const listOrDash = (list?: string[]) => (list && list.length ? list : ['—']);
 
+  // Helper to format phone numbers - show empty string for "0000000000"
+  const formatPhoneNumber = (phone?: string) => {
+    if (!phone || phone === '0000000000') return '';
+    return phone;
+  };
+
   return (
     <>
 
@@ -167,11 +173,11 @@ export const PatientProfile = () => {
                   </div>
                   <div>
                     <div className="pd-stat-label">Phone</div>
-                    <div style={{ color: 'var(--color-text-dark)' }}>{profile?.phone || '—'}</div>
+                    <div style={{ color: 'var(--color-text-dark)' }}>{formatPhoneNumber(profile?.phone) || '—'}</div>
                   </div>
                   <div>
                     <div className="pd-stat-label">WhatsApp</div>
-                    <div style={{ color: 'var(--color-text-dark)' }}>{profile?.whatsapp || '—'}</div>
+                    <div style={{ color: 'var(--color-text-dark)' }}>{formatPhoneNumber(profile?.whatsapp) || '—'}</div>
                   </div>
                   <div>
                     <div className="pd-stat-label">Date of Birth</div>

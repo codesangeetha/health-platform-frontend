@@ -111,15 +111,15 @@ export const PatientProfileEdit = () => {
         firstName: data.firstName || '',
         lastName: data.lastName || '',
         email: data.email || '',
-        phone: data.phone || '',
-        whatsapp: data.whatsapp || '',
+        phone: formatPhoneNumber(data.phone),
+        whatsapp: formatPhoneNumber(data.whatsapp),
         bloodGroup: data.bloodGroup || '',
         allergies,
         chronicDiseases: chronic,
         emergencyContact: {
           name: data.emergencyContact?.name || '',
           relationship: data.emergencyContact?.relationship || '',
-          phone: data.emergencyContact?.phone || '',
+          phone: formatPhoneNumber(data.emergencyContact?.phone),
         },
       });
       // Clear any previous validation state on prefill
@@ -234,6 +234,12 @@ export const PatientProfileEdit = () => {
   // Helpers
   const trim = (v: string) => (v ?? '').trim();
   const onlyDigits = (v: string) => (v ?? '').replace(/\D/g, '');
+  
+  // Helper to format phone numbers - show empty string for "0000000000"
+  const formatPhoneNumber = (phone?: string) => {
+    if (!phone || phone === '0000000000') return '';
+    return phone;
+  };
 
   const validateField = (key: FieldKey, currentForm: ProfileForm = form): string | null => {
     const firstName = trim(currentForm.firstName);
