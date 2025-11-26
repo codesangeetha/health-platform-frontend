@@ -52,7 +52,7 @@ type FieldKey =
 export const PatientProfileEdit = () => {
   const { authState, logout } = useContext(AuthContext);
   const navigate = useNavigate();
-  const token = useMemo(() => authState.token || AuthService.getToken() || '', [authState.token]);
+  const token = useMemo(() => authState.sessions.patient.token || AuthService.getToken('patient') || '', [authState.sessions.patient.token]);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -98,8 +98,8 @@ export const PatientProfileEdit = () => {
 
   const displayName = useMemo(() => {
     const name = `${form.firstName} ${form.lastName}`.trim();
-    return name || authState.user?.email?.split('@')[0] || 'Patient';
-  }, [form.firstName, form.lastName, authState.user?.email]);
+    return name || authState.sessions.patient.user?.email?.split('@')[0] || 'Patient';
+  }, [form.firstName, form.lastName, authState.sessions.patient.user?.email]);
 
   useEffect(() => {
     let isMounted = true;
@@ -111,15 +111,15 @@ export const PatientProfileEdit = () => {
         firstName: data.firstName || '',
         lastName: data.lastName || '',
         email: data.email || '',
-        phone: data.phone || '',
-        whatsapp: data.whatsapp || '',
+        phone: formatPhoneNumber(data.phone),
+        whatsapp: formatPhoneNumber(data.whatsapp),
         bloodGroup: data.bloodGroup || '',
         allergies,
         chronicDiseases: chronic,
         emergencyContact: {
           name: data.emergencyContact?.name || '',
           relationship: data.emergencyContact?.relationship || '',
-          phone: data.emergencyContact?.phone || '',
+          phone: formatPhoneNumber(data.emergencyContact?.phone),
         },
       });
       // Clear any previous validation state on prefill
@@ -234,6 +234,12 @@ export const PatientProfileEdit = () => {
   // Helpers
   const trim = (v: string) => (v ?? '').trim();
   const onlyDigits = (v: string) => (v ?? '').replace(/\D/g, '');
+  
+  // Helper to format phone numbers - show empty string for "0000000000"
+  const formatPhoneNumber = (phone?: string) => {
+    if (!phone || phone === '0000000000') return '';
+    return phone;
+  };
 
   const validateField = (key: FieldKey, currentForm: ProfileForm = form): string | null => {
     const firstName = trim(currentForm.firstName);

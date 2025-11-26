@@ -30,6 +30,7 @@ import { ForgotPassword } from '../features/auth/ForgotPassword';
 import { ResetPassword } from '../features/auth/ResetPassword';
 import { SetDoctorPassword } from '../features/auth/SetDoctorPassword';
 import GoogleCallback from '../features/auth/GoogleCallback';
+import InstagramCallback from '../features/auth/InstagramCallback';
 import { LandingPage } from '../pages/LandingPage';
 import { ServicesPage } from '../pages/ServicesPage';
 import { AboutPage } from '../pages/AboutPage';
@@ -62,6 +63,10 @@ const router = createBrowserRouter([
   {
     path: '/auth/google/callback',
     element: <GoogleCallback />,
+  },
+  {
+    path: '/auth/instagram/callback',
+    element: <InstagramCallback />,
   },
   {
     path: '/',

@@ -65,7 +65,7 @@ const PharmacyOrdersPage = () => {
         <TopBar onLogout={handleLogout} />
         <PageTitle>Pharmacy Orders</PageTitle>
         
-        <StatsContainer>
+<StatsContainer>
           <StatCard>
             <StatValue>9</StatValue>
             <StatLabel>Total Orders</StatLabel>
@@ -77,10 +77,6 @@ const PharmacyOrdersPage = () => {
           <StatCard>
             <StatValue>2</StatValue>
             <StatLabel>Completed Orders</StatLabel>
-          </StatCard>
-          <StatCard>
-            <StatValue>$229.80</StatValue>
-            <StatLabel>Total Revenue</StatLabel>
           </StatCard>
         </StatsContainer>
 

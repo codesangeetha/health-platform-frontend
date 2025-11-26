@@ -3,7 +3,7 @@ import type { ReactNode, Dispatch, SetStateAction } from 'react';
 import { PatientService } from '@/services/patient/patient.service';
 
 interface PatientProfile {
-  _id?: string;
+  patientId?: string;
   email?: string;
   firstName?: string;
   lastName?: string;
@@ -11,8 +11,8 @@ interface PatientProfile {
   whatsapp?: string;
   dateOfBirth?: string;
   bloodGroup?: string;
-  allergies?: string;
-  chronicDiseases?: string;
+  allergies?: string[];
+  chronicDiseases?: string[];
   emergencyContact?: {
     name: string;
     relationship: string;
@@ -32,6 +32,7 @@ interface PatientContextType {
   clearError: () => void;
   fetchPatientProfile: () => Promise<void>;
   getDisplayName: () => string;
+  clearPatientData: () => void;
 }
 
 const defaultPatientState: PatientState = {
@@ -40,21 +41,22 @@ const defaultPatientState: PatientState = {
   error: null,
 };
 
+// LocalStorage key for patient profile
+const PATIENT_PROFILE_KEY = 'healthcare_patient_profile';
+
 export const PatientContext = createContext<PatientContextType>({
   patientState: defaultPatientState,
   setPatientState: (() => undefined) as unknown as Dispatch<SetStateAction<PatientState>>,
   clearError: () => {},
   fetchPatientProfile: async () => {},
-  getDisplayName: () => 'Patient'
+  getDisplayName: () => 'Patient',
+  clearPatientData: () => {}
 });
 
 export function PatientProvider({ children }: { children: ReactNode }) {
   const [patientState, setPatientState] = useState<PatientState>(defaultPatientState);
 
-  const clearError = () => {
-    setPatientState(prev => ({ ...prev, error: null }));
-  };
-
+  // Function to fetch patient profile
   const fetchPatientProfile = async () => {
     try {
       setPatientState(prev => ({ ...prev, isLoading: true, error: null }));
@@ -75,6 +77,93 @@ export function PatientProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Load patient profile from localStorage on initialization
+  useEffect(() => {
+    const loadProfileFromStorage = () => {
+      try {
+        const storedProfile = localStorage.getItem(PATIENT_PROFILE_KEY);
+        if (storedProfile) {
+          const profile = JSON.parse(storedProfile);
+          setPatientState(prev => ({
+            ...prev,
+            profile
+          }));
+        }
+      } catch (error) {
+        console.error('Error loading patient profile from localStorage:', error);
+      }
+    };
+
+    loadProfileFromStorage();
+  }, []);
+
+  // Save profile to localStorage whenever it changes
+  useEffect(() => {
+    if (patientState.profile) {
+      try {
+        localStorage.setItem(PATIENT_PROFILE_KEY, JSON.stringify(patientState.profile));
+      } catch (error) {
+        console.error('Error saving patient profile to localStorage:', error);
+      }
+    }
+  }, [patientState.profile]);
+
+  // Listen for patient authentication and logout events
+  useEffect(() => {
+    const handlePatientAuthSuccess = () => {
+      console.log('Patient auth success detected, fetching profile after delay...');
+      // Add delay to ensure auth token is properly set up
+      setTimeout(() => {
+        fetchPatientProfile();
+      }, 800);
+    };
+
+    const handleGoogleAuthSuccess = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { user } = customEvent.detail;
+      if (user?.userType === 'patient') {
+        console.log('Google patient auth success detected, fetching profile after delay...');
+        // Add delay for OAuth flows
+        setTimeout(() => {
+          fetchPatientProfile();
+        }, 1000);
+      }
+    };
+
+    const handleInstagramAuthSuccess = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { user } = customEvent.detail;
+      if (user?.userType === 'patient') {
+        console.log('Instagram patient auth success detected, fetching profile after delay...');
+        // Add longer delay for Instagram OAuth flows (they can be slower)
+        setTimeout(() => {
+          fetchPatientProfile();
+        }, 1200);
+      }
+    };
+
+    const handlePatientLogout = () => {
+      console.log('Patient logout detected, clearing profile data...');
+      clearPatientData();
+    };
+
+    window.addEventListener('patient-auth-success', handlePatientAuthSuccess);
+    window.addEventListener('google-auth-success', handleGoogleAuthSuccess);
+    window.addEventListener('instagram-auth-success', handleInstagramAuthSuccess);
+    window.addEventListener('patient-logout', handlePatientLogout);
+
+    return () => {
+      window.removeEventListener('patient-auth-success', handlePatientAuthSuccess);
+      window.removeEventListener('google-auth-success', handleGoogleAuthSuccess);
+      window.removeEventListener('instagram-auth-success', handleInstagramAuthSuccess);
+      window.removeEventListener('patient-logout', handlePatientLogout);
+    };
+  }, []);
+
+  const clearError = () => {
+    setPatientState(prev => ({ ...prev, error: null }));
+  };
+
   const getDisplayName = (): string => {
     const { profile } = patientState;
     if (profile?.firstName || profile?.lastName) {
@@ -83,13 +172,23 @@ export function PatientProvider({ children }: { children: ReactNode }) {
     return 'Patient';
   };
 
+  const clearPatientData = () => {
+    setPatientState(defaultPatientState);
+    try {
+      localStorage.removeItem(PATIENT_PROFILE_KEY);
+    } catch (error) {
+      console.error('Error clearing patient profile from localStorage:', error);
+    }
+  };
+
   return (
     <PatientContext.Provider value={{
       patientState,
       setPatientState,
       clearError,
       fetchPatientProfile,
-      getDisplayName
+      getDisplayName,
+      clearPatientData
     }}>
       {children}
     </PatientContext.Provider>

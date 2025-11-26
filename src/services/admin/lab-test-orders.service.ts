@@ -48,10 +48,15 @@ export interface OrdersRequest {
   page?: number;
   limit?: number;
   status?: string;
+  patientName?: string;
   patientId?: string;
   orderType?: 'medicine' | 'lab_test';
   startDate?: string;
   endDate?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  amountMin?: number;
+  amountMax?: number;
 }
 
 export interface UpdateOrderRequest {
@@ -60,7 +65,7 @@ export interface UpdateOrderRequest {
 
 export const getOrders = async (params: OrdersRequest = {}): Promise<OrdersResponse> => {
   try {
-    const { page = 1, limit = 10, status, patientId, orderType, startDate, endDate } = params;
+    const { page = 1, limit = 10, status, patientId, patientName, orderType, startDate, endDate, dateFrom, dateTo, amountMin, amountMax } = params;
     
     const queryParams = new URLSearchParams();
     queryParams.append('page', page.toString());
@@ -68,6 +73,11 @@ export const getOrders = async (params: OrdersRequest = {}): Promise<OrdersRespo
     
     if (status) queryParams.append('status', status);
     if (patientId) queryParams.append('patientId', patientId);
+    if (patientName) queryParams.append('patientName', patientName);
+    if (amountMin) queryParams.append('amountMin', amountMin.toString());
+    if (amountMax) queryParams.append('amountMax', amountMax.toString());
+    if (dateFrom) queryParams.append('dateFrom', dateFrom);
+    if (dateTo) queryParams.append('dateTo', dateTo);
     if (orderType) queryParams.append('orderType', orderType);
     if (startDate) queryParams.append('startDate', startDate);
     if (endDate) queryParams.append('endDate', endDate);
@@ -135,6 +145,80 @@ export const updateOrderStatus = async (
       throw error;
     }
     throw new ApiError('Failed to update order status', 500);
+  }
+};
+
+export const updateLabTestOrderStatus = async (
+  orderId: string,
+  status: 'completed' | 'cancelled',
+  reason: string
+): Promise<{ success: boolean; message: string; timestamp: string; data: Order }> => {
+  try {
+    const token = getAuthToken('admin');
+    if (!token) {
+      throw new ApiError('No authentication token found', 401);
+    }
+
+    const response = await fetch(
+      `${BASE_URL}/api/v1/lab-test-orders/${orderId}/status`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status, reason }),
+      }
+    );
+
+    if (!response.ok) {
+      await handleApiError(response);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError('Failed to update lab test order status', 500);
+  }
+};
+
+export const updatePharmacyOrderStatus = async (
+  orderId: string,
+  status: string,
+  reason: string
+): Promise<{ success: boolean; message: string; timestamp: string; data: Order }> => {
+  try {
+    const token = getAuthToken('admin');
+    if (!token) {
+      throw new ApiError('No authentication token found', 401);
+    }
+
+    const response = await fetch(
+      `${BASE_URL}/api/v1/pharmacy/orders/${orderId}/status`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status, reason }),
+      }
+    );
+
+    if (!response.ok) {
+      await handleApiError(response);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError('Failed to update pharmacy order status', 500);
   }
 };
 

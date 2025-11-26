@@ -1,7 +1,6 @@
-/** @jsxImportSource @emotion/react */
 import { useEffect, useState, useCallback } from 'react';
 import styled from '@emotion/styled';
-import { getOrders } from '../../../services/admin/lab-test-orders.service';
+import { getOrders, updateLabTestOrderStatus } from '../../../services/admin/lab-test-orders.service';
 import type { Order, OrdersRequest } from '../../../services/admin/lab-test-orders.service';
 import { ApiError } from '../../../services/auth/auth.service';
 
@@ -243,6 +242,17 @@ const ErrorMessage = styled.div`
   border: 1px solid #FFCDD2;
 `;
 
+const SuccessBox = styled.div`
+  background: #e8f5e8;
+  color: #2e7d32;
+  border: 1px solid #4caf50;
+  border-radius: 4px;
+  padding: 12px 16px;
+  margin: 8px 0;
+  font-size: 14px;
+  font-weight: 500;
+`;
+
 const SearchContainer = styled.div`
   background: #FFFFFF;
   border-radius: 8px;
@@ -269,6 +279,22 @@ const SearchInput = styled.input`
   border-radius: 4px;
   font-size: 14px;
   color: #333333;
+
+  &:focus {
+    outline: none;
+    border-color: #4A90E2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+  }
+`;
+
+const SearchSelect = styled.select`
+  padding: 8px 12px;
+  border: 1px solid #E0E0E0;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333333;
+  background-color: #FFFFFF;
+  cursor: pointer;
 
   &:focus {
     outline: none;
@@ -340,8 +366,28 @@ const EmptyStateSubtext = styled.p`
   color: #666666;
 `;
 
+interface Filters {
+  patientName: string;
+  amountMin: string;
+  amountMax: string;
+  dateFrom: string;
+  dateTo: string;
+  status: string;
+}
+
+const ORDER_STATUSES = [
+  { value: '', label: 'All Statuses' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'confirmed', label: 'Confirmed' },
+  { value: 'processing', label: 'Processing' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
+  { value: 'shipped', label: 'Shipped' },
+  { value: 'delivered', label: 'Delivered' }
+];
+
 export const LabTestOrdersList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
-  const [orders, setOrders] = useState<Order[]>([]);
+const [orders, setOrders] = useState<Order[]>([]);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -352,12 +398,19 @@ export const LabTestOrdersList = ({ refreshKey = 0 }: { refreshKey?: number }) =
   const [error, setError] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [filters, setFilters] = useState({
-    patientId: '',
-    status: '',
-    orderType: 'lab_test',
-    startDate: '',
-    endDate: ''
+const [showStatusUpdateModal, setShowStatusUpdateModal] = useState(false);
+  const [selectedStatusUpdateOrder, setSelectedStatusUpdateOrder] = useState<Order | null>(null);
+  const [updateStatus, setUpdateStatus] = useState<'completed' | 'cancelled'>('completed');
+  const [updateReason, setUpdateReason] = useState('');
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [filters, setFilters] = useState<Filters>({
+    patientName: '',
+    amountMin: '',
+    amountMax: '',
+    dateFrom: '',
+    dateTo: '',
+    status: ''
   });
 
   const fetchOrders = useCallback(async (page: number = 1) => {
@@ -366,16 +419,14 @@ export const LabTestOrdersList = ({ refreshKey = 0 }: { refreshKey?: number }) =
       const params: OrdersRequest = {
         page,
         limit: pagination.limit,
-        ...filters,
-        orderType: 'lab_test' // Only fetch lab test orders
+        patientName: filters.patientName || undefined,
+        amountMin: filters.amountMin ? parseFloat(filters.amountMin) : undefined,
+        amountMax: filters.amountMax ? parseFloat(filters.amountMax) : undefined,
+        dateFrom: filters.dateFrom || undefined,
+        dateTo: filters.dateTo || undefined,
+        status: filters.status || undefined,
+        orderType: 'lab_test'
       };
-
-      // Remove undefined values
-      Object.keys(params).forEach(key => {
-        if (params[key as keyof OrdersRequest] === '') {
-          delete params[key as keyof OrdersRequest];
-        }
-      });
 
       const response = await getOrders(params);
       setOrders(response.data.orders);
@@ -400,17 +451,18 @@ export const LabTestOrdersList = ({ refreshKey = 0 }: { refreshKey?: number }) =
 
   const handleReset = () => {
     setFilters({
-      patientId: '',
-      status: '',
-      orderType: 'lab_test',
-      startDate: '',
-      endDate: ''
+      patientName: '',
+      amountMin: '',
+      amountMax: '',
+      dateFrom: '',
+      dateTo: '',
+      status: ''
     });
     setPagination(prev => ({ ...prev, page: 1 }));
     fetchOrders(1);
   };
 
-  const handleFilterChange = (field: string, value: string) => {
+  const handleFilterChange = (field: keyof Filters, value: string) => {
     setFilters(prev => ({
       ...prev,
       [field]: value
@@ -421,14 +473,67 @@ export const LabTestOrdersList = ({ refreshKey = 0 }: { refreshKey?: number }) =
     fetchOrders(pagination.page);
   }, [pagination.page, fetchOrders, refreshKey]);
 
-  const handleViewDetails = (order: Order) => {
+const handleViewDetails = (order: Order) => {
     setSelectedOrder(order);
     setShowModal(true);
   };
-  
+
+  const handleStatusUpdate = (order: Order) => {
+    setSelectedStatusUpdateOrder(order);
+    setUpdateReason('');
+    setUpdateStatus('completed');
+    setShowStatusUpdateModal(true);
+  };
+
   const closeModal = () => {
     setShowModal(false);
     setSelectedOrder(null);
+  };
+
+const closeStatusUpdateModal = () => {
+    setShowStatusUpdateModal(false);
+    setSelectedStatusUpdateOrder(null);
+    setUpdateReason('');
+    setUpdateStatus('completed');
+    setSuccessMessage(null);
+  };
+
+const handleUpdateOrderStatus = async () => {
+    if (!selectedStatusUpdateOrder || !updateReason.trim()) {
+      setError('Please provide a reason for the status update');
+      return;
+    }
+
+    try {
+      setUpdatingStatus(true);
+      setError(null);
+      setSuccessMessage(null);
+
+      await updateLabTestOrderStatus(
+        selectedStatusUpdateOrder.orderId,
+        updateStatus,
+        updateReason.trim()
+      );
+
+      // Refresh the orders list
+      await fetchOrders(pagination.page);
+      
+      setSuccessMessage(`Order status updated to ${updateStatus} successfully!`);
+
+      // Close modal after 2 seconds to show success message
+      setTimeout(() => {
+        closeStatusUpdateModal();
+      }, 2000);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError('Failed to update order status');
+      }
+      console.error('Error updating order status:', err);
+    } finally {
+      setUpdatingStatus(false);
+    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -448,44 +553,74 @@ export const LabTestOrdersList = ({ refreshKey = 0 }: { refreshKey?: number }) =
         <h3 style={{ margin: '0 0 16px 0', color: '#333333', fontSize: '18px', fontWeight: '600' }}>Filter Lab Test Orders</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', width: '100%', marginBottom: '16px' }}>
           <SearchField>
-            <SearchLabel htmlFor="patientId">Patient ID</SearchLabel>
+            <SearchLabel htmlFor="patientName">Patient Name</SearchLabel>
             <SearchInput
-              id="patientId"
+              id="patientName"
               type="text"
-              placeholder="Enter patient ID"
-              value={filters.patientId}
-              onChange={(e) => handleFilterChange('patientId', e.target.value)}
+              placeholder="Enter patient name"
+              value={filters.patientName}
+              onChange={(e) => handleFilterChange('patientName', e.target.value)}
             />
           </SearchField>
 
           <SearchField>
             <SearchLabel htmlFor="status">Status</SearchLabel>
-            <SearchInput
+            <SearchSelect
               id="status"
-              type="text"
-              placeholder="e.g., pending, confirmed"
               value={filters.status}
               onChange={(e) => handleFilterChange('status', e.target.value)}
+            >
+              {ORDER_STATUSES.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </SearchSelect>
+          </SearchField>
+
+          <SearchField>
+            <SearchLabel htmlFor="amountMin">Min Amount ($)</SearchLabel>
+            <SearchInput
+              id="amountMin"
+              type="number"
+              placeholder="0"
+              min="0"
+              step="0.01"
+              value={filters.amountMin}
+              onChange={(e) => handleFilterChange('amountMin', e.target.value)}
             />
           </SearchField>
 
           <SearchField>
-            <SearchLabel htmlFor="startDate">Start Date</SearchLabel>
+            <SearchLabel htmlFor="amountMax">Max Amount ($)</SearchLabel>
             <SearchInput
-              id="startDate"
-              type="date"
-              value={filters.startDate}
-              onChange={(e) => handleFilterChange('startDate', e.target.value)}
+              id="amountMax"
+              type="number"
+              placeholder="1000"
+              min="0"
+              step="0.01"
+              value={filters.amountMax}
+              onChange={(e) => handleFilterChange('amountMax', e.target.value)}
             />
           </SearchField>
 
           <SearchField>
-            <SearchLabel htmlFor="endDate">End Date</SearchLabel>
+            <SearchLabel htmlFor="dateFrom">From Date</SearchLabel>
             <SearchInput
-              id="endDate"
+              id="dateFrom"
               type="date"
-              value={filters.endDate}
-              onChange={(e) => handleFilterChange('endDate', e.target.value)}
+              value={filters.dateFrom}
+              onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+            />
+          </SearchField>
+
+          <SearchField>
+            <SearchLabel htmlFor="dateTo">To Date</SearchLabel>
+            <SearchInput
+              id="dateTo"
+              type="date"
+              value={filters.dateTo}
+              onChange={(e) => handleFilterChange('dateTo', e.target.value)}
             />
           </SearchField>
         </div>
@@ -574,11 +709,16 @@ export const LabTestOrdersList = ({ refreshKey = 0 }: { refreshKey?: number }) =
                     <Td style={{ fontWeight: '500', color: '#333333' }}>
                       {formatCurrency(order.totalAmount)}
                     </Td>
-                    <Td>
-                      <ActionButton onClick={() => handleViewDetails(order)}>
-                        View Details
-                      </ActionButton>
-                    </Td>
+<Td>
+  <ActionButton onClick={() => handleViewDetails(order)}>
+    View
+  </ActionButton>
+  {(order.status === 'pending' || order.status === 'confirmed' || order.status === 'processing') && (
+    <ActionButton onClick={() => handleStatusUpdate(order)}>
+      Update
+    </ActionButton>
+  )}
+</Td>
                   </tr>
                 ))
               )}
@@ -686,7 +826,80 @@ export const LabTestOrdersList = ({ refreshKey = 0 }: { refreshKey?: number }) =
           </ModalContent>
         </ModalOverlay>
       )}
-      
+
+      {showStatusUpdateModal && selectedStatusUpdateOrder && (
+        <ModalOverlay onClick={closeStatusUpdateModal}>
+          <ModalContent onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+            <ModalHeader>
+              <ModalTitle>Update Order Status</ModalTitle>
+              <CloseButton onClick={closeStatusUpdateModal}>&times;</CloseButton>
+            </ModalHeader>
+
+            {error && <ErrorMessage>{error}</ErrorMessage>}
+            {successMessage && <SuccessBox>{successMessage}</SuccessBox>}
+
+            {!successMessage && (
+              <>
+                <DetailRow>
+                  <DetailLabel>Order ID:</DetailLabel>
+                  <DetailValue>{selectedStatusUpdateOrder.orderId}</DetailValue>
+                </DetailRow>
+
+                <DetailRow>
+                  <DetailLabel>Current Status:</DetailLabel>
+                  <DetailValue>
+                    <StatusBadge status={selectedStatusUpdateOrder.status}>
+                      {selectedStatusUpdateOrder.status.charAt(0).toUpperCase() + selectedStatusUpdateOrder.status.slice(1)}
+                    </StatusBadge>
+                  </DetailValue>
+                </DetailRow>
+
+                <DetailRow>
+                  <DetailLabel>New Status:</DetailLabel>
+                  <DetailValue>
+                    <SearchSelect
+                      id="statusSelect"
+                      value={updateStatus}
+                      onChange={(e) => setUpdateStatus(e.target.value as 'completed' | 'cancelled')}
+                      style={{ width: '200px' }}
+                    >
+                      <option value="completed">Completed</option>
+                      <option value="cancelled">Cancelled</option>
+                    </SearchSelect>
+                  </DetailValue>
+                </DetailRow>
+
+<DetailRow>
+                  <DetailLabel>Reason *</DetailLabel>
+                  <DetailValue>
+                    <SearchInput
+                      id="reasonInput"
+                      type="text"
+                      placeholder="Enter reason for status update"
+                      value={updateReason}
+                      onChange={(e) => setUpdateReason(e.target.value)}
+                      style={{ width: '100%' }}
+                    />
+                  </DetailValue>
+                </DetailRow>
+
+                <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+                  <SearchButton
+                    onClick={handleUpdateOrderStatus}
+                    disabled={updatingStatus || !updateReason.trim()}
+                  >
+                    {updatingStatus ? 'Updating...' : `Update to ${updateStatus}`}
+                  </SearchButton>
+                  <ResetButton onClick={closeStatusUpdateModal}>
+                    Cancel
+                  </ResetButton>
+                </div>
+              </>
+            )}
+          </ModalContent>
+        </ModalOverlay>
+      )}
+
       {error && (
         <ErrorMessage>
           {error}

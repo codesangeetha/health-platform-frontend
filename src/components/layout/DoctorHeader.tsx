@@ -1,7 +1,6 @@
-import { useContext, useState, useEffect } from 'react';
+import { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { DoctorService } from '../../services/doctor/doctor.service';
 import '../../styles/components/doctor-dashboard.styles.css';
 
 interface DoctorHeaderProps {
@@ -13,45 +12,11 @@ export const DoctorHeader = () => {
   const { authState, logout } = useContext(AuthContext);
   const location = useLocation();
   const navigate = useNavigate();
-  const [doctorProfile, setDoctorProfile] = useState<any>(null);
-  const [profileLoading, setProfileLoading] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/', { replace: true });
   };
-
-  // Fetch doctor profile to get the actual name
-  useEffect(() => {
-    const fetchDoctorProfile = async () => {
-      const currentUser = authState.sessions[authState.currentUserType || 'doctor']?.user;
-      
-      if (!currentUser || currentUser.userType !== 'doctor') {
-        return;
-      }
-
-      try {
-        setProfileLoading(true);
-        const response = await DoctorService.getCurrentDoctorProfile();
-        console.log('Doctor profile fetched:', response);
-        
-        // Handle different response structures
-        const profileData = response?.data || response;
-        setDoctorProfile(profileData);
-      } catch (error) {
-        console.warn('Failed to fetch doctor profile:', error);
-        // Set a basic profile from auth state as fallback
-        setDoctorProfile({
-          firstName: currentUser.email?.split('@')[0] || 'Doctor',
-          lastName: ''
-        });
-      } finally {
-        setProfileLoading(false);
-      }
-    };
-
-    fetchDoctorProfile();
-  }, [authState.currentUserType, authState.sessions.doctor?.user?.email]);
 
   // Get current path to determine active link
   const currentPath = location.pathname;
@@ -65,10 +30,10 @@ export const DoctorHeader = () => {
 
   // Get user initials for avatar fallback
   const getUserInitials = () => {
-    // Try to use doctor's actual name from profile
-    if (doctorProfile && (doctorProfile.firstName || doctorProfile.lastName)) {
-      const firstName = doctorProfile.firstName || '';
-      const lastName = doctorProfile.lastName || '';
+    const currentSession = authState.sessions[authState.currentUserType || 'doctor'];
+    if (currentSession?.user?.firstName || currentSession?.user?.lastName) {
+      const firstName = currentSession.user.firstName || '';
+      const lastName = currentSession.user.lastName || '';
       const parts = `${firstName} ${lastName}`.trim().split(/\s+/);
       if (parts.length >= 2) {
         return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
@@ -78,9 +43,8 @@ export const DoctorHeader = () => {
     }
     
     // Fallback to email
-    const currentUser = authState.sessions[authState.currentUserType || 'doctor']?.user;
-    if (currentUser) {
-      const email = currentUser.email;
+    const email = currentSession?.user?.email || '';
+    if (email) {
       const emailPrefix = email.split('@')[0];
       const parts = emailPrefix.split(/[._-]/);
       if (parts.length >= 2) {
@@ -94,10 +58,10 @@ export const DoctorHeader = () => {
 
   // Get user display name
   const getUserDisplayName = () => {
-    // Try to use doctor's actual name from profile
-    if (doctorProfile && (doctorProfile.firstName || doctorProfile.lastName)) {
-      const firstName = doctorProfile.firstName || '';
-      const lastName = doctorProfile.lastName || '';
+    const currentSession = authState.sessions[authState.currentUserType || 'doctor'];
+    if (currentSession?.user?.firstName || currentSession?.user?.lastName) {
+      const firstName = currentSession.user.firstName || '';
+      const lastName = currentSession.user.lastName || '';
       const fullName = `${firstName} ${lastName}`.trim();
       if (fullName) {
         return `Dr. ${fullName}`;
@@ -105,11 +69,7 @@ export const DoctorHeader = () => {
     }
     
     // Fallback to email
-    const currentUser = authState.sessions[authState.currentUserType || 'doctor']?.user;
-    if (currentUser) {
-      return currentUser.email;
-    }
-    return 'User';
+    return currentSession?.user?.email || 'User';
   };
 
   return (

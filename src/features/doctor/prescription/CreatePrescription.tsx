@@ -650,7 +650,13 @@ export const CreatePrescription = () => {
                       Age
                     </label>
                     <p style={{ color: DESIGN_SYSTEM.colors.text_light }}>
-                      {appointment?.patientAge ? `${appointment.patientAge} years` : 'Loading...'}
+                      {appointment
+                        ? (appointment.patientAge && appointment.patientAge > 0
+                          ? `${appointment.patientAge} years`
+                          : 'NA'
+                        )
+                        : 'Loading...'
+                      }
                     </p>
                   </div>
                   <div>

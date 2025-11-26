@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
-import { usePatient } from '../../context/PatientContext';
+import { PatientContext } from '../../context/PatientContext';
 import { Link, useLocation } from 'react-router-dom';
 import '../../styles/components/patient-dashboard.styles.css';
 
@@ -11,7 +11,7 @@ interface PatientHeaderProps {
 
 export const PatientHeader = () => {
   const { authState, logout } = useContext(AuthContext);
-  const { getDisplayName } = usePatient();
+  const { getDisplayName: getPatientDisplayName } = useContext(PatientContext);
   const location = useLocation();
 
   const handleLogout = () => {
@@ -32,18 +32,20 @@ export const PatientHeader = () => {
   // Get user initials for avatar fallback
   const getUserInitials = () => {
     const currentSession = authState.sessions[authState.currentUserType || 'patient'];
-    if (currentSession?.user) {
-      const displayName = getDisplayName();
-      if (displayName !== 'Patient') {
-        const parts = displayName.split(' ');
-        if (parts.length >= 2) {
-          return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
-        } else {
-          return parts[0].charAt(0).toUpperCase();
-        }
+    if (currentSession?.user?.firstName || currentSession?.user?.lastName) {
+      const firstName = currentSession.user.firstName || '';
+      const lastName = currentSession.user.lastName || '';
+      const parts = `${firstName} ${lastName}`.trim().split(/\s+/);
+      if (parts.length >= 2) {
+        return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+      } else if (parts.length === 1) {
+        return parts[0].charAt(0).toUpperCase();
       }
-      // Fallback to email if no name available
-      const email = currentSession.user.email;
+    }
+    
+    // Fallback to email
+    const email = currentSession?.user?.email || '';
+    if (email) {
       const emailPrefix = email.split('@')[0];
       const parts = emailPrefix.split(/[._-]/);
       if (parts.length >= 2) {
@@ -55,14 +57,26 @@ export const PatientHeader = () => {
     return 'U';
   };
 
-  // Get user display name
+  // Get user display name - use patient profile API first, then fallback to auth context
   const getUserDisplayName = () => {
-    const displayName = getDisplayName();
-    if (displayName !== 'Patient') {
-      return displayName;
+    // First try to get from patient profile API
+    const patientName = getPatientDisplayName();
+    if (patientName && patientName !== 'Patient') {
+      return patientName;
     }
-    // Fallback to email
+    
+    // Fallback to auth context user data
     const currentSession = authState.sessions[authState.currentUserType || 'patient'];
+    if (currentSession?.user?.firstName || currentSession?.user?.lastName) {
+      const firstName = currentSession.user.firstName || '';
+      const lastName = currentSession.user.lastName || '';
+      const fullName = `${firstName} ${lastName}`.trim();
+      if (fullName) {
+        return fullName;
+      }
+    }
+    
+    // Final fallback to email
     return currentSession?.user?.email || 'User';
   };
 

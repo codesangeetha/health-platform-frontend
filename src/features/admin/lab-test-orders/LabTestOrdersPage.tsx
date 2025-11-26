@@ -78,10 +78,6 @@ const LabTestOrdersPage = () => {
             <StatValue>6</StatValue>
             <StatLabel>Completed Orders</StatLabel>
           </StatCard>
-          <StatCard>
-            <StatValue>$3,600</StatValue>
-            <StatLabel>Total Revenue</StatLabel>
-          </StatCard>
         </StatsContainer>
 
         <LabTestOrdersList refreshKey={refreshToken} />
