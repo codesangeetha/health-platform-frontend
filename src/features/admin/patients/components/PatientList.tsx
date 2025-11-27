@@ -302,7 +302,8 @@ export const PatientList = () => {
     lastName: '',
     email: '',
     bloodGroup: '',
-    createdAt: ''
+    fromDate: '',
+    toDate: ''
   });
 
   const fetchPatientsList = useCallback(async (page: number = 1) => {
@@ -315,7 +316,8 @@ export const PatientList = () => {
         lastName: filters.lastName || undefined,
         email: filters.email || undefined,
         bloodGroup: filters.bloodGroup || undefined,
-        createdAt: filters.createdAt || undefined
+        fromDate: filters.fromDate || undefined,
+        toDate: filters.toDate || undefined
       });
 
       // Sort patients by creation date (newest first)
@@ -351,7 +353,8 @@ export const PatientList = () => {
       lastName: '',
       email: '',
       bloodGroup: '',
-      createdAt: ''
+      fromDate: '',
+      toDate: ''
     });
     setPagination(prev => ({ ...prev, page: 1 }));
     fetchPatientsList(1);
@@ -460,12 +463,22 @@ export const PatientList = () => {
           </SearchField>
 
           <SearchField>
-            <SearchLabel htmlFor="createdAt">Created After</SearchLabel>
+            <SearchLabel htmlFor="fromDate">From Date</SearchLabel>
             <SearchInput
-              id="createdAt"
+              id="fromDate"
               type="date"
-              value={filters.createdAt}
-              onChange={(e) => handleFilterChange('createdAt', e.target.value)}
+              value={filters.fromDate}
+              onChange={(e) => handleFilterChange('fromDate', e.target.value)}
+            />
+          </SearchField>
+
+          <SearchField>
+            <SearchLabel htmlFor="toDate">To Date</SearchLabel>
+            <SearchInput
+              id="toDate"
+              type="date"
+              value={filters.toDate}
+              onChange={(e) => handleFilterChange('toDate', e.target.value)}
             />
           </SearchField>
         </div>

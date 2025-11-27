@@ -11,7 +11,8 @@ interface LabTestCategoryFilters {
   name: string;
   description: string;
   status: string;
-  createdAt: string;
+  fromDate: string;
+  toDate: string;
 }
 
 const FilterContainer = styled.div`
@@ -452,7 +453,8 @@ export const LabTestCategoryList = ({ refreshKey = 0 }: { refreshKey?: number })
     name: '',
     description: '',
     status: '',
-    createdAt: ''
+    fromDate: '',
+    toDate: ''
   });
 
   const fetchCategoriesList = useCallback(async (page: number = 1, currentFilters: LabTestCategoryFilters = filters) => {
@@ -464,7 +466,8 @@ export const LabTestCategoryList = ({ refreshKey = 0 }: { refreshKey?: number })
         ...(currentFilters.name && { name: currentFilters.name }),
         ...(currentFilters.description && { description: currentFilters.description }),
         ...(currentFilters.status && { status: currentFilters.status as 'active' | 'inactive' }),
-        ...(currentFilters.createdAt && { createdAt: currentFilters.createdAt })
+        ...(currentFilters.fromDate && { fromDate: currentFilters.fromDate }),
+        ...(currentFilters.toDate && { toDate: currentFilters.toDate })
       });
 
       // Sort categories by creation date (newest first)
@@ -503,7 +506,8 @@ export const LabTestCategoryList = ({ refreshKey = 0 }: { refreshKey?: number })
       name: '',
       description: '',
       status: '',
-      createdAt: ''
+      fromDate: '',
+      toDate: ''
     };
     setFilters(emptyFilters);
     setPagination(prev => ({ ...prev, currentPage: 1 }));
@@ -602,11 +606,20 @@ export const LabTestCategoryList = ({ refreshKey = 0 }: { refreshKey?: number })
         </FilterGroup>
 
         <FilterGroup>
-          <FilterLabel>Created Date</FilterLabel>
+          <FilterLabel>From Date</FilterLabel>
           <FilterInput
             type="date"
-            value={filters.createdAt}
-            onChange={(e) => handleFilterChange('createdAt', e.target.value)}
+            value={filters.fromDate}
+            onChange={(e) => handleFilterChange('fromDate', e.target.value)}
+          />
+        </FilterGroup>
+
+        <FilterGroup>
+          <FilterLabel>To Date</FilterLabel>
+          <FilterInput
+            type="date"
+            value={filters.toDate}
+            onChange={(e) => handleFilterChange('toDate', e.target.value)}
           />
         </FilterGroup>
 

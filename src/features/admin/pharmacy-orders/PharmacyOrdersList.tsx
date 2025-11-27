@@ -537,9 +537,9 @@ const closeModal = () => {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'INR'
     }).format(amount);
   };
 
@@ -579,7 +579,7 @@ const closeModal = () => {
           </SearchField>
 
           <SearchField>
-            <SearchLabel htmlFor="amountMin">Min Amount ($)</SearchLabel>
+            <SearchLabel htmlFor="amountMin">Min Amount (₹)</SearchLabel>
             <SearchInput
               id="amountMin"
               type="number"
@@ -592,7 +592,7 @@ const closeModal = () => {
           </SearchField>
 
           <SearchField>
-            <SearchLabel htmlFor="amountMax">Max Amount ($)</SearchLabel>
+            <SearchLabel htmlFor="amountMax">Max Amount (₹)</SearchLabel>
             <SearchInput
               id="amountMax"
               type="number"
@@ -791,14 +791,7 @@ const closeModal = () => {
               </DetailValue>
             </DetailRow>
             
-            <DetailRow>
-              <DetailLabel>Delivery Address:</DetailLabel>
-              <DetailValue>
-                {selectedOrder.deliveryAddress.street}<br />
-                {selectedOrder.deliveryAddress.city}, {selectedOrder.deliveryAddress.state}
-              </DetailValue>
-            </DetailRow>
-            
+
             <DetailRow>
               <DetailLabel>Medicine Items:</DetailLabel>
               <DetailValue></DetailValue>

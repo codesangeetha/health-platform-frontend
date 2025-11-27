@@ -51,9 +51,8 @@ export const BookAppointment = () => {
     symptoms: false,
   });
 
-  // Minimum date is tomorrow
+  // Minimum date is today
   const minDate = new Date();
-  minDate.setDate(minDate.getDate() + 1);
   const minDateString = minDate.toISOString().split('T')[0];
 
   // Generate time slots based on doctor's available time
@@ -478,7 +477,9 @@ export const BookAppointment = () => {
                 </div>
                 <div className="summary-item">
                   <span className="summary-label">Total Cost:</span>
-                  <span className="summary-value">$150</span>
+                  <span className="summary-value">
+                    {doctor?.consultationFee ? `₹${doctor.consultationFee.toFixed(2)}` : 'Loading...'}
+                  </span>
                 </div>
               </div>
             </div>

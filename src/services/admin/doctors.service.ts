@@ -51,7 +51,8 @@ interface GetDoctorsParams {
   firstName?: string;
   lastName?: string;
   email?: string;
-  createdAt?: string;
+  fromDate?: string;
+  toDate?: string;
   experience?: string | number;
   sort?: string;
 }
@@ -107,7 +108,7 @@ export const verifyDoctor = async (doctorId: string): Promise<VerifyDoctorRespon
 
 export const getDoctors = async (params: GetDoctorsParams = {}): Promise<DoctorsResponse> => {
   try {
-    const { page = 1, limit = 5, specialization, firstName, lastName, email, createdAt, experience, sort = '-createdAt' } = params;
+    const { page = 1, limit = 5, specialization, firstName, lastName, email, fromDate, toDate, experience, sort = '-createdAt' } = params;
     
     // Build query parameters in the correct order: userType, sort, then pagination, then filters
     const queryParams = [
@@ -119,7 +120,8 @@ export const getDoctors = async (params: GetDoctorsParams = {}): Promise<Doctors
       ...(firstName ? [`firstName=${encodeURIComponent(firstName)}`] : []),
       ...(lastName ? [`lastName=${encodeURIComponent(lastName)}`] : []),
       ...(email ? [`email=${encodeURIComponent(email)}`] : []),
-      ...(createdAt ? [`createdAt=${encodeURIComponent(createdAt)}`] : []),
+      ...(fromDate ? [`fromDate=${encodeURIComponent(fromDate)}`] : []),
+      ...(toDate ? [`toDate=${encodeURIComponent(toDate)}`] : []),
       ...(experience ? [`experience=${experience.toString()}`] : [])
     ].join('&');
 

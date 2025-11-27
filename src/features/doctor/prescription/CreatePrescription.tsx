@@ -48,6 +48,27 @@ interface AppointmentDetails {
   updatedAt: string;
 }
 
+// Validation interfaces
+interface MedicineValidationErrors {
+  dosage?: string;
+  timing?: string;
+  duration?: string;
+}
+
+interface FieldErrors {
+  diagnosis?: string;
+  medicines?: MedicineValidationErrors[];
+  medicinesRequired?: string;
+  testsRequired?: string;
+}
+
+type Touched = {
+  diagnosis: boolean;
+  medicines: boolean[];
+  medicinesRequired: boolean;
+  testsRequired: boolean;
+};
+
 export const CreatePrescription = () => {
   const navigate = useNavigate();
   const { appointmentId } = useParams<{ appointmentId: string }>();
@@ -68,6 +89,23 @@ export const CreatePrescription = () => {
   const [diagnosis, setDiagnosis] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
 
+  // Validation state
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const [touched, setTouched] = useState<Touched>({
+    diagnosis: false,
+    medicines: [],
+    medicinesRequired: false,
+    testsRequired: false,
+  });
+
+  // Synchronize touched.medicines with selectedMedicines
+  useEffect(() => {
+    setTouched(prev => ({
+      ...prev,
+      medicines: selectedMedicines.map(() => false)
+    }));
+  }, [selectedMedicines.length]);
+
   // Lab tests state
   const [labTests, setLabTests] = useState<LabTest[]>([]);
   const [selectedLabTests, setSelectedLabTests] = useState<PrescriptionLabTest[]>([]);
@@ -79,10 +117,64 @@ export const CreatePrescription = () => {
   const [labTestCurrentPage, setLabTestCurrentPage] = useState<number>(1);
   const [labTestTotalPages, setLabTestTotalPages] = useState<number>(1);
 
-
   // Pagination state
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
+
+  // Validation helpers
+  const validateDiagnosis = (value: string) => {
+    if (!value.trim()) return 'Diagnosis is required.';
+    return undefined;
+  };
+
+  const validateMedicineField = (field: keyof PrescriptionMedicine, value: any): string | undefined => {
+    switch (field) {
+      case 'dosage':
+        if (!value || !value.trim()) return 'Dosage is required.';
+        return undefined;
+      case 'timing':
+        if (!value || value.length === 0) return 'At least one timing must be selected.';
+        return undefined;
+      case 'duration':
+        if (!value || value < 1) return 'Duration must be at least 1 day.';
+        return undefined;
+      default:
+        return undefined;
+    }
+  };
+
+  const validateMedicine = (medicine: PrescriptionMedicine): MedicineValidationErrors => {
+    return {
+      dosage: validateMedicineField('dosage', medicine.dosage),
+      timing: validateMedicineField('timing', medicine.timing),
+      duration: validateMedicineField('duration', medicine.duration),
+    };
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: FieldErrors = {};
+
+    // Validate diagnosis
+    newErrors.diagnosis = validateDiagnosis(diagnosis);
+
+    // Validate at least one medicine or lab test
+    if (selectedMedicines.length === 0 && selectedLabTests.length === 0) {
+      newErrors.medicinesRequired = 'Please add at least one medicine or lab test to the prescription.';
+    }
+
+    // Validate individual medicines
+    if (selectedMedicines.length > 0) {
+      newErrors.medicines = selectedMedicines.map(medicine => validateMedicine(medicine));
+    }
+
+    setErrors(newErrors);
+    return !Object.values(newErrors).some(error => 
+      error && 
+      (typeof error === 'string' ? error : 
+       Array.isArray(error) ? error.some(e => Object.values(e).some(v => v)) : 
+       false)
+    );
+  };
 
   useEffect(() => {
     if (appointmentId) {
@@ -90,9 +182,27 @@ export const CreatePrescription = () => {
     }
   }, [appointmentId]);
 
+  // Load medicines on component mount
+  useEffect(() => {
+    searchMedicines();
+  }, []);
+
   useEffect(() => {
     searchMedicines();
   }, [currentPage]);
+
+  useEffect(() => {
+    // Trigger medicine search when search query changes
+    const debounceTimer = setTimeout(() => {
+      if (currentPage === 1) {
+        searchMedicines();
+      } else {
+        setCurrentPage(1);
+      }
+    }, 300);
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery]);
 
   useEffect(() => {
     searchLabTests();
@@ -104,7 +214,7 @@ export const CreatePrescription = () => {
   }, []);
 
   useEffect(() => {
-    // Trigger search when search query changes
+    // Trigger search when lab test search query changes
     const debounceTimer = setTimeout(() => {
       if (labTestCurrentPage === 1) {
         searchLabTests();
@@ -174,7 +284,7 @@ export const CreatePrescription = () => {
         currentPage,
         10
       );
-
+      
       if (response.success && response.data) {
         setMedicines(response.data.medicines);
         setTotalPages(response.data.pagination.totalPages);
@@ -209,6 +319,60 @@ export const CreatePrescription = () => {
     setSelectedMedicines(prev => prev.map((med, i) =>
       i === index ? { ...med, [field]: value } : med
     ));
+
+    // Validate individual medicine field if it's been touched
+    if (touched.medicines[index]) {
+      const newErrors = { ...(errors.medicines || []) };
+      if (newErrors && newErrors[index]) {
+        const fieldError = validateMedicineField(field, value);
+        newErrors[index] = { ...newErrors[index], [field]: fieldError };
+        setErrors(prev => ({ ...prev, medicines: newErrors }));
+      }
+    }
+  };
+
+  const handleMedicineFieldBlur = (index: number, field: keyof PrescriptionMedicine, value: any) => {
+    // Mark this medicine field as touched
+    const newTouched = [...touched.medicines];
+    newTouched[index] = true;
+    setTouched(prev => ({ ...prev, medicines: newTouched }));
+
+    // Validate and show error
+    const newErrors = { ...(errors.medicines || []) };
+    const fieldError = validateMedicineField(field, value);
+    newErrors[index] = { ...newErrors[index], [field]: fieldError };
+    setErrors(prev => ({ ...prev, medicines: newErrors }));
+
+    // Scroll to validation message if there's an error for dosage or timing
+    if (fieldError && (field === 'dosage' || field === 'timing')) {
+      const errorElementId = field === 'dosage' ? `dosage-error-${index}` : `timing-error-${index}`;
+      const errorElement = document.getElementById(errorElementId);
+      
+      if (errorElement) {
+        // Small delay to ensure the error message has been rendered
+        setTimeout(() => {
+          errorElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center',
+            inline: 'nearest'
+          });
+        }, 50);
+      }
+    }
+  };
+
+  const handleDiagnosisChange = (value: string) => {
+    setDiagnosis(value);
+    
+    // Validate diagnosis if it's been touched
+    if (touched.diagnosis) {
+      setErrors(prev => ({ ...prev, diagnosis: validateDiagnosis(value) }));
+    }
+  };
+
+  const handleDiagnosisBlur = (value: string) => {
+    setTouched(prev => ({ ...prev, diagnosis: true }));
+    setErrors(prev => ({ ...prev, diagnosis: validateDiagnosis(value) }));
   };
 
   const searchLabTests = async (query?: string) => {
@@ -281,22 +445,40 @@ export const CreatePrescription = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!appointmentId || !diagnosis.trim()) {
-      setError('Please fill in all required fields');
-      return;
-    }
+    // Mark all fields as touched to show all validation errors
+    const allTouched = {
+      diagnosis: true,
+      medicines: selectedMedicines.map(() => true),
+      medicinesRequired: true,
+      testsRequired: true,
+    };
+    setTouched(allTouched);
 
-    if (selectedMedicines.length === 0 && selectedLabTests.length === 0) {
-      setError('Please add at least one medicine or lab test to the prescription');
-      return;
-    }
-
-    // Validate medicines
-    for (const medicine of selectedMedicines) {
-      if (!medicine.dosage.trim() || medicine.timing.length === 0) {
-        setError('Please fill in dosage and timing for all medicines');
+    // Validate form with the updated touched state
+    setTimeout(() => {
+      const isValid = validateForm();
+      if (!isValid) {
+        // Scroll to the first error
+        const firstErrorElement = document.querySelector('.form-error');
+        if (firstErrorElement) {
+          firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
         return;
       }
+
+      // If validation passes, proceed with submission
+      if (!appointmentId) {
+        setError('Invalid appointment ID');
+        return;
+      }
+      submitPrescription();
+    }, 0);
+  };
+
+  const submitPrescription = async () => {
+    if (!appointmentId) {
+      setError('Invalid appointment ID');
+      return;
     }
 
 
@@ -306,7 +488,7 @@ export const CreatePrescription = () => {
 
       // 1. Create prescription first
       const prescriptionData = {
-        appointmentId,
+        appointmentId: appointmentId,
         patientId: appointment?.patientId || '',
         diagnosis: diagnosis.trim(),
         notes: notes.trim(),
@@ -626,6 +808,15 @@ export const CreatePrescription = () => {
                   transform: translateX(-50%) translateY(0);
                 }
               }
+              .form-error {
+                color: #e74c3c;
+                font-size: 0.75rem;
+                margin-top: 0.25rem;
+                margin-bottom: 0.5rem;
+              }
+              .form-error:empty {
+                display: none;
+              }
             `}
           </style>
 
@@ -797,9 +988,16 @@ export const CreatePrescription = () => {
                     Prescribed Medicines ({selectedMedicines.length})
                   </label>
                   {selectedMedicines.length === 0 ? (
-                    <p style={{ color: DESIGN_SYSTEM.colors.text_light, fontStyle: 'italic' }}>
-                      No medicines added yet. Search and click on medicines above to add them.
-                    </p>
+                    <div>
+                      <p style={{ color: DESIGN_SYSTEM.colors.text_light, fontStyle: 'italic' }}>
+                        No medicines added yet. Search and click on medicines above to add them.
+                      </p>
+                      {touched.medicinesRequired && errors.medicinesRequired && (
+                        <p className="form-error" id="medicines-required-error" role="alert">
+                          {errors.medicinesRequired}
+                        </p>
+                      )}
+                    </div>
                   ) : (
                     <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
                       {selectedMedicines.map((med, index) => {
@@ -871,16 +1069,23 @@ export const CreatePrescription = () => {
                                   type="text"
                                   value={med.dosage}
                                   onChange={(e) => updatePrescriptionMedicine(index, 'dosage', e.target.value)}
+                                  onBlur={(e) => handleMedicineFieldBlur(index, 'dosage', e.target.value)}
                                   placeholder="e.g., 500mg"
-                                  required
+                                  aria-invalid={Boolean(touched.medicines[index] && errors.medicines?.[index]?.dosage)}
+                                  aria-describedby={touched.medicines[index] && errors.medicines?.[index]?.dosage ? `dosage-error-${index}` : undefined}
                                   style={{
                                     width: '100%',
                                     padding: '0.4rem',
-                                    border: `1px solid ${DESIGN_SYSTEM.colors.border}`,
+                                    border: `1px solid ${touched.medicines[index] && errors.medicines?.[index]?.dosage ? DESIGN_SYSTEM.colors.error : DESIGN_SYSTEM.colors.border}`,
                                     borderRadius: '0.25rem',
                                     fontSize: '0.875rem'
                                   }}
                                 />
+                                {touched.medicines[index] && errors.medicines?.[index]?.dosage && (
+                                  <p className="form-error" id={`dosage-error-${index}`} role="alert">
+                                    {errors.medicines[index].dosage}
+                                  </p>
+                                )}
                               </div>
                               <div>
                                 <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.75rem', fontWeight: '500' }}>
@@ -889,17 +1094,24 @@ export const CreatePrescription = () => {
                                 <input
                                   type="number"
                                   value={med.duration}
-                                  onChange={(e) => updatePrescriptionMedicine(index, 'duration', parseInt(e.target.value))}
+                                  onChange={(e) => updatePrescriptionMedicine(index, 'duration', parseInt(e.target.value) || 0)}
+                                  onBlur={(e) => handleMedicineFieldBlur(index, 'duration', parseInt(e.target.value) || 0)}
                                   min="1"
-                                  required
+                                  aria-invalid={Boolean(touched.medicines[index] && errors.medicines?.[index]?.duration)}
+                                  aria-describedby={touched.medicines[index] && errors.medicines?.[index]?.duration ? `duration-error-${index}` : undefined}
                                   style={{
                                     width: '100%',
                                     padding: '0.4rem',
-                                    border: `1px solid ${DESIGN_SYSTEM.colors.border}`,
+                                    border: `1px solid ${touched.medicines[index] && errors.medicines?.[index]?.duration ? DESIGN_SYSTEM.colors.error : DESIGN_SYSTEM.colors.border}`,
                                     borderRadius: '0.25rem',
                                     fontSize: '0.875rem'
                                   }}
                                 />
+                                {touched.medicines[index] && errors.medicines?.[index]?.duration && (
+                                  <p className="form-error" id={`duration-error-${index}`} role="alert">
+                                    {errors.medicines[index].duration}
+                                  </p>
+                                )}
                               </div>
                               <div>
                                 <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.75rem', fontWeight: '500' }}>
@@ -912,11 +1124,16 @@ export const CreatePrescription = () => {
                                     const values = Array.from(e.target.selectedOptions, option => option.value);
                                     updatePrescriptionMedicine(index, 'timing', values);
                                   }}
-                                  required
+                                  onBlur={(e) => {
+                                    const values = Array.from(e.target.selectedOptions, option => option.value);
+                                    handleMedicineFieldBlur(index, 'timing', values);
+                                  }}
+                                  aria-invalid={Boolean(touched.medicines[index] && errors.medicines?.[index]?.timing)}
+                                  aria-describedby={touched.medicines[index] && errors.medicines?.[index]?.timing ? `timing-error-${index}` : undefined}
                                   style={{
                                     width: '100%',
                                     padding: '0.4rem',
-                                    border: `1px solid ${DESIGN_SYSTEM.colors.border}`,
+                                    border: `1px solid ${touched.medicines[index] && errors.medicines?.[index]?.timing ? DESIGN_SYSTEM.colors.error : DESIGN_SYSTEM.colors.border}`,
                                     borderRadius: '0.25rem',
                                     fontSize: '0.875rem',
                                     minHeight: '32px'
@@ -927,6 +1144,11 @@ export const CreatePrescription = () => {
                                   <option value="evening">Evening</option>
                                   <option value="night">Night</option>
                                 </select>
+                                {touched.medicines[index] && errors.medicines?.[index]?.timing && (
+                                  <p className="form-error" id={`timing-error-${index}`} role="alert">
+                                    {errors.medicines[index].timing}
+                                  </p>
+                                )}
                               </div>
                               <div>
                                 <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.75rem', fontWeight: '500' }}>
@@ -1151,18 +1373,25 @@ export const CreatePrescription = () => {
                   </label>
                   <textarea
                     value={diagnosis}
-                    onChange={(e) => setDiagnosis(e.target.value)}
+                    onChange={(e) => handleDiagnosisChange(e.target.value)}
+                    onBlur={(e) => handleDiagnosisBlur(e.target.value)}
                     placeholder="Enter diagnosis..."
-                    required
+                    aria-invalid={Boolean(touched.diagnosis && errors.diagnosis)}
+                    aria-describedby={touched.diagnosis && errors.diagnosis ? 'diagnosis-error' : undefined}
                     style={{
                       width: '100%',
                       padding: '0.75rem',
-                      border: `1px solid ${DESIGN_SYSTEM.colors.border}`,
+                      border: `1px solid ${touched.diagnosis && errors.diagnosis ? DESIGN_SYSTEM.colors.error : DESIGN_SYSTEM.colors.border}`,
                       borderRadius: '0.5rem',
                       minHeight: '80px',
                       resize: 'vertical'
                     }}
                   />
+                  {touched.diagnosis && errors.diagnosis && (
+                    <p className="form-error" id="diagnosis-error" role="alert">
+                      {errors.diagnosis}
+                    </p>
+                  )}
                 </div>
 
                 <div style={{ marginBottom: '1rem' }}>

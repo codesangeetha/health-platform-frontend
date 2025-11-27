@@ -455,9 +455,8 @@ interface FilterState {
   genericName: string;
   priceMin: string;
   priceMax: string;
-  createdDateFrom: string;
-  sortBy: string;
-  sortOrder: 'asc' | 'desc';
+  fromDate: string;
+  toDate: string;
 }
 
 export const MedicineList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
@@ -485,9 +484,8 @@ export const MedicineList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
     genericName: '',
     priceMin: '',
     priceMax: '',
-    createdDateFrom: '',
-    sortBy: 'createdAt',
-    sortOrder: 'desc'
+    fromDate: '',
+    toDate: ''
   });
 
   const fetchMedicinesList = useCallback(async (page: number = 1) => {
@@ -528,16 +526,15 @@ export const MedicineList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
       // Convert filter values, only include non-empty ones
       const searchParams: any = {
         page,
-        limit: pagination.limit,
-        sortBy: filters.sortBy,
-        sortOrder: filters.sortOrder
+        limit: pagination.limit
       };
 
       if (filters.name) searchParams.name = filters.name;
       if (filters.genericName) searchParams.genericName = filters.genericName;
       if (filters.priceMin) searchParams.priceMin = parseFloat(filters.priceMin);
       if (filters.priceMax) searchParams.priceMax = parseFloat(filters.priceMax);
-      if (filters.createdDateFrom) searchParams.createdDateFrom = filters.createdDateFrom;
+      if (filters.fromDate) searchParams.fromDate = filters.fromDate;
+      if (filters.toDate) searchParams.toDate = filters.toDate;
 
       const response = await advancedSearchMedicines(searchParams);
 
@@ -557,12 +554,8 @@ export const MedicineList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
     }
   }, [pagination.limit, filters]);
 
-  // Check if any filters are active (excluding default sort values)
-  const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
-    if (key === 'sortBy' && value === 'createdAt') return false;
-    if (key === 'sortOrder' && value === 'desc') return false;
-    return value !== '';
-  });
+  // Check if any filters are active
+  const hasActiveFilters = Object.entries(filters).some(([key, value]) => value !== '');
 
   useEffect(() => {
     if (hasActiveFilters) {
@@ -650,9 +643,8 @@ export const MedicineList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
       genericName: '',
       priceMin: '',
       priceMax: '',
-      createdDateFrom: '',
-      sortBy: 'createdAt',
-      sortOrder: 'desc'
+      fromDate: '',
+      toDate: ''
     });
     setPagination(prev => ({ ...prev, page: 1 }));
   };
@@ -692,7 +684,7 @@ export const MedicineList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
           </FilterGroup>
 
           <FilterGroup>
-            <FilterLabel htmlFor="priceMin">Min Price ($)</FilterLabel>
+            <FilterLabel htmlFor="priceMin">Min Price (₹)</FilterLabel>
             <FilterInput
               id="priceMin"
               type="number"
@@ -705,7 +697,7 @@ export const MedicineList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
           </FilterGroup>
 
           <FilterGroup>
-            <FilterLabel htmlFor="priceMax">Max Price ($)</FilterLabel>
+            <FilterLabel htmlFor="priceMax">Max Price (₹)</FilterLabel>
             <FilterInput
               id="priceMax"
               type="number"
@@ -718,39 +710,23 @@ export const MedicineList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
           </FilterGroup>
 
           <FilterGroup>
-            <FilterLabel htmlFor="createdDateFrom">Created After</FilterLabel>
+            <FilterLabel htmlFor="fromDate">From Date</FilterLabel>
             <FilterInput
-              id="createdDateFrom"
+              id="fromDate"
               type="date"
-              value={filters.createdDateFrom}
-              onChange={(e) => handleFilterChange('createdDateFrom', e.target.value)}
+              value={filters.fromDate}
+              onChange={(e) => handleFilterChange('fromDate', e.target.value)}
             />
           </FilterGroup>
 
           <FilterGroup>
-            <FilterLabel htmlFor="sortBy">Sort By</FilterLabel>
-            <FilterSelect
-              id="sortBy"
-              value={filters.sortBy}
-              onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-            >
-              <option value="name">Name</option>
-              <option value="genericName">Generic Name</option>
-              <option value="price">Price</option>
-              <option value="createdAt">Created Date</option>
-            </FilterSelect>
-          </FilterGroup>
-
-          <FilterGroup>
-            <FilterLabel htmlFor="sortOrder">Sort Order</FilterLabel>
-            <FilterSelect
-              id="sortOrder"
-              value={filters.sortOrder}
-              onChange={(e) => handleFilterChange('sortOrder', e.target.value as 'asc' | 'desc')}
-            >
-              <option value="desc">Descending</option>
-              <option value="asc">Ascending</option>
-            </FilterSelect>
+            <FilterLabel htmlFor="toDate">To Date</FilterLabel>
+            <FilterInput
+              id="toDate"
+              type="date"
+              value={filters.toDate}
+              onChange={(e) => handleFilterChange('toDate', e.target.value)}
+            />
           </FilterGroup>
         </FilterRow>
 
@@ -799,7 +775,7 @@ export const MedicineList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                       <small style={{ color: '#999' }}>{medicine.manufacturer}</small>
                     </Td>
                     <Td>{medicine.genericName}</Td>
-                    <Td>${medicine.price.toFixed(2)}</Td>
+                    <Td>₹{medicine.price.toFixed(2)}</Td>
                     <Td>
                       <StockBadge stock={medicine.stock}>
                         {medicine.stock} units
@@ -888,7 +864,7 @@ export const MedicineList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
 
             <DetailRow>
               <DetailLabel>Price:</DetailLabel>
-              <DetailValue>${selectedMedicine.price.toFixed(2)}</DetailValue>
+              <DetailValue>₹{selectedMedicine.price.toFixed(2)}</DetailValue>
             </DetailRow>
 
             <DetailRow>

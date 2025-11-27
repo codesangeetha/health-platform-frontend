@@ -83,42 +83,42 @@ export const AdminDashboard = () => {
       value: dashboardData ? dashboardData.totalPatients.toString() : '--',
       change: 'Registered patients',
       isPositive: true,
+      to: '/admin/patients',
     },
     {
       title: 'Total Doctors',
       value: dashboardData ? dashboardData.totalDoctors.toString() : '--',
       change: 'Active doctors',
       isPositive: true,
-    },
-    {
-      title: 'Appointments',
-      value: dashboardData ? dashboardData.totalAppointments.toString() : '--',
-      change: 'Booked appointments',
-      isPositive: true,
+      to: '/admin/doctors',
     },
     {
       title: 'Medicines',
       value: dashboardData ? dashboardData.totalMedicines.toString() : '--',
       change: 'Available medicines',
       isPositive: true,
+      to: '/admin/medicines',
     },
     {
       title: 'Lab Tests',
       value: dashboardData ? dashboardData.totalLabTests.toString() : '--',
       change: 'Available tests',
       isPositive: true,
+      to: '/admin/lab-tests',
     },
     {
       title: 'Pharmacy Categories',
       value: dashboardData ? dashboardData.totalPharmacyCategories.toString() : '--',
       change: 'Medicine categories',
       isPositive: true,
+      to: '/admin/categories',
     },
     {
       title: 'Lab Test Categories',
       value: dashboardData ? dashboardData.totalLabTestCategories.toString() : '--',
       change: 'Test categories',
       isPositive: true,
+      to: '/admin/lab-test-categories',
     },
   ];
 
@@ -136,6 +136,7 @@ export const AdminDashboard = () => {
                 value={loading ? 'Loading...' : stat.value}
                 change={stat.change}
                 isPositive={stat.isPositive}
+                to={stat.to}
               />
             ))}
           </StatsGrid>

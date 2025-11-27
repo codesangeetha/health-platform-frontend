@@ -323,7 +323,8 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
     email: '',
     specialization: '',
     experience: '',
-    createdAt: ''
+    fromDate: '',
+    toDate: ''
   });
 
   const fetchDoctorsList = useCallback(async (page: number = 1) => {
@@ -337,7 +338,8 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
         email: filters.email || undefined,
         specialization: filters.specialization || undefined,
         experience: filters.experience ? parseInt(filters.experience) : undefined,
-        createdAt: filters.createdAt || undefined
+        fromDate: filters.fromDate || undefined,
+        toDate: filters.toDate || undefined
       });
 
       // Remove client-side sorting since server now handles it
@@ -368,7 +370,8 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
       email: '',
       specialization: '',
       experience: '',
-      createdAt: ''
+      fromDate: '',
+      toDate: ''
     });
     setPagination(prev => ({ ...prev, page: 1 }));
     fetchDoctorsList(1);
@@ -488,12 +491,22 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
           </SearchField>
 
           <SearchField>
-            <SearchLabel htmlFor="createdAt">Created After</SearchLabel>
+            <SearchLabel htmlFor="fromDate">From Date</SearchLabel>
             <SearchInput
-              id="createdAt"
+              id="fromDate"
               type="date"
-              value={filters.createdAt}
-              onChange={(e) => handleFilterChange('createdAt', e.target.value)}
+              value={filters.fromDate}
+              onChange={(e) => handleFilterChange('fromDate', e.target.value)}
+            />
+          </SearchField>
+
+          <SearchField>
+            <SearchLabel htmlFor="toDate">To Date</SearchLabel>
+            <SearchInput
+              id="toDate"
+              type="date"
+              value={filters.toDate}
+              onChange={(e) => handleFilterChange('toDate', e.target.value)}
             />
           </SearchField>
         </div>
@@ -655,7 +668,7 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
             
             <DetailRow>
               <DetailLabel>Consultation Fee:</DetailLabel>
-              <DetailValue>${selectedDoctor.consultationFee}</DetailValue>
+              <DetailValue>₹{selectedDoctor.consultationFee}</DetailValue>
             </DetailRow>
             
             <DetailRow>
@@ -668,20 +681,19 @@ export const DoctorList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
             </DetailRow>
             
             <DetailRow>
-              <DetailLabel>Rating:</DetailLabel>
-              <DetailValue>{selectedDoctor.rating}/5</DetailValue>
-            </DetailRow>
-            
-            <DetailRow>
-              <DetailLabel>Total Patients:</DetailLabel>
-              <DetailValue>{selectedDoctor.totalPatients}</DetailValue>
-            </DetailRow>
-            
-            <DetailRow>
               <DetailLabel>Available Days:</DetailLabel>
               <DetailValue>
                 {selectedDoctor.availableDays && selectedDoctor.availableDays.length > 0
                   ? selectedDoctor.availableDays.join(', ')
+                  : 'Not specified'}
+              </DetailValue>
+            </DetailRow>
+            
+            <DetailRow>
+              <DetailLabel>Available Time:</DetailLabel>
+              <DetailValue>
+                {selectedDoctor.availableTime && selectedDoctor.availableTime.start && selectedDoctor.availableTime.end
+                  ? `${selectedDoctor.availableTime.start} - ${selectedDoctor.availableTime.end}`
                   : 'Not specified'}
               </DetailValue>
             </DetailRow>

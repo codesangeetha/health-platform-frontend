@@ -28,6 +28,8 @@ interface GetCategoriesParams {
   name?: string;
   description?: string;
   status?: 'active' | 'inactive';
+  fromDate?: string;
+  toDate?: string;
   createdAt?: string;
 }
 
@@ -45,13 +47,15 @@ export type CategoriesResponse = ApiResponse<{
 
 export const getCategories = async (params: GetCategoriesParams = {}): Promise<CategoriesResponse> => {
   try {
-    const { page = 1, limit = 10, name, description, status, createdAt } = params;
+    const { page = 1, limit = 10, name, description, status, fromDate, toDate, createdAt } = params;
     const queryParams = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
       ...(name && { name }),
       ...(description && { description }),
       ...(status && { status }),
+      ...(fromDate && { fromDate }),
+      ...(toDate && { toDate }),
       ...(createdAt && { createdAt })
     });
 
@@ -125,6 +129,87 @@ export const createCategory = async (payload: CreateCategoryPayload): Promise<Cr
       throw error;
     }
     throw new ApiError('Failed to create category', 500);
+  }
+};
+
+export interface UpdateCategoryPayload {
+  name?: string;
+  description?: string;
+  status?: 'active' | 'inactive';
+}
+
+export type UpdateCategoryResponse = ApiResponse<{
+  category: Category;
+}>;
+
+export const updateCategory = async (categoryId: string, payload: UpdateCategoryPayload): Promise<UpdateCategoryResponse> => {
+  try {
+    const token = getAuthToken('admin');
+    if (!token) {
+      throw new ApiError('No authentication token found', 401);
+    }
+
+    const response = await fetch(
+      `${BASE_URL}${API_ENDPOINTS.CATEGORIES}/${categoryId}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      }
+    );
+
+    if (!response.ok) {
+      await handleApiError(response);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError('Failed to update category', 500);
+  }
+};
+
+export type DeleteCategoryResponse = ApiResponse<{
+  categoryId: string;
+  status: string;
+  deletedAt: string;
+}>;
+
+export const deleteCategory = async (categoryId: string): Promise<DeleteCategoryResponse> => {
+  try {
+    const token = getAuthToken('admin');
+    if (!token) {
+      throw new ApiError('No authentication token found', 401);
+    }
+
+    const response = await fetch(
+      `${BASE_URL}${API_ENDPOINTS.CATEGORIES}/${categoryId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+
+    if (!response.ok) {
+      await handleApiError(response);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError('Failed to delete category', 500);
   }
 };
 

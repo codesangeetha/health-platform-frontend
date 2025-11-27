@@ -7,7 +7,8 @@ export interface Specialization {
 
 export interface SpecializationFilters {
   name: string;
-  createdAt: string;
+  fromDate: string;
+  toDate: string;
 }
 
 export interface CreateSpecializationRequest {
@@ -18,7 +19,8 @@ export interface GetSpecializationsParams {
   page?: number;
   limit?: number;
   name?: string;
-  createdAt?: string;
+  fromDate?: string;
+  toDate?: string;
 }
 
 export interface ApiResponse<T> {

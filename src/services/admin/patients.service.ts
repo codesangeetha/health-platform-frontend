@@ -45,6 +45,8 @@ interface GetPatientsParams {
   email?: string;
   bloodGroup?: string;
   createdAt?: string;
+  fromDate?: string;
+  toDate?: string;
 }
 
 interface ApiResponse<T> {
@@ -61,7 +63,7 @@ export type PatientsResponse = ApiResponse<{
 
 export const getPatients = async (params: GetPatientsParams = {}): Promise<PatientsResponse> => {
   try {
-    const { page = 1, limit = 5, verified, firstName, lastName, email, bloodGroup, createdAt } = params;
+    const { page = 1, limit = 5, verified, firstName, lastName, email, bloodGroup, createdAt, fromDate, toDate } = params;
     const queryParams = new URLSearchParams({
       userType: 'patient',
       page: page.toString(),
@@ -71,7 +73,9 @@ export const getPatients = async (params: GetPatientsParams = {}): Promise<Patie
       ...(lastName && { lastName }),
       ...(email && { email }),
       ...(bloodGroup && { bloodGroup }),
-      ...(createdAt && { createdAt })
+      ...(createdAt && { createdAt }),
+      ...(fromDate && { fromDate }),
+      ...(toDate && { toDate })
     });
 
     const token = getAuthToken('admin');

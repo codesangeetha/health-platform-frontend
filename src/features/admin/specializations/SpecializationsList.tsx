@@ -271,7 +271,8 @@ const [selectedSpecialization, setSelectedSpecialization] = useState<Specializat
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [filters, setFilters] = useState<SpecializationFilters>({
     name: '',
-    createdAt: ''
+    fromDate: '',
+    toDate: ''
   });
 
   const fetchSpecializationsList = useCallback(async (page: number = 1, currentFilters: SpecializationFilters = filters) => {
@@ -281,7 +282,8 @@ const [selectedSpecialization, setSelectedSpecialization] = useState<Specializat
         page,
         limit: pagination.limit,
         ...(currentFilters.name && { name: currentFilters.name }),
-        ...(currentFilters.createdAt && { createdAt: currentFilters.createdAt })
+        ...(currentFilters.fromDate && { fromDate: currentFilters.fromDate }),
+        ...(currentFilters.toDate && { toDate: currentFilters.toDate })
       });
 
       // Sort specializations by creation date (newest first)
@@ -325,7 +327,8 @@ const [selectedSpecialization, setSelectedSpecialization] = useState<Specializat
   const handleClearFilters = () => {
     const emptyFilters = {
       name: '',
-      createdAt: ''
+      fromDate: '',
+      toDate: ''
     };
     setFilters(emptyFilters);
     setPagination(prev => ({ ...prev, currentPage: 1 }));
@@ -403,11 +406,20 @@ const closeModal = () => {
         </FilterGroup>
 
         <FilterGroup>
-          <FilterLabel>Created Date</FilterLabel>
+          <FilterLabel>From Date</FilterLabel>
           <FilterInput
             type="date"
-            value={filters.createdAt}
-            onChange={(e) => handleFilterChange('createdAt', e.target.value)}
+            value={filters.fromDate}
+            onChange={(e) => handleFilterChange('fromDate', e.target.value)}
+          />
+        </FilterGroup>
+
+        <FilterGroup>
+          <FilterLabel>To Date</FilterLabel>
+          <FilterInput
+            type="date"
+            value={filters.toDate}
+            onChange={(e) => handleFilterChange('toDate', e.target.value)}
           />
         </FilterGroup>
 
