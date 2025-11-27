@@ -537,9 +537,9 @@ const handleUpdateOrderStatus = async () => {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'INR'
     }).format(amount);
   };
 
@@ -579,7 +579,7 @@ const handleUpdateOrderStatus = async () => {
           </SearchField>
 
           <SearchField>
-            <SearchLabel htmlFor="amountMin">Min Amount ($)</SearchLabel>
+            <SearchLabel htmlFor="amountMin">Min Amount (₹)</SearchLabel>
             <SearchInput
               id="amountMin"
               type="number"
@@ -592,7 +592,7 @@ const handleUpdateOrderStatus = async () => {
           </SearchField>
 
           <SearchField>
-            <SearchLabel htmlFor="amountMax">Max Amount ($)</SearchLabel>
+            <SearchLabel htmlFor="amountMax">Max Amount (₹)</SearchLabel>
             <SearchInput
               id="amountMax"
               type="number"

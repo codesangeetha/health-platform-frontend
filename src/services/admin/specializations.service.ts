@@ -26,12 +26,13 @@ export type CreateSpecializationResponse = ApiResponse<{
 
 export const getSpecializations = async (params: GetSpecializationsParams = {}): Promise<GetSpecializationsResponse> => {
   try {
-    const { page = 1, limit = 10, name, createdAt } = params;
+    const { page = 1, limit = 10, name, fromDate, toDate } = params;
     const queryParams = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
       ...(name && { name }),
-      ...(createdAt && { createdAt })
+      ...(fromDate && { fromDate }),
+      ...(toDate && { toDate })
     });
 
     const token = getAuthToken('admin');

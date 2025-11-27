@@ -78,7 +78,8 @@ export interface GetLabTestCategoriesParams {
   name?: string;
   description?: string;
   status?: 'active' | 'inactive';
-  createdAt?: string;
+  fromDate?: string;
+  toDate?: string;
   page?: number;
   limit?: number;
 }

@@ -12,13 +12,10 @@ const getDoctorToken = (): string | null => {
 export class PharmacyService {
   static async searchMedicines(searchQuery?: string, page: number = 1, limit: number = 10): Promise<MedicineSearchResponse> {
     try {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-      });
+      const params = new URLSearchParams();
 
       if (searchQuery && searchQuery.trim()) {
-        params.append('search', searchQuery.trim());
+        params.append('name', searchQuery.trim());
       }
 
       const token = getDoctorToken();

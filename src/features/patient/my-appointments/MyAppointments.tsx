@@ -221,7 +221,7 @@ export const MyAppointments = () => {
         for (const appointment of response.data.appointments) {
           if (!doctorDetailsMap[appointment.doctorId]) {
             try {
-              const doctorResponse = await DoctorService.getDoctorById(appointment.doctorId);
+              const doctorResponse = await DoctorService.getDoctorById(appointment.doctorId, 'patient');
               if (doctorResponse.success) {
                 doctorDetailsMap[appointment.doctorId] = doctorResponse.data;
               }

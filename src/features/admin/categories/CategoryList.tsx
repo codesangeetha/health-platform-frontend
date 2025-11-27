@@ -1,14 +1,18 @@
 /** @jsxImportSource @emotion/react */
 import { useEffect, useState, useCallback } from 'react';
 import styled from '@emotion/styled';
-import type { Category } from '../../../types/category/category.types';
+import type { Category } from '../../../services/admin/pharmacy.service';
 import { getCategories } from '../../../services/admin/pharmacy.service';
 import { ApiError } from '../../../services/auth/auth.service';
+import { EditCategoryModal } from './components/EditCategoryModal';
+import { DeleteCategoryDialog } from './components/DeleteCategoryDialog';
 
 interface CategoryFilters {
   name: string;
   description: string;
   status: string;
+  fromDate: string;
+  toDate: string;
   createdAt: string;
 }
 
@@ -294,10 +298,14 @@ export const CategoryList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [filters, setFilters] = useState<CategoryFilters>({
     name: '',
     description: '',
     status: '',
+    fromDate: '',
+    toDate: '',
     createdAt: ''
   });
 
@@ -310,6 +318,8 @@ export const CategoryList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
         ...(currentFilters.name && { name: currentFilters.name }),
         ...(currentFilters.description && { description: currentFilters.description }),
         ...(currentFilters.status && { status: currentFilters.status as 'active' | 'inactive' }),
+        ...(currentFilters.fromDate && { fromDate: currentFilters.fromDate }),
+        ...(currentFilters.toDate && { toDate: currentFilters.toDate }),
         ...(currentFilters.createdAt && { createdAt: currentFilters.createdAt })
       });
 
@@ -349,6 +359,8 @@ export const CategoryList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
       name: '',
       description: '',
       status: '',
+      fromDate: '',
+      toDate: '',
       createdAt: ''
     };
     setFilters(emptyFilters);
@@ -365,9 +377,43 @@ export const CategoryList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
     setShowModal(true);
   };
 
+  const handleEditCategory = (category: Category, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent row click
+    setSelectedCategory(category);
+    setShowEditModal(true);
+  };
+
+  const handleDeleteCategory = (category: Category, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent row click
+    setSelectedCategory(category);
+    setShowDeleteDialog(true);
+  };
+
   const closeModal = () => {
     setShowModal(false);
     setSelectedCategory(null);
+  };
+
+  const closeEditModal = () => {
+    setShowEditModal(false);
+    setSelectedCategory(null);
+  };
+
+  const closeDeleteDialog = () => {
+    setShowDeleteDialog(false);
+    setSelectedCategory(null);
+  };
+
+  const handleCategoryUpdated = () => {
+    closeEditModal();
+    // Refresh the list
+    fetchCategoriesList(pagination.page);
+  };
+
+  const handleCategoryDeleted = () => {
+    closeDeleteDialog();
+    // Refresh the list
+    fetchCategoriesList(pagination.page);
   };
 
   if (error) {
@@ -416,11 +462,20 @@ export const CategoryList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
         </FilterGroup>
 
         <FilterGroup>
-          <FilterLabel>Created Date</FilterLabel>
+          <FilterLabel>From Date</FilterLabel>
           <FilterInput
             type="date"
-            value={filters.createdAt}
-            onChange={(e) => handleFilterChange('createdAt', e.target.value)}
+            value={filters.fromDate}
+            onChange={(e) => handleFilterChange('fromDate', e.target.value)}
+          />
+        </FilterGroup>
+
+        <FilterGroup>
+          <FilterLabel>To Date</FilterLabel>
+          <FilterInput
+            type="date"
+            value={filters.toDate}
+            onChange={(e) => handleFilterChange('toDate', e.target.value)}
           />
         </FilterGroup>
 
@@ -455,6 +510,14 @@ export const CategoryList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                     </LoadingOverlay>
                   </td>
                 </tr>
+              ) : categories.length === 0 ? (
+                <tr>
+                  <td colSpan={5}>
+                    <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+                      No medicine categories found.
+                    </div>
+                  </td>
+                </tr>
               ) : (
                 categories.map(category => (
                   <tr key={category.id}>
@@ -475,6 +538,15 @@ export const CategoryList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                     <Td>
                       <ActionButton onClick={() => handleViewDetails(category)}>
                         View
+                      </ActionButton>
+                      <ActionButton onClick={(e) => handleEditCategory(category, e)}>
+                        Edit
+                      </ActionButton>
+                      <ActionButton 
+                        onClick={(e) => handleDeleteCategory(category, e)}
+                        style={{ borderColor: '#dc3545', color: '#dc3545' }}
+                      >
+                        Delete
                       </ActionButton>
                     </Td>
                   </tr>
@@ -548,6 +620,20 @@ export const CategoryList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
           </ModalContent>
         </ModalOverlay>
       )}
+
+      <EditCategoryModal
+        open={showEditModal}
+        category={selectedCategory}
+        onClose={closeEditModal}
+        onUpdated={handleCategoryUpdated}
+      />
+
+      <DeleteCategoryDialog
+        open={showDeleteDialog}
+        category={selectedCategory}
+        onClose={closeDeleteDialog}
+        onDeleted={handleCategoryDeleted}
+      />
     </div>
   );
 };

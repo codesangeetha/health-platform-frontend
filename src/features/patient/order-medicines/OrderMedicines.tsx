@@ -1,7 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { useEffect, useState, useCallback } from 'react';
 import styled from '@emotion/styled';
-import type { Medicine, MedicinesResponse } from '../../../types/medicine/medicine.types';
+import type { Medicine, MedicineSearchResponse } from '../../../types/medicine/medicine.types';
 import type { Doctor } from '../../../types/doctor/doctor.types';
 import { searchMedicines, uploadPrescription, placeOrder } from '../../../services/admin/pharmacy.service';
 import { DoctorService } from '../../../services/doctor/doctor.service';
@@ -925,7 +925,7 @@ export const OrderMedicines = () => {
       setLoading(true);
       setError(null);
 
-      const response: MedicinesResponse = await searchMedicines({
+      const response: MedicineSearchResponse = await searchMedicines({
         query: search,
         page,
         limit: pagination.limit
@@ -1261,7 +1261,7 @@ export const OrderMedicines = () => {
                           Manufacturer: {medicine.manufacturer}
                         </MedicineManufacturer>
                         <MedicineInfo>
-                          <MedicinePrice>${medicine.price.toFixed(2)}</MedicinePrice>
+                          <MedicinePrice>₹{medicine.price.toFixed(2)}</MedicinePrice>
                           <MedicineStock stock={medicine.stock}>
                             In stock: {medicine.stock} tablets
                           </MedicineStock>
@@ -1443,7 +1443,7 @@ export const OrderMedicines = () => {
                   <CartItem key={item.medicine.id}>
                     <CartItemInfo>
                       <CartItemName>{item.medicine.name}</CartItemName>
-                      <CartItemPrice>${item.medicine.price.toFixed(2)} each</CartItemPrice>
+                      <CartItemPrice>₹{item.medicine.price.toFixed(2)} each</CartItemPrice>
                       <QuantityControls>
                         <QuantityButton
                           onClick={() => updateCartQuantity(item.medicine.id, item.quantity - 1)}
@@ -1471,15 +1471,15 @@ export const OrderMedicines = () => {
               <CartSummary>
                 <SummaryRow>
                   <span>Subtotal:</span>
-                  <span>${getCartSummary().subtotal.toFixed(2)}</span>
+                  <span>₹{getCartSummary().subtotal.toFixed(2)}</span>
                 </SummaryRow>
                 <SummaryRow>
                   <span>Delivery Fee:</span>
-                  <span>$5.00</span>
+                  <span>₹5.00</span>
                 </SummaryRow>
                 <SummaryTotal>
                   <span>Total:</span>
-                  <span>${getCartSummary().total.toFixed(2)}</span>
+                  <span>₹{getCartSummary().total.toFixed(2)}</span>
                 </SummaryTotal>
 
                 {orderError && (

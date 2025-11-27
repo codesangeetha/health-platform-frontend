@@ -13,6 +13,36 @@ const TopBar = ({ onLogout }: { onLogout: () => void }) => {
 
   // Get user initials for avatar fallback
   const getUserInitials = () => {
+    // First try to get admin data directly from localStorage to ensure we have the latest data
+    const adminDataStr = localStorage.getItem('admin');
+    if (adminDataStr) {
+      try {
+        const adminData = JSON.parse(adminDataStr);
+        if (adminData.firstName || adminData.lastName) {
+          const firstName = adminData.firstName || '';
+          const lastName = adminData.lastName || '';
+          const parts = `${firstName} ${lastName}`.trim().split(/\s+/);
+          if (parts.length >= 2) {
+            return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+          } else if (parts.length === 1) {
+            return parts[0].charAt(0).toUpperCase();
+          }
+        }
+        if (adminData.email) {
+          const emailPrefix = adminData.email.split('@')[0];
+          const parts = emailPrefix.split(/[._-]/);
+          if (parts.length >= 2) {
+            return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+          } else {
+            return adminData.email.charAt(0).toUpperCase();
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing admin data from localStorage for initials:', error);
+      }
+    }
+
+    // Fallback to authState if localStorage access fails
     const currentSession = authState.sessions[authState.currentUserType || 'admin'];
     if (currentSession?.user?.firstName || currentSession?.user?.lastName) {
       const firstName = currentSession.user.firstName || '';
@@ -25,7 +55,7 @@ const TopBar = ({ onLogout }: { onLogout: () => void }) => {
       }
     }
     
-    // Fallback to email
+    // Final fallback to email or default
     const email = currentSession?.user?.email || '';
     if (email) {
       const emailPrefix = email.split('@')[0];
@@ -41,6 +71,28 @@ const TopBar = ({ onLogout }: { onLogout: () => void }) => {
 
   // Get user display name
   const getUserDisplayName = () => {
+    // First try to get admin data directly from localStorage to ensure we have the latest data
+    const adminDataStr = localStorage.getItem('admin');
+    if (adminDataStr) {
+      try {
+        const adminData = JSON.parse(adminDataStr);
+        if (adminData.firstName || adminData.lastName) {
+          const firstName = adminData.firstName || '';
+          const lastName = adminData.lastName || '';
+          const fullName = `${firstName} ${lastName}`.trim();
+          if (fullName) {
+            return fullName;
+          }
+        }
+        if (adminData.email) {
+          return adminData.email;
+        }
+      } catch (error) {
+        console.error('Error parsing admin data from localStorage:', error);
+      }
+    }
+
+    // Fallback to authState if localStorage access fails
     const currentSession = authState.sessions[authState.currentUserType || 'admin'];
     if (currentSession?.user?.firstName || currentSession?.user?.lastName) {
       const firstName = currentSession.user.firstName || '';
@@ -51,7 +103,7 @@ const TopBar = ({ onLogout }: { onLogout: () => void }) => {
       }
     }
     
-    // Fallback to email
+    // Final fallback to email or default
     return currentSession?.user?.email || 'Admin';
   };
 

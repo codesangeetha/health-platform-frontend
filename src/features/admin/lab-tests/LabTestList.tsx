@@ -479,7 +479,7 @@ export const LabTestList = ({ refreshKey = 0, categories = [], filters = {} }: L
                         ? `${labTest.description.substring(0, 50)}...`
                         : labTest.description}
                     </Td>
-                    <Td>${labTest.price.toFixed(2)}</Td>
+                    <Td>₹{labTest.price.toFixed(2)}</Td>
                     <Td>
                       <StatusBadge status={labTest.isActive}>
                         {labTest.isActive ? 'Active' : 'Inactive'}
@@ -552,7 +552,7 @@ export const LabTestList = ({ refreshKey = 0, categories = [], filters = {} }: L
 
             <DetailRow>
               <DetailLabel>Price:</DetailLabel>
-              <DetailValue>${selectedLabTest.price.toFixed(2)}</DetailValue>
+              <DetailValue>₹{selectedLabTest.price.toFixed(2)}</DetailValue>
             </DetailRow>
 
             <DetailRow>
