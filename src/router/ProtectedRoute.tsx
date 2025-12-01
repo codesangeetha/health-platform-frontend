@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 interface ProtectedRouteProps {
-  requiredRole?: 'admin' | 'doctor' | 'patient';
+  requiredRole?: 'admin' | 'doctor' | 'patient' | 'pharmadmin';
   children?: ReactNode;
 }
 
@@ -31,7 +31,7 @@ export function ProtectedRoute({ requiredRole, children }: ProtectedRouteProps =
   }
 
   // Get the appropriate session based on requiredRole or current path
-  let targetUserType: 'patient' | 'doctor' | 'admin' | null = null;
+  let targetUserType: 'patient' | 'doctor' | 'admin' | 'pharmadmin' | null = null;
   let targetSession = currentSession;
 
   if (requiredRole) {
@@ -39,7 +39,10 @@ export function ProtectedRoute({ requiredRole, children }: ProtectedRouteProps =
     targetSession = authState.sessions[requiredRole];
   } else {
     // Determine user type from path
-    if (location.pathname.startsWith('/admin')) {
+    if (location.pathname.startsWith('/pharmadmin')) {
+      targetUserType = 'pharmadmin';
+      targetSession = authState.sessions.pharmadmin;
+    } else if (location.pathname.startsWith('/admin')) {
       targetUserType = 'admin';
       targetSession = authState.sessions.admin;
     } else if (location.pathname.startsWith('/doctor')) {
@@ -56,7 +59,9 @@ export function ProtectedRoute({ requiredRole, children }: ProtectedRouteProps =
     // Determine the appropriate login page based on the current path or required role
     let loginPath = '/';
     
-    if (targetUserType === 'admin' || location.pathname.startsWith('/admin')) {
+    if (targetUserType === 'pharmadmin' || location.pathname.startsWith('/pharmadmin')) {
+      loginPath = '/admin/login';
+    } else if (targetUserType === 'admin' || location.pathname.startsWith('/admin')) {
       loginPath = '/admin/login';
     } else if (targetUserType === 'doctor' || location.pathname.startsWith('/doctor')) {
       loginPath = '/doctor/login';
@@ -75,6 +80,9 @@ export function ProtectedRoute({ requiredRole, children }: ProtectedRouteProps =
     // Redirect to appropriate dashboard based on user role
     let redirectPath = '/';
     switch (targetSession.user?.userType) {
+      case 'pharmadmin':
+        redirectPath = '/pharmadmin/dashboard';
+        break;
       case 'admin':
         redirectPath = '/admin/dashboard';
         break;

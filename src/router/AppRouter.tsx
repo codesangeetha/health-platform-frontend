@@ -20,8 +20,8 @@ import AdminLogin from '../features/auth/AdminLogin';
 import SpecializationsPage from '../features/admin/specializations/SpecializationsPage';
 import { AdminDashboard } from '../features/admin/dashboard/AdminDashboard';
 import PatientsPage from '../features/admin/patients/PatientsPage';
-import LabTestOrdersPage from '../features/admin/lab-test-orders/LabTestOrdersPage';
-import PharmacyOrdersPage from '../features/admin/pharmacy-orders/PharmacyOrdersPage';
+
+import AdminPharmacyOrdersPage from '../features/admin/pharmacy-orders/PharmacyOrdersPage';
 import { PatientRegister } from '../features/auth/PatientRegister';
 import { RootLayout } from '../components/layout/RootLayout';
 import { PatientLogin } from '../features/auth/PatientLogin';
@@ -47,6 +47,14 @@ import { DoctorProfileEdit } from '../features/doctor/profile/DoctorProfileEdit'
 import { CreatePrescription } from '../features/doctor/prescription/CreatePrescription';
 import { DoctorVideoCallView } from '../features/doctor/video-call/DoctorVideoCallView';
 import { PatientVideoCallView } from '../features/patient/video-call/PatientVideoCallView';
+import { PharmacyAdminDashboard } from '../features/admin/pharmacy-dashboard/PharmacyAdminDashboard';
+import PharmacyMedicinesPage from '../features/admin/pharmacy-dashboard/PharmacyMedicinesPage';
+import PharmacyOrdersPage from '../features/admin/pharmacy-dashboard/PharmacyOrdersPage';
+import { PharmAdminRoute } from './PharmAdminRoute';
+import { LabAdminRoute } from './LabAdminRoute';
+import { LabAdminDashboard } from '../features/admin/lab-dashboard/LabAdminDashboard';
+import { LabAdminLabTestsPage } from '../features/admin/lab-dashboard/LabAdminLabTestsPage';
+import { LabAdminOrdersPage } from '../features/admin/lab-dashboard/LabAdminOrdersPage';
 
 // Component to combine PatientRoute with PatientLayout
 const ProtectedPatientLayout = () => {
@@ -245,12 +253,44 @@ const router = createBrowserRouter([
             element: <MedicinesPage />,
           },
           {
-            path: 'lab-test-orders',
-            element: <LabTestOrdersPage />,
+            path: 'pharmacy-orders',
+            element: <AdminPharmacyOrdersPage />,
+          }
+        ]
+      },
+      {
+        path: 'pharmadmin',
+        element: <PharmAdminRoute />,
+        children: [
+          {
+            path: 'dashboard',
+            element: <PharmacyAdminDashboard />,
+          },
+          {
+            path: 'medicines',
+            element: <PharmacyMedicinesPage />,
           },
           {
             path: 'pharmacy-orders',
             element: <PharmacyOrdersPage />,
+          }
+        ]
+      },
+      {
+        path: 'labadmin',
+        element: <LabAdminRoute />,
+        children: [
+          {
+            path: 'dashboard',
+            element: <LabAdminDashboard />,
+          },
+          {
+            path: 'lab-tests',
+            element: <LabAdminLabTestsPage />,
+          },
+          {
+            path: 'lab-test-orders',
+            element: <LabAdminOrdersPage />,
           }
         ]
       }

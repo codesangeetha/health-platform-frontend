@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import styled from '@emotion/styled';
-import { getOrders, updatePharmacyOrderStatus } from '../../../services/admin/lab-test-orders.service';
-import type { Order, OrdersRequest } from '../../../services/admin/lab-test-orders.service';
+import { getPharmacyOrders, updatePharmacyOrderStatus } from '../../../services/admin/pharmacy-dashboard.service';
+import type { Order } from '../../../services/admin/pharmacy-dashboard.service';
 import { ApiError } from '../../../services/auth/auth.service';
 
 const TableContainer = styled.div`
@@ -366,6 +366,22 @@ const EmptyStateSubtext = styled.p`
   color: #666666;
 `;
 
+const PrintButton = styled.button`
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid #28a745;
+  background: transparent;
+  color: #28a745;
+  cursor: pointer;
+  font-size: 14px;
+  margin-right: 8px;
+
+  &:hover {
+    background: #28a745;
+    color: #FFFFFF;
+  }
+`;
+
 interface Filters {
   patientName: string;
   amountMin: string;
@@ -416,7 +432,7 @@ const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const fetchOrders = useCallback(async (page: number = 1) => {
     try {
       setLoading(true);
-      const params: OrdersRequest = {
+      const params = {
         page,
         limit: pagination.limit,
         patientName: filters.patientName || undefined,
@@ -425,10 +441,10 @@ const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
         dateFrom: filters.dateFrom || undefined,
         dateTo: filters.dateTo || undefined,
         status: filters.status || undefined,
-        orderType: 'medicine'
+        orderType: 'medicine' as const
       };
 
-      const response = await getOrders(params);
+      const response = await getPharmacyOrders(params);
       setOrders(response.data.orders);
       setPagination(response.data.pagination);
       setError(null);
@@ -545,6 +561,250 @@ const closeModal = () => {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
+  };
+
+  const handlePrintInvoice = (order: Order) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const formatDate = (dateString: string) => {
+      return new Date(dateString).toLocaleDateString('en-IN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    };
+
+    const formatTime = (dateString: string) => {
+      return new Date(dateString).toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    };
+
+    const formatCurrency = (amount: number) => {
+      return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR'
+      }).format(amount);
+    };
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Invoice - ${order.orderId}</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+          }
+          .invoice-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          }
+          .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #4A90E2;
+          }
+          .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4A90E2;
+          }
+          .invoice-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+          }
+          .invoice-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+          }
+          .detail-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+          }
+          .detail-section h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-size: 16px;
+          }
+          .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+          }
+          .detail-label {
+            color: #666;
+          }
+          .detail-value {
+            color: #333;
+            font-weight: 500;
+          }
+          .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+          }
+          .items-table th,
+          .items-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+          }
+          .items-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+          }
+          .items-table td {
+            color: #666;
+          }
+          .total-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            text-align: right;
+          }
+          .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 16px;
+          }
+          .total-final {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            border-top: 2px solid #4A90E2;
+            padding-top: 10px;
+          }
+          .footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+          }
+          @media print {
+            body {
+              background-color: white;
+            }
+            .invoice-container {
+              box-shadow: none;
+              margin: 0;
+              padding: 20px;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="invoice-container">
+          <div class="header">
+            <div class="logo">HealthCare Pharmacy</div>
+            <div class="invoice-title">INVOICE</div>
+          </div>
+          
+          <div class="invoice-details">
+            <div class="detail-section">
+              <h3>Order Information</h3>
+              <div class="detail-row">
+                <span class="detail-label">Invoice No:</span>
+                <span class="detail-value">${order.orderId}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Order Date:</span>
+                <span class="detail-value">${formatDate(order.orderDate)}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Order Time:</span>
+                <span class="detail-value">${formatTime(order.orderDate)}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Status:</span>
+                <span class="detail-value">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span>
+              </div>
+            </div>
+            
+            <div class="detail-section">
+              <h3>Patient Information</h3>
+              <div class="detail-row">
+                <span class="detail-label">Patient ID:</span>
+                <span class="detail-value">${order.patientId}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Patient Name:</span>
+                <span class="detail-value">${order.patientName}</span>
+              </div>
+            </div>
+          </div>
+
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Medicine Name</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${order.items.map(item => `
+                <tr>
+                  <td>${item.medicineName}</td>
+                  <td>${item.quantity}</td>
+                  <td>${formatCurrency(item.price)}</td>
+                  <td>${formatCurrency(item.quantity * item.price)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <div class="total-section">
+            <div class="total-row">
+              <span>Subtotal:</span>
+              <span>${formatCurrency(order.totalAmount)}</span>
+            </div>
+            <div class="total-row">
+              <span>Tax (0%):</span>
+              <span>${formatCurrency(0)}</span>
+            </div>
+            <div class="total-row total-final">
+              <span>Total Amount:</span>
+              <span>${formatCurrency(order.totalAmount)}</span>
+            </div>
+          </div>
+
+          <div class="footer">
+            <p>Thank you for choosing HealthCare Pharmacy!</p>
+            <p>Generated on ${formatDate(new Date().toISOString())} at ${formatTime(new Date().toISOString())}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+    
+    printWindow.onload = () => {
+      printWindow.print();
+      printWindow.close();
+    };
   };
 
   return (
@@ -717,6 +977,11 @@ const closeModal = () => {
                         <ActionButton onClick={() => handleStatusUpdate(order)}>
                           Update
                         </ActionButton>
+                      )}
+                      {order.status === 'completed' && (
+                        <PrintButton onClick={() => handlePrintInvoice(order)}>
+                          Print Invoice
+                        </PrintButton>
                       )}
                     </Td>
                   </tr>

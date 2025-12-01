@@ -17,6 +17,14 @@ const STORAGE_KEYS = {
     user: 'admin',
     token: 'admin_token'
   },
+  pharmadmin: {
+    user: 'pharmadmin',
+    token: 'pharmadmin_token'
+  },
+  labadmin: {
+    user: 'labadmin',
+    token: 'labadmin_token'
+  },
   // Legacy keys for backward compatibility
   legacy: {
     user: 'user',
@@ -24,19 +32,30 @@ const STORAGE_KEYS = {
   }
 };
 
-export const getAuthToken = (userType?: 'patient' | 'doctor' | 'admin'): string | null => {
+export const getAuthToken = (userType?: 'patient' | 'doctor' | 'admin' | 'pharmadmin' | 'labadmin'): string | null => {
   if (userType && STORAGE_KEYS[userType]) {
     return localStorage.getItem(STORAGE_KEYS[userType].token);
   }
+  
+  // When no userType is specified, check all available tokens
+  const userTypes: Array<'patient' | 'doctor' | 'admin' | 'pharmadmin' | 'labadmin'> = ['patient', 'doctor', 'admin', 'pharmadmin', 'labadmin'];
+  
+  for (const type of userTypes) {
+    const token = localStorage.getItem(STORAGE_KEYS[type].token);
+    if (token) {
+      return token;
+    }
+  }
+  
   // Fallback to legacy key for backward compatibility
   return localStorage.getItem(STORAGE_KEYS.legacy.token);
 };
 
-export const setAuthToken = (token: string, userType: 'patient' | 'doctor' | 'admin'): void => {
+export const setAuthToken = (token: string, userType: 'patient' | 'doctor' | 'admin' | 'pharmadmin' | 'labadmin'): void => {
   localStorage.setItem(STORAGE_KEYS[userType].token, token);
 };
 
-export const removeAuthToken = (userType?: 'patient' | 'doctor' | 'admin'): void => {
+export const removeAuthToken = (userType?: 'patient' | 'doctor' | 'admin' | 'pharmadmin' | 'labadmin'): void => {
   if (userType && STORAGE_KEYS[userType]) {
     localStorage.removeItem(STORAGE_KEYS[userType].token);
   } else {
@@ -96,10 +115,10 @@ interface PatientRegisterData extends RegisterDataBase {
   };
 }
 
-export type RegisterData = PatientRegisterData | (RegisterDataBase & { userType: 'doctor' | 'admin'; });
+export type RegisterData = PatientRegisterData | (RegisterDataBase & { userType: 'doctor' | 'admin' | 'pharmadmin' | 'labadmin'; });
 
 export class AuthService {
-  static async login(email: string, password: string, userType?: 'patient' | 'doctor' | 'admin'): Promise<AuthResponseData> {
+  static async login(email: string, password: string, userType?: 'patient' | 'doctor' | 'admin' | 'pharmadmin' | 'labadmin'): Promise<AuthResponseData> {
     try {
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
@@ -125,7 +144,7 @@ export class AuthService {
       }
 
       // Store the token and user data with user-type specific keys
-      const actualUserType = data.data.user.userType as 'patient' | 'doctor' | 'admin';
+      const actualUserType = data.data.user.userType as 'patient' | 'doctor' | 'admin' | 'pharmadmin' | 'labadmin';
       localStorage.setItem(STORAGE_KEYS[actualUserType].token, data.data.token);
       localStorage.setItem(STORAGE_KEYS[actualUserType].user, JSON.stringify(data.data.user));
 
@@ -229,14 +248,14 @@ export class AuthService {
     }
   }
 
-  static getCurrentUser(userType?: 'patient' | 'doctor' | 'admin') {
+  static getCurrentUser(userType?: 'patient' | 'doctor' | 'admin' | 'pharmadmin' | 'labadmin') {
     let userStr: string | null = null;
     
     if (userType && STORAGE_KEYS[userType]) {
       userStr = localStorage.getItem(STORAGE_KEYS[userType].user);
     } else {
       // Try to get user from any of the user type keys
-      for (const key of ['patient', 'doctor', 'admin']) {
+      for (const key of ['patient', 'doctor', 'admin', 'pharmadmin', 'labadmin']) {
         userStr = localStorage.getItem(STORAGE_KEYS[key as keyof typeof STORAGE_KEYS].user);
         if (userStr) break;
       }
@@ -263,7 +282,7 @@ export class AuthService {
     return null;
   }
 
-  static logout(userType?: 'patient' | 'doctor' | 'admin'): void {
+  static logout(userType?: 'patient' | 'doctor' | 'admin' | 'pharmadmin' | 'labadmin'): void {
     if (userType && STORAGE_KEYS[userType]) {
       localStorage.removeItem(STORAGE_KEYS[userType].token);
       localStorage.removeItem(STORAGE_KEYS[userType].user);
@@ -333,12 +352,12 @@ export class AuthService {
     }
   }
 
-  static getToken(userType?: 'patient' | 'doctor' | 'admin'): string | null {
+  static getToken(userType?: 'patient' | 'doctor' | 'admin' | 'pharmadmin' | 'labadmin'): string | null {
     return getAuthToken(userType);
   }
 
   static setUserData(user: AuthResponseData['user'], token: string): void {
-    const userType = user.userType as 'patient' | 'doctor' | 'admin';
+    const userType = user.userType as 'patient' | 'doctor' | 'admin' | 'pharmadmin' | 'labadmin';
     localStorage.setItem(STORAGE_KEYS[userType].user, JSON.stringify(user));
     localStorage.setItem(STORAGE_KEYS[userType].token, token);
   }
@@ -389,7 +408,7 @@ export class AuthService {
       }
 
       // Store the token and user data with user-type specific keys
-      const actualUserType = data.data.user.userType as 'patient' | 'doctor' | 'admin';
+      const actualUserType = data.data.user.userType as 'patient' | 'doctor' | 'admin' | 'pharmadmin' | 'labadmin';
       localStorage.setItem(STORAGE_KEYS[actualUserType].token, data.data.token);
       localStorage.setItem(STORAGE_KEYS[actualUserType].user, JSON.stringify(data.data.user));
 
@@ -402,7 +421,7 @@ export class AuthService {
     }
   }
 
-  static async logoutFromBackend(userType?: 'patient' | 'doctor' | 'admin'): Promise<void> {
+  static async logoutFromBackend(userType?: 'patient' | 'doctor' | 'admin' | 'pharmadmin' | 'labadmin'): Promise<void> {
     try {
       console.log('🔄 [LOGOUT] Starting logout request...');
       console.log('🔄 [LOGOUT] API_URL:', API_URL);
@@ -498,7 +517,7 @@ export class AuthService {
     }
   }
 
-  static async checkAuthStatus(userType?: 'patient' | 'doctor' | 'admin'): Promise<AuthResponseData | null> {
+  static async checkAuthStatus(userType?: 'patient' | 'doctor' | 'admin' | 'pharmadmin' | 'labadmin'): Promise<AuthResponseData | null> {
     try {
       const token = this.getToken(userType);
       if (!token) {

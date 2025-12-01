@@ -43,7 +43,7 @@ export const getLabTestCategories = async (params: GetLabTestCategoriesParams = 
       queryParams.append('toDate', toDate);
     }
 
-    const token = getAuthToken('admin');
+    const token = getAuthToken('labadmin') || getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }
@@ -75,7 +75,7 @@ export const getLabTestCategories = async (params: GetLabTestCategoriesParams = 
 
 export const getLabTestCategoryById = async (categoryId: string): Promise<LabTestCategoriesResponse> => {
   try {
-    const token = getAuthToken('admin');
+    const token = getAuthToken('labadmin') || getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }
@@ -107,7 +107,7 @@ export const getLabTestCategoryById = async (categoryId: string): Promise<LabTes
 
 export const createLabTestCategory = async (payload: CreateLabTestCategoryPayload): Promise<CreateLabTestCategoryResponse> => {
   try {
-    const token = getAuthToken('admin');
+    const token = getAuthToken('labadmin') || getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }
@@ -140,7 +140,7 @@ export const createLabTestCategory = async (payload: CreateLabTestCategoryPayloa
 
 export const updateLabTestCategory = async (categoryId: string, payload: UpdateLabTestCategoryPayload): Promise<UpdateLabTestCategoryResponse> => {
   try {
-    const token = getAuthToken('admin');
+    const token = getAuthToken('labadmin') || getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }
@@ -173,7 +173,7 @@ export const updateLabTestCategory = async (categoryId: string, payload: UpdateL
 
 export const deleteLabTestCategory = async (categoryId: string): Promise<DeleteLabTestCategoryResponse> => {
   try {
-    const token = getAuthToken('admin');
+    const token = getAuthToken('labadmin') || getAuthToken('admin');
     if (!token) {
       throw new ApiError('No authentication token found', 401);
     }

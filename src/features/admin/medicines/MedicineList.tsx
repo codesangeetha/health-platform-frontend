@@ -459,7 +459,7 @@ interface FilterState {
   toDate: string;
 }
 
-export const MedicineList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
+export const MedicineList = ({ refreshKey = 0, showActions = true }: { refreshKey?: number; showActions?: boolean }) => {
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -753,13 +753,13 @@ export const MedicineList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                 <Th>Stock</Th>
                 <Th>Status</Th>
                 <Th>Created</Th>
-                <Th>Actions</Th>
+                {showActions && <Th>Actions</Th>}
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7}>
+                  <td colSpan={showActions ? 7 : 6}>
                     <LoadingOverlay>
                       <LoadingSpinner />
                       {isLoadingFiltered ? 'Filtering medicines...' : 'Loading medicines...'}
@@ -789,23 +789,25 @@ export const MedicineList = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                     <Td>
                       {medicine.createdAt ? new Date(medicine.createdAt).toLocaleDateString() : '-'}
                     </Td>
-                    <ActionButtonsContainer>
-                      <ActionButtonsWrapper>
-                        <ActionButton onClick={() => handleViewDetails(medicine)}>
-                          View
-                        </ActionButton>
-                        <ActionButton onClick={() => handleEditMedicine(medicine)}>
-                          Edit
-                        </ActionButton>
-                        <ActionButton
-                          variant="danger"
-                          onClick={() => handleDeleteMedicine(medicine)}
-                          disabled={deletingId === medicine.id}
-                        >
-                          {deletingId === medicine.id ? 'Deleting...' : 'Delete'}
-                        </ActionButton>
-                      </ActionButtonsWrapper>
-                    </ActionButtonsContainer>
+                    {showActions && (
+                      <ActionButtonsContainer>
+                        <ActionButtonsWrapper>
+                          <ActionButton onClick={() => handleViewDetails(medicine)}>
+                            View
+                          </ActionButton>
+                          <ActionButton onClick={() => handleEditMedicine(medicine)}>
+                            Edit
+                          </ActionButton>
+                          <ActionButton
+                            variant="danger"
+                            onClick={() => handleDeleteMedicine(medicine)}
+                            disabled={deletingId === medicine.id}
+                          >
+                            {deletingId === medicine.id ? 'Deleting...' : 'Delete'}
+                          </ActionButton>
+                        </ActionButtonsWrapper>
+                      </ActionButtonsContainer>
+                    )}
                   </tr>
                 ))
               )}

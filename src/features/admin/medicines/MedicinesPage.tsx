@@ -90,7 +90,7 @@ const MedicinesPage = () => {
             <div />
             <CreateButton onClick={() => setOpen(true)}>+ Create Medicine</CreateButton>
           </ActionBar>
-          <MedicineList refreshKey={refreshToken} />
+          <MedicineList refreshKey={refreshToken} showActions={true} />
         </PageContainer>
         <CreateMedicineModal open={open} onClose={() => setOpen(false)} onCreated={handleCreated} />
         <Footer />

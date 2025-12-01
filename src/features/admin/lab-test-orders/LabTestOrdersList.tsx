@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import styled from '@emotion/styled';
-import { getOrders, updateLabTestOrderStatus } from '../../../services/admin/lab-test-orders.service';
+import { getOrders, updateLabTestOrderStatus, getLabTestOrderById } from '../../../services/admin/lab-test-orders.service';
+import type { TestResult } from '../../../services/admin/lab-test-orders.service';
 import type { Order, OrdersRequest } from '../../../services/admin/lab-test-orders.service';
 import { ApiError } from '../../../services/auth/auth.service';
 
@@ -165,7 +166,7 @@ const ModalContent = styled.div`
   border-radius: 8px;
   padding: 24px;
   width: 90%;
-  max-width: 600px;
+  max-width: 700px;
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
@@ -176,6 +177,12 @@ const ModalHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+`;
+
+const ModalActions = styled.div`
+  display: flex;
+  gap: 8px;
+  align-items: center;
 `;
 
 const ModalTitle = styled.h2`
@@ -366,6 +373,38 @@ const EmptyStateSubtext = styled.p`
   color: #666666;
 `;
 
+const PrintButton = styled.button`
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid #28a745;
+  background: transparent;
+  color: #28a745;
+  cursor: pointer;
+  font-size: 14px;
+  margin-right: 8px;
+
+  &:hover {
+    background: #28a745;
+    color: #FFFFFF;
+  }
+`;
+
+const PrintResultButton = styled.button`
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid #17a2b8;
+  background: transparent;
+  color: #17a2b8;
+  cursor: pointer;
+  font-size: 14px;
+  margin-right: 8px;
+
+  &:hover {
+    background: #17a2b8;
+    color: #FFFFFF;
+  }
+`;
+
 interface Filters {
   patientName: string;
   amountMin: string;
@@ -373,6 +412,38 @@ interface Filters {
   dateFrom: string;
   dateTo: string;
   status: string;
+}
+
+interface LabTestDetails {
+  _id: string;
+  name: string;
+  categoryId: string;
+  price: number;
+  description: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface LabTestItem {
+  testName: string;
+  price: number;
+  labTestId: string;
+  labTestDetails: LabTestDetails;
+}
+
+interface DetailedLabTestOrder {
+  orderId: string;
+  orderDate: string;
+  status: string;
+  totalAmount: number;
+  testItems: LabTestItem[];
+  collectionMethod: string;
+  scheduledDate: string;
+  prescriptionId: string | object;
+  reason?: string;
+  resultData?: Record<string, string>;
+  completedDate?: string;
 }
 
 const ORDER_STATUSES = [
@@ -396,7 +467,7 @@ const [orders, setOrders] = useState<Order[]>([]);
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<DetailedLabTestOrder | null>(null);
   const [showModal, setShowModal] = useState(false);
 const [showStatusUpdateModal, setShowStatusUpdateModal] = useState(false);
   const [selectedStatusUpdateOrder, setSelectedStatusUpdateOrder] = useState<Order | null>(null);
@@ -404,6 +475,8 @@ const [showStatusUpdateModal, setShowStatusUpdateModal] = useState(false);
   const [updateReason, setUpdateReason] = useState('');
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [testResults, setTestResults] = useState<TestResult[]>([]);
+  const [orderDetails, setOrderDetails] = useState<any>(null);
   const [filters, setFilters] = useState<Filters>({
     patientName: '',
     amountMin: '',
@@ -473,15 +546,51 @@ const [showStatusUpdateModal, setShowStatusUpdateModal] = useState(false);
     fetchOrders(pagination.page);
   }, [pagination.page, fetchOrders, refreshKey]);
 
-const handleViewDetails = (order: Order) => {
-    setSelectedOrder(order);
-    setShowModal(true);
+const handleViewDetails = async (order: Order) => {
+    try {
+      setError(null);
+      setLoading(true);
+      
+      // Fetch detailed order information
+      const response = await getLabTestOrderById(order.orderId);
+      const detailedOrder = response.data.order as DetailedLabTestOrder;
+      
+      setSelectedOrder(detailedOrder);
+      setShowModal(true);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError('Failed to fetch order details');
+      }
+      console.error('Error fetching order details:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleStatusUpdate = (order: Order) => {
+  const handleStatusUpdate = async (order: Order) => {
     setSelectedStatusUpdateOrder(order);
     setUpdateReason('');
     setUpdateStatus('completed');
+    setTestResults([]);
+    
+    // Fetch order details to get labTestIds
+    try {
+      const response = await getLabTestOrderById(order.orderId);
+      setOrderDetails(response.data.order);
+      
+      // Initialize test results for each test item
+      const initialResults: TestResult[] = response.data.order.testItems.map((item: any) => ({
+        labTestId: item.labTestId,
+        testResult: ''
+      }));
+      setTestResults(initialResults);
+    } catch (err) {
+      console.error('Error fetching order details:', err);
+      setError('Failed to fetch order details');
+    }
+    
     setShowStatusUpdateModal(true);
   };
 
@@ -496,6 +605,16 @@ const closeStatusUpdateModal = () => {
     setUpdateReason('');
     setUpdateStatus('completed');
     setSuccessMessage(null);
+    setTestResults([]);
+    setOrderDetails(null);
+  };
+
+  const handleTestResultChange = (index: number, value: string) => {
+    setTestResults(prev => 
+      prev.map((result, i) => 
+        i === index ? { ...result, testResult: value } : result
+      )
+    );
   };
 
 const handleUpdateOrderStatus = async () => {
@@ -504,15 +623,29 @@ const handleUpdateOrderStatus = async () => {
       return;
     }
 
+    // Validate test results when status is completed
+    if (updateStatus === 'completed') {
+      const emptyResults = testResults.filter(result => !result.testResult.trim());
+      if (emptyResults.length > 0) {
+        setError('Please provide results for all tests');
+        return;
+      }
+    }
+
     try {
       setUpdatingStatus(true);
       setError(null);
       setSuccessMessage(null);
 
+      const updateData = {
+        status: updateStatus,
+        reason: updateReason.trim(),
+        result: updateStatus === 'completed' ? testResults : undefined
+      };
+
       await updateLabTestOrderStatus(
         selectedStatusUpdateOrder.orderId,
-        updateStatus,
-        updateReason.trim()
+        updateData
       );
 
       // Refresh the orders list
@@ -533,6 +666,459 @@ const handleUpdateOrderStatus = async () => {
       console.error('Error updating order status:', err);
     } finally {
       setUpdatingStatus(false);
+    }
+  };
+
+  const handlePrintInvoice = async (order: Order) => {
+    try {
+      setError(null);
+      
+      // Fetch detailed order information
+      const response = await getLabTestOrderById(order.orderId);
+      const detailedOrder = response.data.order as DetailedLabTestOrder;
+      
+      // Create a new window for printing
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        setError('Unable to open print window. Please check your browser settings.');
+        return;
+      }
+
+      // Generate invoice HTML
+      const invoiceHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Lab Test Invoice - ${detailedOrder.orderId}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              margin: 20px;
+              color: #333;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 30px;
+              border-bottom: 2px solid #4A90E2;
+              padding-bottom: 20px;
+            }
+            .header h1 {
+              color: #4A90E2;
+              margin: 0;
+            }
+            .invoice-info {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 30px;
+            }
+            .info-section {
+              width: 48%;
+            }
+            .info-section h3 {
+              margin: 0 0 10px 0;
+              color: #4A90E2;
+              border-bottom: 1px solid #E0E0E0;
+              padding-bottom: 5px;
+            }
+            .info-row {
+              margin-bottom: 5px;
+            }
+            .label {
+              font-weight: bold;
+              display: inline-block;
+              width: 120px;
+            }
+            .items-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 20px 0;
+            }
+            .items-table th,
+            .items-table td {
+              border: 1px solid #E0E0E0;
+              padding: 10px;
+              text-align: left;
+            }
+            .items-table th {
+              background-color: #F8F9FA;
+              font-weight: bold;
+              color: #4A90E2;
+            }
+            .items-table td:last-child {
+              text-align: right;
+            }
+            .total-section {
+              margin-top: 30px;
+              text-align: right;
+            }
+            .total-row {
+              font-size: 18px;
+              font-weight: bold;
+              color: #4A90E2;
+            }
+            .footer {
+              margin-top: 50px;
+              text-align: center;
+              color: #666;
+              border-top: 1px solid #E0E0E0;
+              padding-top: 20px;
+            }
+            .status-completed {
+              background-color: #D4EDDA;
+              color: #155724;
+              padding: 4px 8px;
+              border-radius: 4px;
+              font-size: 12px;
+              font-weight: 500;
+            }
+            @media print {
+              body { margin: 0; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Lab Test Invoice</h1>
+            <p>Health Platform Laboratory Services</p>
+          </div>
+
+          <div class="invoice-info">
+            <div class="info-section">
+              <h3>Order Information</h3>
+              <div class="info-row">
+                <span class="label">Order ID:</span>
+                ${detailedOrder.orderId}
+              </div>
+              <div class="info-row">
+                <span class="label">Order Date:</span>
+                ${formatDate(detailedOrder.orderDate)}
+              </div>
+              <div class="info-row">
+                <span class="label">Status:</span>
+                <span class="status-completed">Completed</span>
+              </div>
+              ${detailedOrder.completedDate ? `
+                <div class="info-row">
+                  <span class="label">Completed Date:</span>
+                  ${formatDate(detailedOrder.completedDate)}
+                </div>
+              ` : ''}
+              <div class="info-row">
+                <span class="label">Collection Method:</span>
+                ${detailedOrder.collectionMethod === 'lab_visit' ? 'Lab Visit' : detailedOrder.collectionMethod}
+              </div>
+              <div class="info-row">
+                <span class="label">Scheduled Date:</span>
+                ${formatDate(detailedOrder.scheduledDate)}
+              </div>
+            </div>
+
+            <div class="info-section">
+              <h3>Test Information</h3>
+              <div class="info-row">
+                <span class="label">Total Tests:</span>
+                ${detailedOrder.testItems.length}
+              </div>
+            </div>
+          </div>
+
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Test Name</th>
+                <th>Description</th>
+                <th>Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${detailedOrder.testItems.map(item => `
+                <tr>
+                  <td>${item.testName}</td>
+                  <td>${item.labTestDetails.description}</td>
+                  <td>${formatCurrency(item.price)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <div class="total-section">
+            <div class="total-row">
+              Total Amount: ${formatCurrency(detailedOrder.totalAmount)}
+            </div>
+          </div>
+
+          <div class="footer">
+            <p>Thank you for choosing our laboratory services!</p>
+            <p>For any queries, please contact us at support@healthplatform.com</p>
+          </div>
+
+          <script>
+            window.onload = function() {
+              window.print();
+              window.onafterprint = function() {
+                window.close();
+              };
+            };
+          </script>
+        </body>
+        </html>
+      `;
+
+      // Write the HTML to the new window and print
+      printWindow.document.write(invoiceHTML);
+      printWindow.document.close();
+      
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError('Failed to generate invoice');
+      }
+      console.error('Error generating invoice:', err);
+    }
+  };
+
+  const handlePrintResult = async (order: DetailedLabTestOrder) => {
+    try {
+      setError(null);
+      
+      // Create a new window for printing
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        setError('Unable to open print window. Please check your browser settings.');
+        return;
+      }
+
+      // Generate lab test result HTML
+      const resultHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Lab Test Results - ${order.orderId}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              margin: 20px;
+              color: #333;
+              line-height: 1.6;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 30px;
+              border-bottom: 2px solid #4A90E2;
+              padding-bottom: 20px;
+            }
+            .header h1 {
+              color: #4A90E2;
+              margin: 0;
+              font-size: 28px;
+            }
+            .header p {
+              margin: 5px 0;
+              color: #666;
+            }
+            .report-info {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 30px;
+            }
+            .info-section {
+              width: 48%;
+            }
+            .info-section h3 {
+              margin: 0 0 10px 0;
+              color: #4A90E2;
+              border-bottom: 1px solid #E0E0E0;
+              padding-bottom: 5px;
+              font-size: 16px;
+            }
+            .info-row {
+              margin-bottom: 8px;
+            }
+            .label {
+              font-weight: bold;
+              display: inline-block;
+              width: 130px;
+            }
+            .results-section {
+              margin: 30px 0;
+            }
+            .results-section h3 {
+              margin: 0 0 15px 0;
+              color: #4A90E2;
+              border-bottom: 2px solid #E0E0E0;
+              padding-bottom: 8px;
+              font-size: 18px;
+            }
+            .test-result {
+              border: 1px solid #E0E0E0;
+              border-radius: 6px;
+              margin-bottom: 20px;
+              overflow: hidden;
+            }
+            .test-header {
+              background-color: #F8F9FA;
+              padding: 12px 16px;
+              border-bottom: 1px solid #E0E0E0;
+            }
+            .test-name {
+              font-size: 16px;
+              font-weight: 600;
+              color: #333;
+              margin: 0;
+            }
+            .test-description {
+              font-size: 12px;
+              color: #666;
+              margin: 4px 0 0 0;
+            }
+            .test-result-value {
+              padding: 16px;
+              font-size: 14px;
+            }
+            .result-label {
+              font-weight: 600;
+              color: #4A90E2;
+              margin-bottom: 8px;
+            }
+            .result-value {
+              background-color: #F8F9FA;
+              padding: 12px;
+              border-radius: 4px;
+              border-left: 4px solid #28a745;
+              font-family: 'Courier New', monospace;
+              font-size: 13px;
+            }
+            .no-results {
+              text-align: center;
+              color: #666;
+              font-style: italic;
+              padding: 20px;
+              background-color: #F8F9FA;
+              border-radius: 4px;
+            }
+            .footer {
+              margin-top: 50px;
+              text-align: center;
+              color: #666;
+              border-top: 1px solid #E0E0E0;
+              padding-top: 20px;
+            }
+            .report-status {
+              background-color: #D4EDDA;
+              color: #155724;
+              padding: 6px 12px;
+              border-radius: 4px;
+              font-size: 12px;
+              font-weight: 500;
+              display: inline-block;
+            }
+            @media print {
+              body { margin: 0; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>LABORATORY TEST RESULTS</h1>
+            <p>Health Platform Laboratory Services</p>
+            <p>Accredited Testing Facility</p>
+          </div>
+
+          <div class="report-info">
+            <div class="info-section">
+              <h3>Order Information</h3>
+              <div class="info-row">
+                <span class="label">Order ID:</span>
+                ${order.orderId}
+              </div>
+              <div class="info-row">
+                <span class="label">Order Date:</span>
+                ${formatDate(order.orderDate)}
+              </div>
+              <div class="info-row">
+                <span class="label">Collection Method:</span>
+                ${order.collectionMethod === 'lab_visit' ? 'Lab Visit' : order.collectionMethod}
+              </div>
+              <div class="info-row">
+                <span class="label">Scheduled Date:</span>
+                ${formatDate(order.scheduledDate)}
+              </div>
+            </div>
+
+            <div class="info-section">
+              <h3>Report Information</h3>
+              <div class="info-row">
+                <span class="label">Completed Date:</span>
+                ${order.completedDate ? formatDate(order.completedDate) : 'N/A'}
+              </div>
+              <div class="info-row">
+                <span class="label">Report Status:</span>
+                <span class="report-status">FINAL REPORT</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Total Tests:</span>
+                ${order.testItems.length}
+              </div>
+            </div>
+          </div>
+
+          <div class="results-section">
+            <h3>TEST RESULTS</h3>
+            
+            ${order.testItems && order.testItems.length > 0 ? 
+              order.testItems.map((item, index) => {
+                const resultValue = order.resultData && order.resultData[item.testName] ? 
+                  order.resultData[item.testName] : 'Results not available';
+                
+                return `
+                  <div class="test-result">
+                    <div class="test-header">
+                      <h4 class="test-name">Test ${index + 1}: ${item.testName}</h4>
+                      <p class="test-description">${item.labTestDetails.description}</p>
+                    </div>
+                    <div class="test-result-value">
+                      <div class="result-label">Test Result:</div>
+                      <div class="result-value">${resultValue}</div>
+                    </div>
+                  </div>
+                `;
+              }).join('')
+              : '<div class="no-results">No test results available</div>'
+            }
+          </div>
+
+          <div class="footer">
+            <p><strong>Report Generated:</strong> ${new Date().toLocaleString()}</p>
+            <p>This report contains confidential patient information</p>
+            <p>For any queries, please contact our laboratory at lab@healthplatform.com</p>
+          </div>
+
+          <script>
+            window.onload = function() {
+              window.print();
+              window.onafterprint = function() {
+                window.close();
+              };
+            };
+          </script>
+        </body>
+        </html>
+      `;
+
+      // Write the HTML to the new window and print
+      printWindow.document.write(resultHTML);
+      printWindow.document.close();
+      
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError('Failed to generate test results');
+      }
+      console.error('Error generating test results:', err);
     }
   };
 
@@ -718,6 +1304,11 @@ const handleUpdateOrderStatus = async () => {
       Update
     </ActionButton>
   )}
+  {order.status === 'completed' && (
+    <PrintButton onClick={() => handlePrintInvoice(order)}>
+      Print Invoice
+    </PrintButton>
+  )}
 </Td>
                   </tr>
                 ))
@@ -752,22 +1343,19 @@ const handleUpdateOrderStatus = async () => {
           <ModalContent onClick={(e: React.MouseEvent) => e.stopPropagation()}>
             <ModalHeader>
               <ModalTitle>Lab Test Order Details</ModalTitle>
-              <CloseButton onClick={closeModal}>&times;</CloseButton>
+              <ModalActions>
+                {selectedOrder.status === 'completed' && (
+                  <PrintResultButton onClick={() => handlePrintResult(selectedOrder)}>
+                    Print Result
+                  </PrintResultButton>
+                )}
+                <CloseButton onClick={closeModal}>&times;</CloseButton>
+              </ModalActions>
             </ModalHeader>
             
             <DetailRow>
               <DetailLabel>Order ID:</DetailLabel>
               <DetailValue>{selectedOrder.orderId}</DetailValue>
-            </DetailRow>
-            
-            <DetailRow>
-              <DetailLabel>Patient Name:</DetailLabel>
-              <DetailValue>{selectedOrder.patientName}</DetailValue>
-            </DetailRow>
-            
-            <DetailRow>
-              <DetailLabel>Patient ID:</DetailLabel>
-              <DetailValue>{selectedOrder.patientId}</DetailValue>
             </DetailRow>
             
             <DetailRow>
@@ -790,39 +1378,76 @@ const handleUpdateOrderStatus = async () => {
                 {formatCurrency(selectedOrder.totalAmount)}
               </DetailValue>
             </DetailRow>
-            
+
             <DetailRow>
-              <DetailLabel>Delivery Address:</DetailLabel>
+              <DetailLabel>Collection Method:</DetailLabel>
               <DetailValue>
-                {selectedOrder.deliveryAddress.street}<br />
-                {selectedOrder.deliveryAddress.city}, {selectedOrder.deliveryAddress.state}
+                {selectedOrder.collectionMethod === 'lab_visit' ? 'Lab Visit' : selectedOrder.collectionMethod}
               </DetailValue>
             </DetailRow>
+            
+            <DetailRow>
+              <DetailLabel>Scheduled Date:</DetailLabel>
+              <DetailValue>{formatDate(selectedOrder.scheduledDate)}</DetailValue>
+            </DetailRow>
+
+            {selectedOrder.completedDate && (
+              <DetailRow>
+                <DetailLabel>Completed Date:</DetailLabel>
+                <DetailValue>{formatDate(selectedOrder.completedDate)}</DetailValue>
+              </DetailRow>
+            )}
             
             <DetailRow>
               <DetailLabel>Test Items:</DetailLabel>
               <DetailValue></DetailValue>
             </DetailRow>
             <ItemsList>
-              {selectedOrder.items.map((item, index) => (
+              {selectedOrder.testItems.map((item, index) => (
                 <ItemRow key={index}>
-                  <div>
-                    <div style={{ fontWeight: '500' }}>{item.labTestName}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: '500', marginBottom: '4px' }}>{item.testName}</div>
+                    <div style={{ fontSize: '12px', color: '#666666', marginBottom: '4px' }}>
+                      {item.labTestDetails.description}
+                    </div>
                     <div style={{ fontSize: '12px', color: '#666666' }}>
-                      Quantity: {item.quantity} × {formatCurrency(item.price)}
+                      Price: {formatCurrency(item.price)}
                     </div>
                   </div>
                   <div style={{ fontWeight: '500' }}>
-                    {formatCurrency(item.quantity * item.price)}
+                    {formatCurrency(item.price)}
                   </div>
                 </ItemRow>
               ))}
             </ItemsList>
-            
-            <DetailRow>
-              <DetailLabel>Created At:</DetailLabel>
-              <DetailValue>{formatDate(selectedOrder.createdAt)}</DetailValue>
-            </DetailRow>
+
+            {selectedOrder.resultData && Object.keys(selectedOrder.resultData).length > 0 && (
+              <>
+                <DetailRow>
+                  <DetailLabel>Test Results:</DetailLabel>
+                  <DetailValue></DetailValue>
+                </DetailRow>
+                <ItemsList>
+                  {Object.entries(selectedOrder.resultData).map(([testName, result], index) => (
+                    <ItemRow key={index}>
+                      <div>
+                        <div style={{ fontWeight: '500' }}>{testName}</div>
+                        <div style={{ fontSize: '12px', color: '#666666' }}>
+                          Result: {result}
+                        </div>
+                      </div>
+                    </ItemRow>
+                  ))}
+                </ItemsList>
+              </>
+            )}
+
+            {selectedOrder.reason && (
+              <DetailRow>
+                <DetailLabel>Reason:</DetailLabel>
+                <DetailValue>{selectedOrder.reason}</DetailValue>
+              </DetailRow>
+            )}
           </ModalContent>
         </ModalOverlay>
       )}
@@ -883,10 +1508,37 @@ const handleUpdateOrderStatus = async () => {
                   </DetailValue>
                 </DetailRow>
 
+                {updateStatus === 'completed' && orderDetails && (
+                  <DetailRow style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                    <DetailLabel style={{ marginBottom: '8px' }}>Test Results *</DetailLabel>
+                    <DetailValue style={{ width: '100%' }}>
+                      {orderDetails.testItems.map((item: any, index: number) => (
+                        <div key={item.labTestId} style={{ marginBottom: '16px', padding: '12px', backgroundColor: '#F8F9FA', borderRadius: '4px' }}>
+                          <div style={{ fontWeight: '500', marginBottom: '8px' }}>{item.testName}</div>
+                          <SearchInput
+                            type="text"
+                            placeholder={`Enter result for ${item.testName}`}
+                            value={testResults[index]?.testResult || ''}
+                            onChange={(e) => {
+                              handleTestResultChange(index, e.target.value);
+                              setError(null);
+                            }}
+                            style={{ width: '100%' }}
+                          />
+                        </div>
+                      ))}
+                    </DetailValue>
+                  </DetailRow>
+                )}
+
                 <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
                   <SearchButton
                     onClick={handleUpdateOrderStatus}
-                    disabled={updatingStatus || !updateReason.trim()}
+                    disabled={
+                      updatingStatus || 
+                      !updateReason.trim() || 
+                      (updateStatus === 'completed' && testResults.some(result => !result.testResult.trim()))
+                    }
                   >
                     {updatingStatus ? 'Updating...' : `Update to ${updateStatus}`}
                   </SearchButton>

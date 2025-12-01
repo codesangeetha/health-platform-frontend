@@ -329,9 +329,10 @@ interface LabTestListProps {
   refreshKey?: number;
   categories?: { categoryId: string; name: string }[];
   filters?: import('../../../types/lab-test/lab-test.types').LabTestFilters;
+  showActions?: boolean;
 }
 
-export const LabTestList = ({ refreshKey = 0, categories = [], filters = {} }: LabTestListProps) => {
+export const LabTestList = ({ refreshKey = 0, categories = [], filters = {}, showActions = true }: LabTestListProps) => {
   const [labTests, setLabTests] = useState<LabTest[]>([]);
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -457,13 +458,13 @@ export const LabTestList = ({ refreshKey = 0, categories = [], filters = {} }: L
                 <Th>Price</Th>
                 <Th>Status</Th>
                 <Th>Created</Th>
-                <Th>Actions</Th>
+                {showActions && <Th>Actions</Th>}
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6}>
+                  <td colSpan={showActions ? 6 : 5}>
                     <LoadingOverlay>
                       <LoadingSpinner />
                       Loading lab tests...
@@ -488,22 +489,24 @@ export const LabTestList = ({ refreshKey = 0, categories = [], filters = {} }: L
                     <Td>
                       {labTest.createdAt ? new Date(labTest.createdAt).toLocaleDateString() : '-'}
                     </Td>
-                    <ActionButtonsContainer>
-                      <ActionButtonsWrapper>
-                        <ActionButton onClick={() => handleViewDetails(labTest)}>
-                          View
-                        </ActionButton>
-                        <ActionButton onClick={() => handleEdit(labTest)}>
-                          Edit
-                        </ActionButton>
-                        <ActionButton
-                          variant="danger"
-                          onClick={() => handleDelete(labTest)}
-                        >
-                          Delete
-                        </ActionButton>
-                      </ActionButtonsWrapper>
-                    </ActionButtonsContainer>
+                    {showActions && (
+                      <ActionButtonsContainer>
+                        <ActionButtonsWrapper>
+                          <ActionButton onClick={() => handleViewDetails(labTest)}>
+                            View
+                          </ActionButton>
+                          <ActionButton onClick={() => handleEdit(labTest)}>
+                            Edit
+                          </ActionButton>
+                          <ActionButton
+                            variant="danger"
+                            onClick={() => handleDelete(labTest)}
+                          >
+                            Delete
+                          </ActionButton>
+                        </ActionButtonsWrapper>
+                      </ActionButtonsContainer>
+                    )}
                   </tr>
                 ))
               )}

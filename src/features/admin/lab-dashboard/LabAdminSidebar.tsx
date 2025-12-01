@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 
-const Sidebar = () => {
+const LabAdminSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [activeItem, setActiveItem] = useState('/admin/dashboard');
+  const [activeItem, setActiveItem] = useState('/labadmin/dashboard');
+  
   const SidebarContainer = {
     width: '240px',
     backgroundColor: '#FFFFFF',
@@ -72,22 +73,11 @@ const Sidebar = () => {
     cursor: 'pointer',
   });
 
-  const navigationItems: {
-    main: Array<{ label: string; icon: string; path: string }>;
-    management: Array<{ label: string; icon: string; path: string }>;
-  } = {
-    main: [
-      { label: 'Dashboard', icon: '📊', path: '/admin/dashboard' },
-      { label: 'Doctors', icon: '👨‍⚕️', path: '/admin/doctors' },
-      { label: 'Patients', icon: '🏥', path: '/admin/patients' },
-      { label: 'Specializations', icon: '🎯', path: '/admin/specializations' },
-      { label: 'Medicine Categories', icon: '🏷️', path: '/admin/categories' },
-      { label: 'Lab Test Categories', icon: '🧪', path: '/admin/lab-test-categories' },
-      { label: 'Lab Tests', icon: '🔬', path: '/admin/lab-tests' },
-      { label: 'Medicines', icon: '💊', path: '/admin/medicines' },
-    ],
-    management: [],
-  };
+  const navigationItems = [
+    { label: 'Dashboard', icon: '📊', path: '/labadmin/dashboard' },
+    { label: 'Lab Tests', icon: '🔬', path: '/labadmin/lab-tests' },
+    { label: 'Lab Test Orders', icon: '📋', path: '/labadmin/lab-test-orders' },
+  ];
 
   const handleNavItemClick = (path: string) => {
     setActiveItem(path);
@@ -108,8 +98,8 @@ const Sidebar = () => {
       </div>
       
       <div style={NavSection}>
-        <h2 style={NavTitle as React.CSSProperties}>MAIN</h2>
-        {navigationItems.main.map((item) => (
+        <h2 style={NavTitle as React.CSSProperties}>LAB ADMIN</h2>
+        {navigationItems.map((item) => (
           <div
             key={item.label}
             style={getNavItemStyle(activeItem === item.path)}
@@ -120,24 +110,8 @@ const Sidebar = () => {
           </div>
         ))}
       </div>
-
-      {navigationItems.management.length > 0 && (
-        <div style={NavSection}>
-          <h2 style={NavTitle as React.CSSProperties}>MANAGEMENT</h2>
-          {navigationItems.management.map((item) => (
-            <div
-              key={item.label}
-              style={getNavItemStyle(activeItem === item.path)}
-              onClick={() => handleNavItemClick(item.path)}
-            >
-              <span style={{ marginRight: '0.75rem' }}>{item.icon}</span>
-              {item.label}
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 };
 
-export default Sidebar;
+export default LabAdminSidebar;
