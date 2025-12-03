@@ -88,7 +88,13 @@ const AdminLogin = () => {
 
         try {
             setSubmitting(true);
+            // Try logging in as admin first
             await login(email, password, 'admin');
+            
+            // Note: If the credentials are for a pharmadmin or labadmin user, 
+            // the server will return the appropriate token but the login method 
+            // will store it under 'admin' userType. We'll handle the redirect
+            // based on the actual user type from the response.
             
             if (authState?.error) {
                 const ctxErr = (authState as any)?.errorCode || (authState as any)?.code || authState.error;
@@ -131,16 +137,48 @@ const AdminLogin = () => {
         if (formError) setFormError(null);
     };
 
-    const currentSession = getCurrentSession();
     const isAdminAuthenticated = authState.sessions.admin?.isAuthenticated;
+    const isPharmAdminAuthenticated = authState.sessions.pharmadmin?.isAuthenticated;
+    const isLabAdminAuthenticated = authState.sessions.labadmin?.isAuthenticated;
+    
+    // Check if either admin, pharmadmin, or labadmin is authenticated
+    const isAnyAdminAuthenticated = isAdminAuthenticated || isPharmAdminAuthenticated || isLabAdminAuthenticated;
 
     useEffect(() => {
-        if (isAdminAuthenticated && !authState.isLoading) {
-            // Get the redirect location from state or default to admin dashboard
-            const from = location.state?.from?.pathname || '/admin/dashboard';
-            navigate(from, { replace: true });
+        // Only redirect after login is complete and user is authenticated
+        if (isAnyAdminAuthenticated && !authState.isLoading && authState.currentUserType) {
+            // Get the current user from the appropriate session
+            let currentUser;
+            if (isLabAdminAuthenticated) {
+                currentUser = authState.sessions.labadmin.user;
+            } else if (isPharmAdminAuthenticated) {
+                currentUser = authState.sessions.pharmadmin.user;
+            } else {
+                currentUser = authState.sessions.admin.user;
+            }
+            
+            let redirectPath = '/admin/dashboard';
+            
+            // Check the user type and set appropriate redirect path
+            if (currentUser?.userType === 'labadmin') {
+                redirectPath = '/labadmin/dashboard';
+            } else if (currentUser?.userType === 'pharmadmin') {
+                redirectPath = '/pharmadmin/dashboard';
+            } else if (currentUser?.userType === 'admin') {
+                redirectPath = '/admin/dashboard';
+            }
+            
+            // Get the redirect location from state or use the determined path
+            const from = location.state?.from?.pathname || redirectPath;
+            
+            // Use setTimeout to avoid immediate navigation during render
+            const timer = setTimeout(() => {
+                navigate(from, { replace: true });
+            }, 100);
+            
+            return () => clearTimeout(timer);
         }
-    }, [isAdminAuthenticated, authState.isLoading, navigate, location]);
+    }, [isAnyAdminAuthenticated, authState.isLoading, authState.currentUserType, navigate, location.state?.from?.pathname]);
 
     // Show loading while checking authentication
     if (authState.isLoading) {
@@ -158,8 +196,8 @@ const AdminLogin = () => {
         );
     }
 
-    // Don't show login form if admin user is already authenticated
-    if (isAdminAuthenticated) {
+    // Don't show login form if admin, pharmadmin, or labadmin user is already authenticated
+    if (isAnyAdminAuthenticated) {
         return (
             <div style={{
                 display: 'flex',

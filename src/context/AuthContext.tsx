@@ -10,11 +10,13 @@ interface UserSession {
 }
 
 interface AuthState {
-  currentUserType: 'patient' | 'doctor' | 'admin' | null;
+  currentUserType: 'patient' | 'doctor' | 'admin' | 'pharmadmin' | 'labadmin' | null;
   sessions: {
     patient: UserSession;
     doctor: UserSession;
     admin: UserSession;
+    pharmadmin: UserSession;
+    labadmin: UserSession;
   };
   isLoading: boolean;
   error: string | null;
@@ -24,11 +26,11 @@ interface AuthContextType {
   authState: AuthState;
   setAuthState: Dispatch<SetStateAction<AuthState>>;
   clearError: () => void;
-  login: (email: string, password: string, userType: 'patient' | 'doctor' | 'admin') => Promise<void>;
+  login: (email: string, password: string, userType: 'patient' | 'doctor' | 'admin' | 'pharmadmin' | 'labadmin') => Promise<void>;
   register: (userData: RegisterData) => Promise<{ success: boolean; message?: string }>;
-  logout: (userType?: 'patient' | 'doctor' | 'admin') => void;
+  logout: (userType?: 'patient' | 'doctor' | 'admin' | 'pharmadmin' | 'labadmin') => void;
   logoutAll: () => void;
-  switchUser: (userType: 'patient' | 'doctor' | 'admin') => void;
+  switchUser: (userType: 'patient' | 'doctor' | 'admin' | 'pharmadmin' | 'labadmin') => void;
   getCurrentSession: () => UserSession | null;
   googleLogin: () => Promise<void>;
   handleGoogleCallback: () => Promise<AuthResponseData>;
@@ -74,6 +76,8 @@ const defaultAuthState: AuthState = {
     patient: createEmptySession(),
     doctor: createEmptySession(),
     admin: createEmptySession(),
+    pharmadmin: createEmptySession(),
+    labadmin: createEmptySession(),
   },
   isLoading: false,
   error: null,
@@ -114,9 +118,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAuthState(prev => ({ ...prev, isLoading: true }));
 
         // Initialize sessions from localStorage
-        const userTypes: Array<'patient' | 'doctor' | 'admin'> = ['patient', 'doctor', 'admin'];
+        const userTypes: Array<'patient' | 'doctor' | 'admin' | 'pharmadmin' | 'labadmin'> = ['patient', 'doctor', 'admin', 'pharmadmin', 'labadmin'];
         const newSessions = { ...defaultAuthState.sessions };
-        let firstAuthenticatedUserType: 'patient' | 'doctor' | 'admin' | null = null;
+        let firstAuthenticatedUserType: 'patient' | 'doctor' | 'admin' | 'pharmadmin' | 'labadmin' | null = null;
 
         for (const userType of userTypes) {
           const user = AuthService.getCurrentUser(userType);
@@ -161,7 +165,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('👤 External auth update - User:', user);
       console.log('🔑 External auth update - Token length:', token?.length || 0);
 
-      const userType = user.userType as 'patient' | 'doctor' | 'admin';
+      const userType = user.userType as 'patient' | 'doctor' | 'admin' | 'pharmadmin' | 'labadmin';
       
       setAuthState(prev => ({
         ...prev,
@@ -196,23 +200,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthState(prev => ({ ...prev, error: null }));
   };
 
-  const login = async (email: string, password: string, userType: 'patient' | 'doctor' | 'admin') => {
+  const login = async (email: string, password: string, userType: 'patient' | 'doctor' | 'admin' | 'pharmadmin' | 'labadmin') => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
       const data = await AuthService.login(email, password, userType);
       console.log("data", data);
       
+      // Handle the case where admin credentials return a pharmadmin or labadmin user
+      const actualUserType = data.user.userType as 'patient' | 'doctor' | 'admin' | 'pharmadmin' | 'labadmin';
+      const sessionUserType = userType === 'admin' && (actualUserType === 'pharmadmin' || actualUserType === 'labadmin') 
+        ? actualUserType 
+        : userType;
+      
       setAuthState(prev => ({
         ...prev,
         sessions: {
           ...prev.sessions,
-          [userType]: {
+          [sessionUserType]: {
             user: data.user,
             token: data.token,
             isAuthenticated: true,
           },
         },
-        currentUserType: userType,
+        currentUserType: sessionUserType,
         isLoading: false,
         error: null,
       }));
@@ -255,7 +265,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = async (userType?: 'patient' | 'doctor' | 'admin') => {
+  const logout = async (userType?: 'patient' | 'doctor' | 'admin' | 'pharmadmin' | 'labadmin') => {
     console.log('🚪 [AUTH_CONTEXT] Logout initiated by user');
     
     const targetUserType = userType || authState.currentUserType;
@@ -287,7 +297,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (prev.currentUserType === targetUserType) {
         newCurrentUserType = null;
         // Find another authenticated user
-        for (const type of ['patient', 'doctor', 'admin'] as const) {
+        for (const type of ['patient', 'doctor', 'admin', 'pharmadmin', 'labadmin'] as const) {
           if (newSessions[type].isAuthenticated) {
             newCurrentUserType = type;
             break;
@@ -319,7 +329,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     try {
       // Call backend logout for all user types
-      for (const userType of ['patient', 'doctor', 'admin'] as const) {
+      for (const userType of ['patient', 'doctor', 'admin', 'pharmadmin', 'labadmin'] as const) {
         if (authState.sessions[userType].isAuthenticated) {
           try {
             await AuthService.logoutFromBackend(userType);
@@ -347,7 +357,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log('🎉 [AUTH_CONTEXT] All users logged out');
   };
 
-  const switchUser = (userType: 'patient' | 'doctor' | 'admin') => {
+  const switchUser = (userType: 'patient' | 'doctor' | 'admin' | 'pharmadmin' | 'labadmin') => {
     if (authState.sessions[userType].isAuthenticated) {
       setAuthState(prev => ({
         ...prev,

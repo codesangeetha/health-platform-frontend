@@ -82,9 +82,9 @@ export const getOrders = async (params: OrdersRequest = {}): Promise<OrdersRespo
     if (startDate) queryParams.append('startDate', startDate);
     if (endDate) queryParams.append('endDate', endDate);
 
-    const token = getAuthToken('admin');
+    const token = getAuthToken('labadmin');
     if (!token) {
-      throw new ApiError('No authentication token found', 401);
+      throw new ApiError('No lab admin authentication token found', 401);
     }
 
     const response = await fetch(
@@ -117,9 +117,9 @@ export const updateOrderStatus = async (
   updateData: UpdateOrderRequest
 ): Promise<{ success: boolean; message: string; timestamp: string; data: Order }> => {
   try {
-    const token = getAuthToken('admin');
+    const token = getAuthToken('labadmin');
     if (!token) {
-      throw new ApiError('No authentication token found', 401);
+      throw new ApiError('No lab admin authentication token found', 401);
     }
 
     const response = await fetch(
@@ -148,15 +148,25 @@ export const updateOrderStatus = async (
   }
 };
 
+export interface TestResult {
+  labTestId: string;
+  testResult: string;
+}
+
+export interface UpdateLabTestOrderRequest {
+  status: 'completed' | 'cancelled';
+  reason: string;
+  result?: TestResult[];
+}
+
 export const updateLabTestOrderStatus = async (
   orderId: string,
-  status: 'completed' | 'cancelled',
-  reason: string
+  updateData: UpdateLabTestOrderRequest
 ): Promise<{ success: boolean; message: string; timestamp: string; data: Order }> => {
   try {
-    const token = getAuthToken('admin');
+    const token = getAuthToken('labadmin');
     if (!token) {
-      throw new ApiError('No authentication token found', 401);
+      throw new ApiError('No lab admin authentication token found', 401);
     }
 
     const response = await fetch(
@@ -167,7 +177,7 @@ export const updateLabTestOrderStatus = async (
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ status, reason }),
+        body: JSON.stringify(updateData),
       }
     );
 
@@ -191,9 +201,9 @@ export const updatePharmacyOrderStatus = async (
   reason: string
 ): Promise<{ success: boolean; message: string; timestamp: string; data: Order }> => {
   try {
-    const token = getAuthToken('admin');
+    const token = getAuthToken('labadmin');
     if (!token) {
-      throw new ApiError('No authentication token found', 401);
+      throw new ApiError('No lab admin authentication token found', 401);
     }
 
     const response = await fetch(
@@ -222,20 +232,46 @@ export const updatePharmacyOrderStatus = async (
   }
 };
 
-export const getOrderById = async (orderId: string): Promise<{
+export const getLabTestOrderById = async (orderId: string): Promise<{
   success: boolean;
   message: string;
   timestamp: string;
-  data: Order;
+  data: {
+    order: {
+      orderId: string;
+      orderDate: string;
+      status: string;
+      totalAmount: number;
+      testItems: Array<{
+        testName: string;
+        price: number;
+        labTestId: string;
+        labTestDetails: {
+          _id: string;
+          name: string;
+          categoryId: string;
+          price: number;
+          description: string;
+          isActive: boolean;
+          createdAt: string;
+          updatedAt: string;
+        };
+      }>;
+      collectionMethod: string;
+      scheduledDate: string;
+      prescriptionId: string;
+      completedDate?: string;
+    };
+  };
 }> => {
   try {
-    const token = getAuthToken('admin');
+    const token = getAuthToken('labadmin');
     if (!token) {
-      throw new ApiError('No authentication token found', 401);
+      throw new ApiError('No lab admin authentication token found', 401);
     }
 
     const response = await fetch(
-      `${BASE_URL}/api/v1/pharmacy/orders/${orderId}`,
+      `${BASE_URL}/api/v1/lab-test-orders/${orderId}`,
       {
         method: 'GET',
         headers: {
@@ -255,6 +291,6 @@ export const getOrderById = async (orderId: string): Promise<{
     if (error instanceof ApiError) {
       throw error;
     }
-    throw new ApiError('Failed to fetch order details', 500);
+    throw new ApiError('Failed to fetch lab test order details', 500);
   }
 };

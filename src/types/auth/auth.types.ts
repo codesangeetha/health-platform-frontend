@@ -7,7 +7,7 @@ export interface LoginResponse {
     user: {
       userId: string;
       email: string;
-      userType: 'patient' | 'doctor' | 'admin';
+      userType: 'patient' | 'doctor' | 'admin' | 'pharmadmin' | 'labadmin';
       firstName: string;
       lastName: string;
     };
@@ -20,7 +20,7 @@ export interface AuthResponseData {
   user: {
     userId: string;
     email: string;
-    userType: 'patient' | 'doctor' | 'admin';
+    userType: 'patient' | 'doctor' | 'admin' | 'pharmadmin' | 'labadmin';
     firstName: string;
     lastName: string;
   };
