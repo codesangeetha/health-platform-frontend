@@ -88,6 +88,9 @@ export const DoctorAppointments = () => {
     total: 0,
     totalPages: 0,
   });
+  const [selectedPrescription, setSelectedPrescription] = useState<any>(null);
+  const [prescriptionLoading, setPrescriptionLoading] = useState<boolean>(false);
+  const [showPrescriptionModal, setShowPrescriptionModal] = useState<boolean>(false);
 
   useEffect(() => {
     fetchAppointments();
@@ -135,6 +138,27 @@ export const DoctorAppointments = () => {
   const handleVideoCall = (appointment: DoctorAppointment) => {
     // Navigate to video call page with appointment ID
     navigate(`/doctor/video-call/${appointment.appointmentId}`);
+  };
+
+  const fetchPrescriptionDetails = async (appointmentId: string) => {
+    try {
+      setPrescriptionLoading(true);
+      const response = await DoctorService.getPrescriptionDetails(appointmentId);
+      if (response.success && response.data) {
+        setSelectedPrescription(response.data);
+        setShowPrescriptionModal(true);
+      }
+    } catch (err: any) {
+      console.error('Error fetching prescription details:', err);
+      setError(err.message || 'Failed to fetch prescription details');
+    } finally {
+      setPrescriptionLoading(false);
+    }
+  };
+
+  const closePrescriptionModal = () => {
+    setShowPrescriptionModal(false);
+    setSelectedPrescription(null);
   };
 
   const getStatusColor = (status: string) => {
@@ -434,6 +458,38 @@ export const DoctorAppointments = () => {
                                 )}
                               </>
                             )}
+
+                            {/* View Prescription Button */}
+                            <button
+                              onClick={() => fetchPrescriptionDetails(appointment.appointmentId)}
+                              disabled={prescriptionLoading}
+                              style={{
+                                padding: '0.5rem 1rem',
+                                backgroundColor: prescriptionLoading ? '#9CA3AF' : '#8B5CF6',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '0.5rem',
+                                fontSize: DESIGN_SYSTEM.typography.body.fontSize,
+                                fontWeight: '500',
+                                cursor: prescriptionLoading ? 'not-allowed' : 'pointer',
+                                transition: 'all 0.2s',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem'
+                              }}
+                              onMouseOver={(e) => {
+                                if (!prescriptionLoading) {
+                                  e.currentTarget.style.backgroundColor = '#7C3AED';
+                                }
+                              }}
+                              onMouseOut={(e) => {
+                                if (!prescriptionLoading) {
+                                  e.currentTarget.style.backgroundColor = '#8B5CF6';
+                                }
+                              }}
+                            >
+                              📋 {prescriptionLoading ? 'Loading...' : 'View Prescription'}
+                            </button>
                             <div style={{
                               fontSize: DESIGN_SYSTEM.typography.subtext.fontSize,
                               color: DESIGN_SYSTEM.colors.text_light,
@@ -499,6 +555,408 @@ export const DoctorAppointments = () => {
           </div>
         </div>
       </div>
+
+      {/* Prescription Details Modal */}
+      {showPrescriptionModal && selectedPrescription && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '1rem'
+          }}
+          onClick={closePrescriptionModal}
+        >
+          <div 
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '0.75rem',
+              maxWidth: '800px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{
+              padding: '1.5rem',
+              borderBottom: `1px solid ${DESIGN_SYSTEM.colors.border}`,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <h2 style={{
+                fontSize: DESIGN_SYSTEM.typography.headings.h1.fontSize,
+                fontWeight: DESIGN_SYSTEM.typography.headings.h1.fontWeight,
+                color: DESIGN_SYSTEM.colors.text_dark,
+                margin: 0
+              }}>
+                Prescription Details
+              </h2>
+              <button
+                onClick={closePrescriptionModal}
+                style={{
+                  padding: '0.5rem',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  cursor: 'pointer',
+                  fontSize: '1.5rem',
+                  color: DESIGN_SYSTEM.colors.text_light
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = DESIGN_SYSTEM.colors.border;
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div style={{ padding: '1.5rem' }}>
+              {/* Prescription Info */}
+              {selectedPrescription.prescription && (
+                <div style={{ marginBottom: '2rem' }}>
+                  <h3 style={{
+                    fontSize: DESIGN_SYSTEM.typography.headings.h2.fontSize,
+                    fontWeight: DESIGN_SYSTEM.typography.headings.h2.fontWeight,
+                    color: DESIGN_SYSTEM.colors.text_dark,
+                    marginBottom: '1rem'
+                  }}>
+                    Prescription Information
+                  </h3>
+                  
+                  <div style={{
+                    backgroundColor: DESIGN_SYSTEM.colors.background_light,
+                    borderRadius: '0.5rem',
+                    padding: '1rem',
+                    marginBottom: '1rem'
+                  }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                      <div>
+                        <strong>Diagnosis:</strong>
+                        <span style={{ marginLeft: '0.5rem', color: DESIGN_SYSTEM.colors.text_light }}>
+                          {selectedPrescription.prescription.diagnosis}
+                        </span>
+                      </div>
+                      <div>
+                        <strong>Status:</strong>
+                        <span style={{
+                          marginLeft: '0.5rem',
+                          padding: '0.25rem 0.75rem',
+                          borderRadius: '9999px',
+                          fontSize: '0.75rem',
+                          fontWeight: '600',
+                          backgroundColor: getStatusColor(selectedPrescription.prescription.status),
+                          color: selectedPrescription.prescription.status === 'Created' ? '#065F46' : DESIGN_SYSTEM.colors.text_light
+                        }}>
+                          {selectedPrescription.prescription.status}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {selectedPrescription.prescription.notes && (
+                      <div>
+                        <strong>Notes:</strong>
+                        <p style={{ 
+                          margin: '0.5rem 0 0 0', 
+                          color: DESIGN_SYSTEM.colors.text_light,
+                          fontStyle: 'italic'
+                        }}>
+                          {selectedPrescription.prescription.notes}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Medicines */}
+              {selectedPrescription.prescription?.medicines && selectedPrescription.prescription.medicines.length > 0 && (
+                <div style={{ marginBottom: '2rem' }}>
+                  <h3 style={{
+                    fontSize: DESIGN_SYSTEM.typography.headings.h2.fontSize,
+                    fontWeight: DESIGN_SYSTEM.typography.headings.h2.fontWeight,
+                    color: DESIGN_SYSTEM.colors.text_dark,
+                    marginBottom: '1rem'
+                  }}>
+                    Medicines ({selectedPrescription.prescription.medicines.length})
+                  </h3>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {selectedPrescription.prescription.medicines.map((medicine: any, index: number) => (
+                      <div
+                        key={index}
+                        style={{
+                          backgroundColor: 'white',
+                          border: `1px solid ${DESIGN_SYSTEM.colors.border}`,
+                          borderRadius: '0.5rem',
+                          padding: '1rem'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.5rem' }}>
+                          <h4 style={{
+                            fontSize: '1rem',
+                            fontWeight: '600',
+                            color: DESIGN_SYSTEM.colors.text_dark,
+                            margin: 0
+                          }}>
+                            {medicine.name}
+                          </h4>
+                          <span style={{
+                            fontSize: '0.75rem',
+                            color: DESIGN_SYSTEM.colors.text_light
+                          }}>
+                            {medicine.dosage}
+                          </span>
+                        </div>
+                        
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.5rem', fontSize: '0.875rem' }}>
+                          <div>
+                            <strong>Timing:</strong>
+                            <span style={{ marginLeft: '0.5rem', color: DESIGN_SYSTEM.colors.text_light }}>
+                              {medicine.timing?.join(', ') || 'Not specified'}
+                            </span>
+                          </div>
+                          <div>
+                            <strong>Duration:</strong>
+                            <span style={{ marginLeft: '0.5rem', color: DESIGN_SYSTEM.colors.text_light }}>
+                              {medicine.duration} day(s)
+                            </span>
+                          </div>
+                          <div>
+                            <strong>Meal Time:</strong>
+                            <span style={{ marginLeft: '0.5rem', color: DESIGN_SYSTEM.colors.text_light }}>
+                              {medicine.mealTime || 'Not specified'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Lab Test Orders */}
+              {selectedPrescription.labTestOrders && selectedPrescription.labTestOrders.length > 0 && (
+                <div style={{ marginBottom: '2rem' }}>
+                  <h3 style={{
+                    fontSize: DESIGN_SYSTEM.typography.headings.h2.fontSize,
+                    fontWeight: DESIGN_SYSTEM.typography.headings.h2.fontWeight,
+                    color: DESIGN_SYSTEM.colors.text_dark,
+                    marginBottom: '1rem'
+                  }}>
+                    Lab Test Orders ({selectedPrescription.labTestOrders.length})
+                  </h3>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {selectedPrescription.labTestOrders.map((order: any, index: number) => (
+                      <div
+                        key={index}
+                        style={{
+                          backgroundColor: 'white',
+                          border: `1px solid ${DESIGN_SYSTEM.colors.border}`,
+                          borderRadius: '0.5rem',
+                          padding: '1rem'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                          <div>
+                            <h4 style={{
+                              fontSize: '1rem',
+                              fontWeight: '600',
+                              color: DESIGN_SYSTEM.colors.text_dark,
+                              margin: 0
+                            }}>
+                              Order ID: {order.orderId}
+                            </h4>
+                            <span style={{
+                              fontSize: '0.75rem',
+                              color: DESIGN_SYSTEM.colors.text_light
+                            }}>
+                              Total: ${order.totalAmount}
+                            </span>
+                          </div>
+                          <span style={{
+                            padding: '0.25rem 0.75rem',
+                            borderRadius: '9999px',
+                            fontSize: '0.75rem',
+                            fontWeight: '600',
+                            backgroundColor: getStatusColor(order.status),
+                            color: order.status === 'completed' ? '#065F46' : DESIGN_SYSTEM.colors.text_light
+                          }}>
+                            {order.status}
+                          </span>
+                        </div>
+
+                        <div style={{ marginBottom: '1rem' }}>
+                          <strong>Tests:</strong>
+                          <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            {order.items?.map((item: any, itemIndex: number) => (
+                              <div
+                                key={itemIndex}
+                                style={{
+                                  backgroundColor: DESIGN_SYSTEM.colors.background_light,
+                                  padding: '0.75rem',
+                                  borderRadius: '0.375rem'
+                                }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <span style={{ fontWeight: '500' }}>{item.name}</span>
+                                  <span style={{ fontSize: '0.875rem', color: DESIGN_SYSTEM.colors.text_light }}>
+                                    ${item.price} x {item.quantity}
+                                  </span>
+                                </div>
+                                {item.result && (
+                                  <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                                    <strong>Result:</strong>
+                                    <span style={{ marginLeft: '0.5rem' }}>{item.result}</span>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {order.deliveryAddress && (
+                          <div>
+                            <strong>Collection Method:</strong>
+                            <span style={{ marginLeft: '0.5rem', color: DESIGN_SYSTEM.colors.text_light }}>
+                              {order.collectionMethod?.replace('_', ' ').toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Medicine Orders */}
+              {selectedPrescription.medicineOrders && selectedPrescription.medicineOrders.length > 0 && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <h3 style={{
+                    fontSize: DESIGN_SYSTEM.typography.headings.h2.fontSize,
+                    fontWeight: DESIGN_SYSTEM.typography.headings.h2.fontWeight,
+                    color: DESIGN_SYSTEM.colors.text_dark,
+                    marginBottom: '1rem'
+                  }}>
+                    Medicine Orders ({selectedPrescription.medicineOrders.length})
+                  </h3>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {selectedPrescription.medicineOrders.map((order: any, index: number) => (
+                      <div
+                        key={index}
+                        style={{
+                          backgroundColor: 'white',
+                          border: `1px solid ${DESIGN_SYSTEM.colors.border}`,
+                          borderRadius: '0.5rem',
+                          padding: '1rem'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                          <div>
+                            <h4 style={{
+                              fontSize: '1rem',
+                              fontWeight: '600',
+                              color: DESIGN_SYSTEM.colors.text_dark,
+                              margin: 0
+                            }}>
+                              Order ID: {order.orderId}
+                            </h4>
+                            <span style={{
+                              fontSize: '0.75rem',
+                              color: DESIGN_SYSTEM.colors.text_light
+                            }}>
+                              Total: ${order.totalAmount}
+                            </span>
+                          </div>
+                          <span style={{
+                            padding: '0.25rem 0.75rem',
+                            borderRadius: '9999px',
+                            fontSize: '0.75rem',
+                            fontWeight: '600',
+                            backgroundColor: getStatusColor(order.status),
+                            color: order.status === 'completed' ? '#065F46' : DESIGN_SYSTEM.colors.text_light
+                          }}>
+                            {order.status}
+                          </span>
+                        </div>
+
+                        <div style={{ marginBottom: '1rem' }}>
+                          <strong>Medicines:</strong>
+                          <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            {order.items?.map((item: any, itemIndex: number) => (
+                              <div
+                                key={itemIndex}
+                                style={{
+                                  backgroundColor: DESIGN_SYSTEM.colors.background_light,
+                                  padding: '0.75rem',
+                                  borderRadius: '0.375rem'
+                                }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <span style={{ fontWeight: '500' }}>{item.name}</span>
+                                  <span style={{ fontSize: '0.875rem', color: DESIGN_SYSTEM.colors.text_light }}>
+                                    ${item.price} x {item.quantity}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', fontSize: '0.875rem' }}>
+                          <div>
+                            <strong>Delivery Method:</strong>
+                            <span style={{ marginLeft: '0.5rem', color: DESIGN_SYSTEM.colors.text_light }}>
+                              {order.deliveryMethod?.toUpperCase()}
+                            </span>
+                          </div>
+                          {order.estimatedDelivery && (
+                            <div>
+                              <strong>Estimated Delivery:</strong>
+                              <span style={{ marginLeft: '0.5rem', color: DESIGN_SYSTEM.colors.text_light }}>
+                                {new Date(order.estimatedDelivery).toLocaleDateString()}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* No Data Message */}
+              {!selectedPrescription.prescription?.medicines?.length && 
+               !selectedPrescription.labTestOrders?.length && 
+               !selectedPrescription.medicineOrders?.length && (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '2rem',
+                  color: DESIGN_SYSTEM.colors.text_light
+                }}>
+                  <p>No prescription details available for this appointment.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </DoctorLayout>
   );
 };

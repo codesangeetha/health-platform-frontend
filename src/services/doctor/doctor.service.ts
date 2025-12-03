@@ -266,4 +266,36 @@ export class DoctorService {
       throw new ApiError('Failed to fetch doctor profile');
     }
   }
+
+  /**
+   * Get prescription details by appointment ID
+   */
+  static async getPrescriptionDetails(appointmentId: string): Promise<any> {
+    try {
+      const token = getAuthToken('doctor');
+      if (!token) {
+        throw new ApiError('No authentication token found', 401);
+      }
+
+      const response = await fetch(`${API_URL}/prescriptions/appointment/${appointmentId}/details`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        await handleApiError(response);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      throw new ApiError('Failed to fetch prescription details');
+    }
+  }
 }
