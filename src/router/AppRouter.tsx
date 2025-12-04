@@ -55,6 +55,7 @@ import { LabAdminRoute } from './LabAdminRoute';
 import { LabAdminDashboard } from '../features/admin/lab-dashboard/LabAdminDashboard';
 import { LabAdminLabTestsPage } from '../features/admin/lab-dashboard/LabAdminLabTestsPage';
 import { LabAdminOrdersPage } from '../features/admin/lab-dashboard/LabAdminOrdersPage';
+import { NotFoundPage } from '../pages/NotFoundPage';
 
 // Component to combine PatientRoute with PatientLayout
 const ProtectedPatientLayout = () => {
@@ -293,6 +294,10 @@ const router = createBrowserRouter([
             element: <LabAdminOrdersPage />,
           }
         ]
+      },
+      {
+        path: '*',
+        element: <NotFoundPage />
       }
     ]
   }

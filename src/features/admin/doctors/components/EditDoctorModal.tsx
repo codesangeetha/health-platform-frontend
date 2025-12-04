@@ -216,7 +216,6 @@ interface EditFormData {
   phone: string;
   specialization: string;
   qualification: string;
-  hospital: string;
   experience: string;
   consultationFee: string;
   isActive: boolean;
@@ -243,7 +242,6 @@ export function EditDoctorModal({
     phone: '',
     specialization: '',
     qualification: '',
-    hospital: '',
     experience: '',
     consultationFee: '',
     isActive: true,
@@ -270,7 +268,6 @@ export function EditDoctorModal({
         phone: doctor.phone || '',
         specialization: doctor.specialization || '',
         qualification: doctor.qualification || '',
-        hospital: doctor.hospital || '',
         experience: doctor.experience?.toString() || '',
         consultationFee: doctor.consultationFee?.toString() || '',
         isActive: doctor.isActive || false,
@@ -365,12 +362,7 @@ export function EditDoctorModal({
     return undefined;
   };
 
-  const validateHospital = (v: string) => {
-    const s = v.trim();
-    if (!s) return 'Hospital is required.';
-    if (/\d/.test(s)) return 'Hospital name cannot contain numbers.';
-    return undefined;
-  };
+
 
   const validateExperience = (v: string) => {
     if (!v) return 'Experience is required.';
@@ -409,7 +401,6 @@ export function EditDoctorModal({
       case 'phone': return validatePhone(value as string);
       case 'specialization': return validateSpecialization(value as string);
       case 'qualification': return validateQualification(value as string);
-      case 'hospital': return validateHospital(value as string);
       case 'experience': return validateExperience(value as string);
       case 'consultationFee': return validateConsultationFee(value as string);
       case 'availableTimeStart': return validateAvailableTimeStart(value as string);
@@ -427,7 +418,6 @@ export function EditDoctorModal({
       phone: validatePhone(form.phone) || '',
       specialization: validateSpecialization(form.specialization) || '',
       qualification: validateQualification(form.qualification) || '',
-      hospital: validateHospital(form.hospital) || '',
       experience: validateExperience(form.experience) || '',
       consultationFee: validateConsultationFee(form.consultationFee) || '',
       availableTimeStart: validateAvailableTimeStart(form.availableTimeStart) || '',
@@ -509,7 +499,6 @@ export function EditDoctorModal({
         phone: true,
         specialization: true,
         qualification: true,
-        hospital: true,
         experience: true,
         consultationFee: true,
         availableTimeStart: true,
@@ -529,7 +518,6 @@ export function EditDoctorModal({
         phone: form.phone.trim(),
         specialization: form.specialization.trim(),
         qualification: form.qualification.trim(),
-        hospital: form.hospital.trim(),
         experience: Number(form.experience),
         consultationFee: Number(form.consultationFee),
         isActive: form.isActive,
@@ -682,18 +670,6 @@ export function EditDoctorModal({
             </InputRow>
 
             <InputRow>
-              <Label>
-                Hospital*
-                <Input
-                  aria-invalid={!!fieldErrors.hospital}
-                  value={form.hospital}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  name="hospital"
-                  placeholder="General Hospital"
-                />
-                {fieldErrors.hospital && <ErrorText>{fieldErrors.hospital}</ErrorText>}
-              </Label>
               <Label>
                 Experience (years)*
                 <Input

@@ -306,7 +306,7 @@ export const PatientDashboard = () => {
                   <button 
                     className="pd-btn pd-btn-primary-light" 
                     style={{ marginTop: '16px' }}
-                    onClick={() => navigate('/patient/book-appointment')}
+                    onClick={() => navigate('/patient/doctor-directory')}
                   >
                     Book Your First Appointment
                   </button>
