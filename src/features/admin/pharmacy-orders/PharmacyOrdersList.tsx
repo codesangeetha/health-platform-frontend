@@ -1123,8 +1123,6 @@ const closeModal = () => {
                     >
                       <option value="completed">Completed</option>
                       <option value="cancelled">Cancelled</option>
-                      <option value="shipped">Shipped</option>
-                      <option value="delivered">Delivered</option>
                     </SearchSelect>
                   </DetailValue>
                 </DetailRow>

@@ -181,7 +181,6 @@ const TopBar = ({ onLogout }: { onLogout: () => void }) => {
           {getUserInitials()}
         </div>
         <div style={UserInfo}>
-          <span style={UserName}>{getUserDisplayName()}</span>
           <span style={UserRole}>Administrator</span>
         </div>
       </div>

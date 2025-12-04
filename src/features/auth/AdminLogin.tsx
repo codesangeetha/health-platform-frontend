@@ -20,6 +20,7 @@ const AdminLogin = () => {
     const location = useLocation();
     const [submitting, setSubmitting] = useState(false);
     const [scrolled, setScrolled] = useState(false);
+    const [navigationGuard, setNavigationGuard] = useState(false);
 
     // Validation states
     const [errors, setErrors] = useState<FieldErrors>({});
@@ -145,8 +146,20 @@ const AdminLogin = () => {
     const isAnyAdminAuthenticated = isAdminAuthenticated || isPharmAdminAuthenticated || isLabAdminAuthenticated;
 
     useEffect(() => {
+        console.log('🔑 [AdminLogin] Auth state changed:');
+        console.log('   - isAnyAdminAuthenticated:', isAnyAdminAuthenticated);
+        console.log('   - authState.isLoading:', authState.isLoading);
+        console.log('   - authState.currentUserType:', authState.currentUserType);
+        console.log('   - navigationGuard:', navigationGuard);
+        console.log('   - currentUserType from sessions:', {
+            labadmin: isLabAdminAuthenticated,
+            pharmadmin: isPharmAdminAuthenticated,
+            admin: isAdminAuthenticated
+        });
+
         // Only redirect after login is complete and user is authenticated
-        if (isAnyAdminAuthenticated && !authState.isLoading && authState.currentUserType) {
+        // Add additional checks to prevent infinite loops
+        if (isAnyAdminAuthenticated && !authState.isLoading && authState.currentUserType && !navigationGuard) {
             // Get the current user from the appropriate session
             let currentUser;
             if (isLabAdminAuthenticated) {
@@ -157,28 +170,61 @@ const AdminLogin = () => {
                 currentUser = authState.sessions.admin.user;
             }
             
+            console.log('👤 [AdminLogin] Current user for redirect:', currentUser);
+            
             let redirectPath = '/admin/dashboard';
             
             // Check the user type and set appropriate redirect path
             if (currentUser?.userType === 'labadmin') {
                 redirectPath = '/labadmin/dashboard';
+                console.log('🏥 [AdminLogin] Detected labadmin user, redirecting to:', redirectPath);
             } else if (currentUser?.userType === 'pharmadmin') {
                 redirectPath = '/pharmadmin/dashboard';
+                console.log('💊 [AdminLogin] Detected pharmadmin user, redirecting to:', redirectPath);
             } else if (currentUser?.userType === 'admin') {
                 redirectPath = '/admin/dashboard';
+                console.log('👨‍💼 [AdminLogin] Detected admin user, redirecting to:', redirectPath);
+            } else {
+                console.log('❓ [AdminLogin] Unknown user type:', currentUser?.userType);
             }
             
-            // Get the redirect location from state or use the determined path
-            const from = location.state?.from?.pathname || redirectPath;
+            // ALWAYS redirect to the correct dashboard based on user type for admin logins
+            // Ignore location.state to prevent redirect path override issues
+            let from = redirectPath;
+            console.log('🏁 [AdminLogin] Direct redirect to user dashboard based on user type:', from);
+            console.log('📍 [AdminLogin] Ignoring location.state to prevent path conflicts');
+            
+            // Prevent navigation if already on the target path
+            if (window.location.pathname === from) {
+                console.log('⚠️ [AdminLogin] Already on target path, skipping navigation');
+                return;
+            }
+            
+            console.log('🔄 [AdminLogin] Navigating to:', from);
+            
+            // Activate navigation guard to prevent multiple rapid navigations
+            setNavigationGuard(true);
+            
+            console.log('🛡️ [AdminLogin] Navigation guard activated');
             
             // Use setTimeout to avoid immediate navigation during render
             const timer = setTimeout(() => {
+                console.log('✅ [AdminLogin] Executing navigation to:', from);
                 navigate(from, { replace: true });
             }, 100);
             
-            return () => clearTimeout(timer);
+            return () => {
+                console.log('🧹 [AdminLogin] Cleaning up navigation timer');
+                clearTimeout(timer);
+                // Reset navigation guard after navigation completes
+                setTimeout(() => setNavigationGuard(false), 500);
+            };
+        } else if (navigationGuard) {
+            // Reset navigation guard if conditions are no longer met
+            console.log('🔄 [AdminLogin] Resetting navigation guard due to changed conditions');
+            setNavigationGuard(false);
         }
-    }, [isAnyAdminAuthenticated, authState.isLoading, authState.currentUserType, navigate, location.state?.from?.pathname]);
+    }, [isAnyAdminAuthenticated, authState.isLoading, authState.currentUserType, navigate, location.state?.from?.pathname, navigationGuard]);
 
     // Show loading while checking authentication
     if (authState.isLoading) {
@@ -197,7 +243,8 @@ const AdminLogin = () => {
     }
 
     // Don't show login form if admin, pharmadmin, or labadmin user is already authenticated
-    if (isAnyAdminAuthenticated) {
+    // Only show redirecting message if we're actually going to redirect (not in loading state)
+    if (isAnyAdminAuthenticated && !authState.isLoading) {
         return (
             <div style={{
                 display: 'flex',
