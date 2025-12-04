@@ -169,7 +169,6 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
     dateOfBirth: '',
     specialization: '',
     qualification: '',
-    hospital: '',
     licenseNumber: '',
     experience: '',
     consultationFee: undefined,
@@ -283,12 +282,7 @@ export function CreateDoctorModal({ open, onClose, onCreated }: { open: boolean;
     return undefined;
   };
 
-  const validateHospital = (v: string) => {
-    const s = v.trim();
-    if (!s) return 'Hospital is required.';
-    if (/\d/.test(s)) return 'Hospital name cannot contain numbers.';
-    return undefined;
-  };
+
 
   const validateLicenseNumber = (v: string) => {
     const s = v.trim();
@@ -340,7 +334,6 @@ const validateField = (name: keyof typeof form, value: string | string[] | { sta
       case 'dateOfBirth': return validateDOB(value as string);
       case 'specialization': return validateSpecialization(value as string);
       case 'qualification': return validateQualification(value as string);
-      case 'hospital': return validateHospital(value as string);
       case 'licenseNumber': return validateLicenseNumber(value as string);
       case 'experience': return validateExperience(value as string);
       case 'consultationFee': return validateConsultationFee(value as string);
@@ -367,7 +360,6 @@ const validateField = (name: keyof typeof form, value: string | string[] | { sta
       dateOfBirth: validateDOB(form.dateOfBirth) || '',
       specialization: validateSpecialization(form.specialization) || '',
       qualification: validateQualification(form.qualification || '') || '',
-      hospital: validateHospital(form.hospital || '') || '',
       licenseNumber: validateLicenseNumber(form.licenseNumber || '') || '',
       experience: validateExperience(form.experience?.toString() || '') || '',
       consultationFee: validateConsultationFee(form.consultationFee?.toString() || '') || '',
@@ -446,7 +438,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         dateOfBirth: true,
         specialization: true,
         qualification: true,
-        hospital: true,
         licenseNumber: true,
         experience: true,
         consultationFee: true,
@@ -469,7 +460,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         dateOfBirth: form.dateOfBirth, // YYYY-MM-DD
         specialization: form.specialization.trim(),
         qualification: form.qualification?.trim() || undefined,
-        hospital: form.hospital?.trim() || undefined,
         licenseNumber: form.licenseNumber?.trim() || undefined,
         experience: form.experience ? Number(form.experience) : undefined,
         consultationFee: form.consultationFee ? Number(form.consultationFee) : undefined,
@@ -490,7 +480,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         dateOfBirth: '',
         specialization: '',
         qualification: '',
-        hospital: '',
         licenseNumber: '',
         experience: '',
         consultationFee: undefined,
@@ -530,7 +519,6 @@ const handleSubmit = async (e: React.FormEvent) => {
       dateOfBirth: '',
       specialization: '',
       qualification: '',
-      hospital: '',
       licenseNumber: '',
       experience: '',
       consultationFee: undefined,
@@ -693,18 +681,6 @@ const handleSubmit = async (e: React.FormEvent) => {
             </InputRow>
 
             <InputRow>
-              <Label>
-                Hospital*
-                <Input
-                  aria-invalid={!!fieldErrors.hospital}
-                  value={form.hospital}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  name="hospital"
-                  placeholder="General Hospital"
-                />
-                {fieldErrors.hospital && <ErrorText>{fieldErrors.hospital}</ErrorText>}
-              </Label>
               <Label>
                 License Number*
                 <Input

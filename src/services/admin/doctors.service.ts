@@ -27,7 +27,6 @@ export interface Doctor {
   experience: number | string;
   consultationFee: number;
   qualification?: string;
-  hospital?: string;
   availableDays: string[];
   availableTime?: {
     start: string;
@@ -165,7 +164,6 @@ export interface CreateDoctorPayload {
   dateOfBirth: string; // YYYY-MM-DD
   specialization: string;
   qualification?: string;
-  hospital?: string;
   licenseNumber?: string;
   experience?: number | string;
   consultationFee?: number;
@@ -262,7 +260,6 @@ export interface UpdateDoctorPayload {
   phone?: string;
   specialization?: string;
   qualification?: string;
-  hospital?: string;
   experience?: number;
   consultationFee?: number;
   isActive?: boolean;
