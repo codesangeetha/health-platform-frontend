@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 interface ProtectedRouteProps {
-  requiredRole?: 'admin' | 'doctor' | 'patient' | 'pharmadmin';
+  requiredRole?: 'admin' | 'doctor' | 'patient' | 'pharmadmin' | 'labadmin';
   children?: ReactNode;
 }
 
@@ -31,7 +31,7 @@ export function ProtectedRoute({ requiredRole, children }: ProtectedRouteProps =
   }
 
   // Get the appropriate session based on requiredRole or current path
-  let targetUserType: 'patient' | 'doctor' | 'admin' | 'pharmadmin' | null = null;
+  let targetUserType: 'patient' | 'doctor' | 'admin' | 'pharmadmin' | 'labadmin' | null = null;
   let targetSession = currentSession;
 
   if (requiredRole) {
@@ -39,7 +39,10 @@ export function ProtectedRoute({ requiredRole, children }: ProtectedRouteProps =
     targetSession = authState.sessions[requiredRole];
   } else {
     // Determine user type from path
-    if (location.pathname.startsWith('/pharmadmin')) {
+    if (location.pathname.startsWith('/labadmin')) {
+      targetUserType = 'labadmin';
+      targetSession = authState.sessions.labadmin;
+    } else if (location.pathname.startsWith('/pharmadmin')) {
       targetUserType = 'pharmadmin';
       targetSession = authState.sessions.pharmadmin;
     } else if (location.pathname.startsWith('/admin')) {
@@ -59,7 +62,9 @@ export function ProtectedRoute({ requiredRole, children }: ProtectedRouteProps =
     // Determine the appropriate login page based on the current path or required role
     let loginPath = '/';
     
-    if (targetUserType === 'pharmadmin' || location.pathname.startsWith('/pharmadmin')) {
+    if (targetUserType === 'labadmin' || location.pathname.startsWith('/labadmin')) {
+      loginPath = '/admin/login';
+    } else if (targetUserType === 'pharmadmin' || location.pathname.startsWith('/pharmadmin')) {
       loginPath = '/admin/login';
     } else if (targetUserType === 'admin' || location.pathname.startsWith('/admin')) {
       loginPath = '/admin/login';
@@ -80,6 +85,9 @@ export function ProtectedRoute({ requiredRole, children }: ProtectedRouteProps =
     // Redirect to appropriate dashboard based on user role
     let redirectPath = '/';
     switch (targetSession.user?.userType) {
+      case 'labadmin':
+        redirectPath = '/labadmin/dashboard';
+        break;
       case 'pharmadmin':
         redirectPath = '/pharmadmin/dashboard';
         break;
