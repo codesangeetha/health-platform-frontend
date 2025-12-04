@@ -1,15 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { DoctorService } from '@/services/doctor/doctor.service';
 import type { Doctor, DoctorFilters } from '@/types/doctor/doctor.types';
+import { useDoctors } from '@/hooks/useDoctors';
 import '@/styles/components/patient-dashboard.styles.css';
 import './DoctorDirectory.styles.css';
 
 export const DoctorDirectory = () => {
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [totalPages, setTotalPages] = useState<number>(0);
   const [filters, setFilters] = useState<DoctorFilters>({
     limit: 6,
     page: 1,
@@ -17,32 +13,15 @@ export const DoctorDirectory = () => {
     searchName: '',
     availableDays: '',
   });
-  const [specializations, setSpecializations] = useState<string[]>([]);
 
-  useEffect(() => {
-    fetchDoctors();
-  }, [filters]);
-
-  const fetchDoctors = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await DoctorService.getDoctors(filters, 'patient');
-      setDoctors(response.data.doctors);
-      setTotalPages(response.data.pagination.totalPages);
-      
-      // Extract unique specializations for filter dropdown
-      const uniqueSpecializations = Array.from(
-        new Set(response.data.doctors.map(doctor => doctor.specialization))
-      );
-      setSpecializations(uniqueSpecializations);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch doctors');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    doctors,
+    loading,
+    error,
+    totalPages,
+    specializations,
+    refreshDoctors,
+  } = useDoctors(filters);
 
   const handleFilterChange = (key: keyof DoctorFilters, value: string | number) => {
     setFilters(prev => ({
@@ -112,7 +91,7 @@ export const DoctorDirectory = () => {
           </select>
           
           <button
-            onClick={fetchDoctors}
+            onClick={refreshDoctors}
             className="search-button"
           >
             Search
@@ -129,7 +108,7 @@ export const DoctorDirectory = () => {
         ) : error ? (
           <div className="error-message">
             <p>{error}</p>
-            <button onClick={fetchDoctors} className="try-again-button">
+            <button onClick={refreshDoctors} className="try-again-button">
               Try Again
             </button>
           </div>
