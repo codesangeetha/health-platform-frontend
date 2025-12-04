@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import '../styles/landing-page.css';
 import docImg from '../assets/doctor.jpg';
 import docProImg1 from '../assets/drProfile-1.jpg';
@@ -8,33 +8,88 @@ import docProImg3 from '../assets/fm-dr-profile1.avif';
 import patientPro1 from '../assets/patientProfile1.jpeg';
 import patientPro2 from '../assets/patientProfile2.webp';
 import patientPro3 from '../assets/patientProfile3.jpg';
-export const LandingPage = () => {
-  const [scrolled, setScrolled] = useState(false);
+import { ScrollAware, DeviceAware, DataRenderer } from '../components/render-props';
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+export const LandingPage = () => {
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
+
+  // Mock services for dynamic data
+  const doctorsService = {
+    getData: async () => [
+      {
+        id: 1,
+        name: 'Dr. Antony',
+        specialization: 'Specialist',
+        image: docProImg1,
+        rating: 4.8,
+        experience: '10 years'
+      },
+      {
+        id: 2,
+        name: 'Dr. Alex Morgan',
+        specialization: 'Cardiologist',
+        image: docProImg2,
+        rating: 4.9,
+        experience: '15 years'
+      },
+      {
+        id: 3,
+        name: 'Dr. Priya Singh',
+        specialization: 'Neurologist',
+        image: docProImg3,
+        rating: 4.7,
+        experience: '12 years'
+      }
+    ]
+  };
+
+  const testimonialsService = {
+    getData: async () => [
+      {
+        id: 1,
+        name: 'Sophia',
+        image: patientPro1,
+        quote: 'A brief, two to three line quote about their experience.',
+        rating: 5
+      },
+      {
+        id: 2,
+        name: 'Rahul Mehta',
+        image: patientPro2,
+        quote: 'Booking an appointment was seamless and the doctors are top-notch!',
+        rating: 5
+      },
+      {
+        id: 3,
+        name: 'James',
+        image: patientPro3,
+        quote: 'Loved the telemedicine feature. Quick consultation without travel.',
+        rating: 5
+      }
+    ]
+  };
 
   return (
-    <div>
-      {/* Header */}
-      <header className={`hc-header ${scrolled ? 'scrolled' : ''}`}>
-        <div className="hc-container hc-header__inner">
-          <Link to="/" className="hc-logo" aria-label="HealthCare+ Home">
-            <span className="hc-logo__mark">+</span>
-            <span>HealthCare+</span>
-          </Link>
-          <nav className="hc-nav" aria-label="Primary">
-            <Link to="/">Home</Link>
-            <Link to="/services">Services</Link>
-            <Link to="/about">About Us</Link>
-            <Link to="/contact">Contact</Link>
-          </nav>
-        </div>
-      </header>
+    <DeviceAware>
+      {device => (
+        <ScrollAware threshold={8}>
+          {scrolled => (
+            <div>
+              {/* Header */}
+              <header className={`hc-header ${scrolled ? 'scrolled' : ''}`}>
+                <div className="hc-container hc-header__inner">
+                  <Link to="/" className="hc-logo" aria-label="HealthCare+ Home">
+                    <span className="hc-logo__mark">+</span>
+                    <span>HealthCare+</span>
+                  </Link>
+                  <nav className="hc-nav" aria-label="Primary">
+                    <Link to="/">Home</Link>
+                    <Link to="/services">Services</Link>
+                    <Link to="/about">About Us</Link>
+                    <Link to="/contact">Contact</Link>
+                  </nav>
+                </div>
+              </header>
 
       {/* Hero Section */}
       <section className="hc-hero">
@@ -133,58 +188,61 @@ export const LandingPage = () => {
         </div>
       </section>
 
-      {/* Featured Doctors */}
-      <section className="hc-section">
-        <div className="hc-container">
-          <div className="hc-section__header">
-            <h2>Featured Doctors</h2>
-          </div>
-          <div className="hc-card-grid">
-            <article className="hc-card">
-              <div className="hc-card__row">
-                <div className="hc-profile" role="img" aria-label="Profile picture of a doctor">
-                  <img src={docProImg1} alt="drProfile1" />
+              {/* Featured Doctors with DataRenderer */}
+              <section className="hc-section">
+                <div className="hc-container">
+                  <div className="hc-section__header">
+                    <h2>Featured Doctors</h2>
+                  </div>
+                  <DataRenderer service={doctorsService}>
+                    {({ data, loading, error }) => {
+                      if (loading) {
+                        return (
+                          <div style={{ textAlign: 'center', padding: '40px' }}>
+                            <div>Loading doctors...</div>
+                          </div>
+                        );
+                      }
+
+                      if (error) {
+                        return (
+                          <div style={{ textAlign: 'center', padding: '40px', color: '#dc3545' }}>
+                            <p>Error loading doctors: {error}</p>
+                            <button onClick={() => window.location.reload()} className="hc-btn hc-btn--primary">
+                              Retry
+                            </button>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="hc-card-grid">
+                          {data?.slice(0, device === 'mobile' ? 2 : 3).map((doctor: any) => (
+                            <article className="hc-card" key={doctor.id}>
+                              <div className="hc-card__row">
+                                <div className="hc-profile" role="img" aria-label={`Profile picture of ${doctor.name}`}>
+                                  <img src={doctor.image} alt={`${doctor.name} profile`} />
+                                </div>
+                                <div>
+                                  <h3>{doctor.name}</h3>
+                                  <p className="hc-muted">{doctor.specialization}</p>
+                                  <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
+                                    <span>⭐ {doctor.rating}</span>
+                                    <span className="hc-muted">{doctor.experience}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="hc-card__actions">
+                                <Link to="/patient/login" className="hc-btn hc-btn--primary">Book Appointment</Link>
+                              </div>
+                            </article>
+                          ))}
+                        </div>
+                      );
+                    }}
+                  </DataRenderer>
                 </div>
-                <div>
-                  <h3>Dr. Antony</h3>
-                  <p className="hc-muted">Specialist</p>
-                </div>
-              </div>
-              <div className="hc-card__actions">
-                <Link to="/patient/login" className="hc-btn hc-btn--primary">Book Appointment</Link>
-              </div>
-            </article>
-            <article className="hc-card">
-              <div className="hc-card__row">
-                <div className="hc-profile" role="img" aria-label="Profile picture of a doctor">
-                   <img src={docProImg2} alt="drProfile2" />
-                  </div> 
-                <div>
-                  <h3>Dr. Alex Morgan</h3>
-                  <p className="hc-muted">Cardiologist</p>
-                </div>
-              </div>
-              <div className="hc-card__actions">
-                <Link to="/patient/login" className="hc-btn hc-btn--primary">Book Appointment</Link>
-              </div>
-            </article>
-            <article className="hc-card">
-              <div className="hc-card__row">
-                <div className="hc-profile" role="img" aria-label="Profile picture of a doctor">
-                  <img src={docProImg3} alt="drProfile2" />
-                  </div> 
-                <div>
-                  <h3>Dr. Priya Singh</h3>
-                  <p className="hc-muted">Neurologist</p>
-                </div>
-              </div>
-              <div className="hc-card__actions">
-                <Link to="/patient/login" className="hc-btn hc-btn--primary">Book Appointment</Link>
-              </div>
-            </article>
-          </div>
-        </div>
-      </section>
+              </section>
 
       {/* Pharmacy Deals */}
       <section className="hc-section" aria-labelledby="pharmacy-heading">
@@ -238,49 +296,56 @@ export const LandingPage = () => {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="hc-section hc-testimonials" aria-labelledby="testimonials-heading">
-        <div className="hc-container">
-          <div className="hc-section__header">
-            <h2 id="testimonials-heading">What Our Patients Say</h2>
-          </div>
-          <div className="hc-card-grid">
-            <article className="hc-card">
-              <div className="hc-card__row">
-                <div className="hc-profile" role="img" aria-label="Profile picture of a patient">
-                  <img src={patientPro1} alt="patient1-pro" />
-                  </div> 
-                <div>
-                  <h3>Sophia</h3>
+              {/* Testimonials with DataRenderer */}
+              <section className="hc-section hc-testimonials" aria-labelledby="testimonials-heading">
+                <div className="hc-container">
+                  <div className="hc-section__header">
+                    <h2 id="testimonials-heading">What Our Patients Say</h2>
+                  </div>
+                  <DataRenderer service={testimonialsService}>
+                    {({ data, loading, error }) => {
+                      if (loading) {
+                        return (
+                          <div style={{ textAlign: 'center', padding: '40px' }}>
+                            <div>Loading testimonials...</div>
+                          </div>
+                        );
+                      }
+
+                      if (error) {
+                        return (
+                          <div style={{ textAlign: 'center', padding: '40px', color: '#dc3545' }}>
+                            <p>Error loading testimonials: {error}</p>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="hc-card-grid">
+                          {data?.slice(0, device === 'mobile' ? 2 : 3).map((testimonial: any) => (
+                            <article className="hc-card" key={testimonial.id}>
+                              <div className="hc-card__row">
+                                <div className="hc-profile" role="img" aria-label={`Profile picture of ${testimonial.name}`}>
+                                  <img src={testimonial.image} alt={`${testimonial.name} profile`} />
+                                </div>
+                                <div>
+                                  <h3>{testimonial.name}</h3>
+                                  <div style={{ display: 'flex', gap: '2px', margin: '5px 0' }}>
+                                    {Array.from({ length: testimonial.rating }).map((_, i) => (
+                                      <span key={i} style={{ color: '#ffc107' }}>⭐</span>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                              <p className="hc-quote">"{testimonial.quote}"</p>
+                            </article>
+                          ))}
+                        </div>
+                      );
+                    }}
+                  </DataRenderer>
                 </div>
-              </div>
-              <p className="hc-quote">"A brief, two to three line quote about their experience."</p>
-            </article>
-            <article className="hc-card">
-              <div className="hc-card__row">
-                <div className="hc-profile" role="img" aria-label="Profile picture of a patient">
-                   <img src={patientPro2} alt="patient1-pro" />
-                </div>
-                <div>
-                  <h3>Rahul Mehta</h3>
-                </div>
-              </div>
-              <p className="hc-quote">"Booking an appointment was seamless and the doctors are top-notch!"</p>
-            </article>
-            <article className="hc-card">
-              <div className="hc-card__row">
-                <div className="hc-profile" role="img" aria-label="Profile picture of a patient" >
-                   <img src={patientPro3} alt="patient1-pro" />
-                </div>
-                <div>
-                  <h3> James</h3>
-                </div>
-              </div>
-              <p className="hc-quote">"Loved the telemedicine feature. Quick consultation without travel."</p>
-            </article>
-          </div>
-        </div>
-      </section>
+              </section>
 
       {/* Footer */}
       <footer id="contact" className="hc-footer" role="contentinfo">
@@ -323,6 +388,10 @@ export const LandingPage = () => {
           <div className="hc-footer__bottom">© 2025 HealthCare+. All rights reserved.</div>
         </div>
       </footer>
-    </div>
+            </div>
+          )}
+        </ScrollAware>
+      )}
+    </DeviceAware>
   );
 };
