@@ -193,6 +193,11 @@ export const DoctorDashboard = () => {
     return appointments.filter((a) => a.date >= now).slice(0, 5);
   }, [appointments]);
 
+  // Navigate to appointments page
+  const navigateToAppointments = () => {
+    navigate('/doctor/appointments');
+  };
+
   const displayName = useMemo(() => {
     // First try to use doctor's actual name from profile
     if (doctorProfile && (doctorProfile.firstName || doctorProfile.lastName)) {
@@ -349,7 +354,24 @@ export const DoctorDashboard = () => {
 
       {/* Stat Cards */}
       <section className="info-grid" aria-label="Statistics">
-        <div className="info-card">
+        <div 
+          className="info-card" 
+          onClick={navigateToAppointments}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              navigateToAppointments();
+            }
+          }}
+          tabIndex={0}
+          role="button"
+          aria-label={`Today's Appointments: ${isLoading ? 'Loading' : dashboardData?.todayAppointments || 0}. Click to view all appointments`}
+          style={{ cursor: 'pointer', transition: 'all 0.2s ease', outline: 'none' }}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+          onFocus={(e) => e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.3)'}
+          onBlur={(e) => e.currentTarget.style.boxShadow = 'none'}
+        >
           <div className="icon-wrap" aria-hidden>
             <svg viewBox="0 0 24 24">
               <path d="M19 4h-1V3a1 1 0 1 0-2 0v1H8V3a1 1 0 1 0-2 0v1H5a3 3 0 0 0-3 3v11a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3Zm1 14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V10h16v8Z" />
@@ -359,7 +381,24 @@ export const DoctorDashboard = () => {
           <div className="label">Today's Appointments</div>
         </div>
 
-        <div className="info-card">
+        <div 
+          className="info-card" 
+          onClick={navigateToAppointments}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              navigateToAppointments();
+            }
+          }}
+          tabIndex={0}
+          role="button"
+          aria-label={`Pending Consultations: ${isLoading ? 'Loading' : dashboardData?.pendingConsultations || 0}. Click to manage appointments`}
+          style={{ cursor: 'pointer', transition: 'all 0.2s ease', outline: 'none' }}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+          onFocus={(e) => e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.3)'}
+          onBlur={(e) => e.currentTarget.style.boxShadow = 'none'}
+        >
           <div className="icon-wrap" aria-hidden>
             <svg viewBox="0 0 24 24">
               <path d="M12 2a5 5 0 0 1 5 5v2h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h1V7a5 5 0 0 1 5-5Zm3 7V7a3 3 0 0 0-6 0v2h6Z" />
@@ -369,7 +408,24 @@ export const DoctorDashboard = () => {
           <div className="label">Pending Consultations</div>
         </div>
 
-        <div className="info-card">
+        <div 
+          className="info-card" 
+          onClick={navigateToAppointments}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              navigateToAppointments();
+            }
+          }}
+          tabIndex={0}
+          role="button"
+          aria-label={`Completed Today: ${isLoading ? 'Loading' : dashboardData?.todayCompletedConsultations || 0}. Click to view appointment history`}
+          style={{ cursor: 'pointer', transition: 'all 0.2s ease', outline: 'none' }}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+          onFocus={(e) => e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.3)'}
+          onBlur={(e) => e.currentTarget.style.boxShadow = 'none'}
+        >
           <div className="icon-wrap" aria-hidden>
             <svg viewBox="0 0 24 24">
               <path d="M12 3a9 9 0 1 1-9 9 9 9 0 0 1 9-9Zm4.3 6.3a1 1 0 0 0-1.4-1.4L11 11.8l-1.9-1.9a1 1 0 1 0-1.4 1.4l2.6 2.6a1 1 0 0 0 1.4 0l5.6-5.6Z" />
@@ -379,7 +435,24 @@ export const DoctorDashboard = () => {
           <div className="label">Completed Today</div>
         </div>
 
-        <div className="info-card">
+        <div 
+          className="info-card" 
+          onClick={navigateToAppointments}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              navigateToAppointments();
+            }
+          }}
+          tabIndex={0}
+          role="button"
+          aria-label={`Total Appointments: ${isLoading ? 'Loading' : dashboardData?.totalAppointments || 0}. Click to view all appointments`}
+          style={{ cursor: 'pointer', transition: 'all 0.2s ease', outline: 'none' }}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+          onFocus={(e) => e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.3)'}
+          onBlur={(e) => e.currentTarget.style.boxShadow = 'none'}
+        >
           <div className="icon-wrap" aria-hidden>
             <svg viewBox="0 0 24 24">
               <path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Zm-7 3h5v5h-5V6Zm-2 6H6v-2h4v2Zm0-4H6V8h4v2Zm6 4h-4v-2h4v2Zm0-4h-4V8h4v2Z" />
@@ -396,12 +469,35 @@ export const DoctorDashboard = () => {
         <div className="dd-card calendar-card">
           <div className="card-header">
             <h3>Calendar</h3>
-            <div className="calendar-nav" aria-label="Calendar Navigation">
-              <button aria-label="Previous month" onClick={gotoPrevMonth}>‹</button>
-              <div className="calendar-month" aria-live="polite">
-                {isCalendarLoading ? 'Loading...' : monthLabel}
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <button
+                onClick={navigateToAppointments}
+                style={{
+                  padding: '6px 12px',
+                  backgroundColor: '#3B82F6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  fontSize: '0.75rem',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#2563EB'}
+                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#3B82F6'}
+              >
+                📅 View All Appointments
+              </button>
+              <div className="calendar-nav" aria-label="Calendar Navigation">
+                <button aria-label="Previous month" onClick={gotoPrevMonth}>‹</button>
+                <div className="calendar-month" aria-live="polite">
+                  {isCalendarLoading ? 'Loading...' : monthLabel}
+                </div>
+                <button aria-label="Next month" onClick={gotoNextMonth}>›</button>
               </div>
-              <button aria-label="Next month" onClick={gotoNextMonth}>›</button>
             </div>
           </div>
           <div className="calendar-body">
@@ -495,35 +591,89 @@ export const DoctorDashboard = () => {
             </div>
             <div className="modal-body">
               {selectedDateAppointments.length > 0 ? (
-                <div className="appointment-list">
-                  {selectedDateAppointments.map((appointment, index) => (
-                    <div key={index} className="appointment-item">
-                      <div className="appointment-time">
-                        {appointment.time || 'Time not specified'}
+                <>
+                  <div className="appointment-list">
+                    {selectedDateAppointments.map((appointment, index) => (
+                      <div key={index} className="appointment-item">
+                        <div className="appointment-time">
+                          {appointment.time || 'Time not specified'}
+                        </div>
+                        <div className="appointment-details">
+                          <div className="patient-name">
+                            <strong>
+                              {appointment.patient?.firstName && appointment.patient?.lastName
+                                ? `${appointment.patient.firstName} ${appointment.patient.lastName}`
+                                : appointment.patientName || 'Unknown Patient'}
+                            </strong>
+                          </div>
+                          <div className="appointment-type">
+                            {appointment.type || appointment.appointmentType || 'General Consultation'}
+                          </div>
+                          <div className="appointment-status">
+                            <span className={`status-badge status-${appointment.status || 'pending'}`}>
+                              {appointment.status || 'Pending'}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="appointment-details">
-                        <div className="patient-name">
-                          <strong>
-                            {appointment.patient?.firstName && appointment.patient?.lastName
-                              ? `${appointment.patient.firstName} ${appointment.patient.lastName}`
-                              : appointment.patientName || 'Unknown Patient'}
-                          </strong>
-                        </div>
-                        <div className="appointment-type">
-                          {appointment.type || appointment.appointmentType || 'General Consultation'}
-                        </div>
-                        <div className="appointment-status">
-                          <span className={`status-badge status-${appointment.status || 'pending'}`}>
-                            {appointment.status || 'Pending'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e5e7eb', textAlign: 'center' }}>
+                    <button
+                      onClick={() => {
+                        closePopup();
+                        navigateToAppointments();
+                      }}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: '#3B82F6',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontSize: '0.875rem',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#2563EB'}
+                      onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#3B82F6'}
+                    >
+                      📋 View All Appointments
+                    </button>
+                  </div>
+                </>
               ) : (
                 <div className="no-appointments">
                   <p>No appointments scheduled for this date.</p>
+                  <div style={{ marginTop: '16px' }}>
+                    <button
+                      onClick={() => {
+                        closePopup();
+                        navigateToAppointments();
+                      }}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: '#3B82F6',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontSize: '0.875rem',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#2563EB'}
+                      onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#3B82F6'}
+                    >
+                      📋 View All Appointments
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

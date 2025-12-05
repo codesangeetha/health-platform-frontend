@@ -442,6 +442,32 @@ export const CreatePrescription = () => {
     setSelectedLabTests(prev => prev.filter((_, i) => i !== index));
   };
 
+  const scrollToFirstError = () => {
+    // Try multiple selectors to find the first error
+    const errorSelectors = [
+      '.form-error:not(:empty)',
+      '[id$="-error"]:not(:empty)',
+      '[role="alert"]:not(:empty)'
+    ];
+
+    for (const selector of errorSelectors) {
+      const errorElement = document.querySelector(selector);
+      if (errorElement) {
+        // Ensure the element is actually visible and has content
+        const rect = errorElement.getBoundingClientRect();
+        if (rect.height > 0 && rect.width > 0) {
+          errorElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center',
+            inline: 'nearest'
+          });
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -458,11 +484,17 @@ export const CreatePrescription = () => {
     setTimeout(() => {
       const isValid = validateForm();
       if (!isValid) {
-        // Scroll to the first error
-        const firstErrorElement = document.querySelector('.form-error');
-        if (firstErrorElement) {
-          firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
+        // Scroll to the first error with a small delay to ensure DOM is updated
+        setTimeout(() => {
+          const scrolled = scrollToFirstError();
+          if (!scrolled) {
+            // Fallback: scroll to the top of the form
+            const formElement = document.querySelector('form');
+            if (formElement) {
+              formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }
+        }, 100);
         return;
       }
 
@@ -472,7 +504,7 @@ export const CreatePrescription = () => {
         return;
       }
       submitPrescription();
-    }, 0);
+    }, 50);
   };
 
   const submitPrescription = async () => {
