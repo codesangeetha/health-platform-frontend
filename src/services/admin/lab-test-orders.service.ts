@@ -247,7 +247,7 @@ export const getLabTestOrderById = async (orderId: string): Promise<{
         testName: string;
         price: number;
         labTestId: string;
-        testStatus?: 'completed' | 'skipped';
+        testStatus?: 'completed' | 'skipped' | 'pending';
         result?: string | null;
         labTestDetails: {
           _id: string;

@@ -429,7 +429,7 @@ interface LabTestItem {
   testName: string;
   price: number;
   labTestId: string;
-  testStatus?: 'completed' | 'skipped';
+  testStatus?: 'completed' | 'skipped' | 'pending';
   result?: string | null;
   labTestDetails: LabTestDetails;
 }
@@ -589,7 +589,7 @@ const handleViewDetails = async (order: Order) => {
       // Initialize test results for each test item with existing data
       const initialResults: TestResult[] = orderData.testItems.map((item: any) => ({
         labTestId: item.labTestId,
-        testStatus: item.testStatus || 'completed' as const, // Use existing test status or default to completed
+        testStatus: validateTestStatus(item.testStatus),
         testResult: item.result || '' // Use existing result or empty string
       }));
       setTestResults(initialResults);
@@ -633,6 +633,10 @@ const closeStatusUpdateModal = () => {
         } : result
       )
     );
+  };
+
+  const validateTestStatus = (status: string | undefined): 'completed' | 'skipped' => {
+    return (status === 'completed' || status === 'skipped') ? status : 'completed';
   };
 
   const calculateFinalOrderStatus = (testResults: TestResult[]): 'completed' | 'cancelled' => {
@@ -1163,7 +1167,7 @@ const handleUpdateOrderStatus = async () => {
             
             ${order.testItems && order.testItems.length > 0 ? 
               order.testItems.map((item, index) => {
-                const testStatus = item.testStatus || 'unknown';
+                const testStatus = validateTestStatus(item.testStatus);
                 const resultValue = item.result || 
                   (order.resultData && order.resultData[item.testName]) || 
                   'No result available';
@@ -1483,10 +1487,7 @@ const handleUpdateOrderStatus = async () => {
               </DetailValue>
             </DetailRow>
             
-            <DetailRow>
-              <DetailLabel>Scheduled Date:</DetailLabel>
-              <DetailValue>{formatDate(selectedOrder.scheduledDate)}</DetailValue>
-            </DetailRow>
+
 
             {selectedOrder.completedDate && (
               <DetailRow>
