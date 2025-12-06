@@ -150,13 +150,14 @@ export const updateOrderStatus = async (
 
 export interface TestResult {
   labTestId: string;
-  testResult: string;
+  testStatus: 'completed' | 'skipped';
+  testResult: string | null;
 }
 
 export interface UpdateLabTestOrderRequest {
   status: 'completed' | 'cancelled';
   reason: string;
-  result?: TestResult[];
+  result: TestResult[];
 }
 
 export const updateLabTestOrderStatus = async (
@@ -246,6 +247,8 @@ export const getLabTestOrderById = async (orderId: string): Promise<{
         testName: string;
         price: number;
         labTestId: string;
+        testStatus?: 'completed' | 'skipped';
+        result?: string | null;
         labTestDetails: {
           _id: string;
           name: string;
@@ -259,7 +262,9 @@ export const getLabTestOrderById = async (orderId: string): Promise<{
       }>;
       collectionMethod: string;
       scheduledDate: string;
-      prescriptionId: string;
+      prescriptionId: string | object;
+      reason?: string;
+      resultData?: Record<string, string>;
       completedDate?: string;
     };
   };

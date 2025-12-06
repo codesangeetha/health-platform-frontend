@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import styled from '@emotion/styled';
-import { getPharmacyOrders, updatePharmacyOrderStatus } from '../../../services/admin/pharmacy-dashboard.service';
-import type { Order } from '../../../services/admin/pharmacy-dashboard.service';
+import { getPharmacyOrders, updatePharmacyOrderStatus, getPharmacyOrderDetail, type Order, type MedicineStatusUpdate, type OrderDetail, type OrderDetailItem, validateMedicineStock, type StockValidationResult } from '../../../services/admin/pharmacy-dashboard.service';
 import { ApiError } from '../../../services/auth/auth.service';
 
 const TableContainer = styled.div`
@@ -366,6 +365,32 @@ const EmptyStateSubtext = styled.p`
   color: #666666;
 `;
 
+const StockIndicator = styled.span<{ stockStatus: 'in-stock' | 'low-stock' | 'out-of-stock' | 'checking' }>`
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 500;
+  margin-left: 8px;
+  background-color: ${props => {
+    switch (props.stockStatus) {
+      case 'in-stock': return '#D4EDDA';
+      case 'low-stock': return '#FFF3CD';
+      case 'out-of-stock': return '#F8D7DA';
+      case 'checking': return '#E2E3E5';
+      default: return '#E2E3E5';
+    }
+  }};
+  color: ${props => {
+    switch (props.stockStatus) {
+      case 'in-stock': return '#155724';
+      case 'low-stock': return '#856404';
+      case 'out-of-stock': return '#721C24';
+      case 'checking': return '#383D41';
+      default: return '#383D41';
+    }
+  }};
+`;
+
 const PrintButton = styled.button`
   padding: 6px 12px;
   border-radius: 4px;
@@ -413,13 +438,16 @@ export const PharmacyOrdersList = ({ refreshKey = 0 }: { refreshKey?: number }) 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrderDetail, setSelectedOrderDetail] = useState<OrderDetail | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [loadingOrderDetail, setLoadingOrderDetail] = useState(false);
   const [showStatusUpdateModal, setShowStatusUpdateModal] = useState(false);
   const [selectedStatusUpdateOrder, setSelectedStatusUpdateOrder] = useState<Order | null>(null);
-  const [updateStatus, setUpdateStatus] = useState<string>('completed');
   const [updateReason, setUpdateReason] = useState('');
+  const [medicineStatuses, setMedicineStatuses] = useState<MedicineStatusUpdate[]>([]);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [loadingPreviousValues, setLoadingPreviousValues] = useState(false);
   const [filters, setFilters] = useState<Filters>({
     patientName: '',
     amountMin: '',
@@ -428,6 +456,8 @@ const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     dateTo: '',
     status: ''
   });
+  const [stockValidations, setStockValidations] = useState<Map<string, StockValidationResult[]>>(new Map());
+  const [loadingStockValidation, setLoadingStockValidation] = useState(false);
 
   const fetchOrders = useCallback(async (page: number = 1) => {
     try {
@@ -489,20 +519,193 @@ const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     fetchOrders(pagination.page);
   }, [pagination.page, fetchOrders, refreshKey]);
 
-  const handleViewDetails = (order: Order) => {
-    setSelectedOrder(order);
-    setShowModal(true);
+  const handleViewDetails = async (order: Order) => {
+    try {
+      setLoadingOrderDetail(true);
+      setError(null);
+      
+      // Fetch detailed order information using the new API
+      const response = await getPharmacyOrderDetail(order.orderId);
+      setSelectedOrderDetail(response.data.order);
+      setSelectedOrder(order);
+      setShowModal(true);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError('Failed to fetch order details');
+      }
+      console.error('Error fetching order details:', err);
+    } finally {
+      setLoadingOrderDetail(false);
+    }
   };
   
 const closeModal = () => {
     setShowModal(false);
     setSelectedOrder(null);
+    setSelectedOrderDetail(null);
+    setLoadingOrderDetail(false);
   };
 
-  const handleStatusUpdate = (order: Order) => {
+  const handleStatusUpdate = async (order: Order) => {
     setSelectedStatusUpdateOrder(order);
     setUpdateReason('');
-    setUpdateStatus('completed');
+    setError(null);
+    
+    // Validate stock for all medicines in the order
+    try {
+      setLoadingStockValidation(true);
+      const stockValidations = await validateOrderStock(order);
+      
+      // Store validation results
+      setStockValidations(prev => new Map(prev.set(order.orderId, stockValidations)));
+      
+      // Check if any medicines have insufficient stock
+      const outOfStockMedicines = stockValidations.filter(v => !v.isValid && v.currentStock <= 0);
+      const lowStockMedicines = stockValidations.filter(v => !v.isValid && v.currentStock > 0);
+      
+      if (outOfStockMedicines.length > 0) {
+        const medicineNames = outOfStockMedicines.map(v => v.medicineName).join(', ');
+        setError(`Cannot complete/cancel order. The following medicines are out of stock: ${medicineNames}. These medicines will be automatically set to skipped status.`);
+      }
+      
+      if (lowStockMedicines.length > 0) {
+        const medicineDetails = lowStockMedicines.map(v => `${v.medicineName} (Need: ${v.requiredQuantity}, Available: ${v.currentStock})`).join('; ');
+        setError(`Warning: Insufficient stock for some medicines. ${medicineDetails}`);
+      }
+    } catch (error) {
+      console.error('Error validating stock:', error);
+      setError('Warning: Could not verify stock availability for some medicines. Please check manually.');
+    } finally {
+      setLoadingStockValidation(false);
+    }
+    
+    // For completed or cancelled orders, fetch previous update values from order detail API
+    if (order.status === 'completed' || order.status === 'cancelled') {
+      try {
+        setLoadingPreviousValues(true);
+        const response = await getPharmacyOrderDetail(order.orderId);
+        const orderDetail = response.data.order;
+        
+        // Set smart default reason based on stock validation
+        const newStockValidations = await validateOrderStock(order);
+        const allSkippedDueToStock = newStockValidations.every(v => !v.isValid && v.currentStock <= 0);
+        if (allSkippedDueToStock) {
+          setUpdateReason('Order cancelled due to all medicines being out of stock');
+        }
+        
+        // Initialize medicine statuses by matching the original order items with detail items
+        // This ensures the order matches exactly for proper index-based mapping in the UI
+        const initialStatuses: MedicineStatusUpdate[] = order.items.map((orderItem) => {
+          // Find the corresponding detail item by matching medicine name
+          const detailItem = orderDetail.medicineItems.find(
+            item => item.medicineName === orderItem.medicineName
+          );
+          
+          const validation = stockValidations.get(order.orderId)?.find(v => v.medicineName === orderItem.medicineName);
+          const currentStock = validation?.currentStock ?? 0;
+          
+          // For out-of-stock items, always set to 'skipped' regardless of existing detail item status
+          // This ensures consistency with stock validation and API requirements
+          // Only allow 'completed' or 'skipped' - convert any other status to 'completed' as default
+          let itemStatus: 'completed' | 'skipped';
+          if (currentStock <= 0) {
+            itemStatus = 'skipped';
+          } else if (detailItem?.itemStatus === 'completed' || detailItem?.itemStatus === 'skipped') {
+            itemStatus = detailItem.itemStatus;
+          } else {
+            itemStatus = 'completed'; // Default to 'completed' for any other status (including 'pending')
+          }
+          
+          // Ensure we always use a real medicine ID, never fallback to medicine name
+          if (!detailItem?.medicineId) {
+            throw new Error(`Medicine ID not found for medicine: ${orderItem.medicineName}`);
+          }
+          
+          return {
+            medicineId: detailItem.medicineId,
+            itemStatus: itemStatus
+          };
+        });
+        
+        // Set the reason from previous update if available
+        setUpdateReason(orderDetail.reason || '');
+        setMedicineStatuses(initialStatuses);
+      } catch (err) {
+        console.error('Error fetching previous update values:', err);
+        // Fallback to default initialization if fetch fails
+        // For pending/processing orders, we need to fetch order detail to get medicine IDs
+        try {
+          const fallbackDetailResponse = await getPharmacyOrderDetail(order.orderId);
+          const fallbackOrderDetail = fallbackDetailResponse.data.order;
+          
+          const fallbackStatuses: MedicineStatusUpdate[] = order.items.map((item) => {
+            const detailItem = fallbackOrderDetail.medicineItems.find(
+              detail => detail.medicineName === item.medicineName
+            );
+            
+            const validation = stockValidations.get(order.orderId)?.find(v => v.medicineName === item.medicineName);
+            const currentStock = validation?.currentStock ?? 0;
+            
+            // For out-of-stock items, always set to 'skipped' to ensure consistency
+            const itemStatus = currentStock <= 0 ? 'skipped' : 'completed';
+            
+            // Ensure we always use a real medicine ID, never fallback to medicine name
+            if (!detailItem?.medicineId) {
+              throw new Error(`Medicine ID not found for medicine: ${item.medicineName}`);
+            }
+            
+            return {
+              medicineId: detailItem.medicineId,
+              itemStatus: itemStatus
+            };
+          });
+          setMedicineStatuses(fallbackStatuses);
+        } catch (fallbackError) {
+          console.error('Error in fallback initialization:', fallbackError);
+          setError('Unable to initialize medicine statuses. Please refresh the page and try again.');
+          setMedicineStatuses([]);
+        }
+      } finally {
+        setLoadingPreviousValues(false);
+      }
+    } else {
+      // For pending/processing orders, initialize with default values
+      // We need to fetch order detail to get proper medicine IDs
+      try {
+        const pendingOrderDetailResponse = await getPharmacyOrderDetail(order.orderId);
+        const pendingOrderDetail = pendingOrderDetailResponse.data.order;
+        
+        const initialStatuses: MedicineStatusUpdate[] = order.items.map((item) => {
+          const detailItem = pendingOrderDetail.medicineItems.find(
+            detail => detail.medicineName === item.medicineName
+          );
+          
+          const validation = stockValidations.get(order.orderId)?.find(v => v.medicineName === item.medicineName);
+          const currentStock = validation?.currentStock ?? 0;
+          
+          // For out-of-stock items, always set to 'skipped' to ensure consistency with stock validation
+          const itemStatus = currentStock <= 0 ? 'skipped' : 'completed';
+          
+          // Ensure we always use a real medicine ID, never fallback to medicine name
+          if (!detailItem?.medicineId) {
+            throw new Error(`Medicine ID not found for medicine: ${item.medicineName}`);
+          }
+          
+          return {
+            medicineId: detailItem.medicineId,
+            itemStatus: itemStatus
+          };
+        });
+        setMedicineStatuses(initialStatuses);
+      } catch (pendingError) {
+        console.error('Error initializing pending order statuses:', pendingError);
+        setError('Unable to initialize medicine statuses. Please refresh the page and try again.');
+        setMedicineStatuses([]);
+      }
+    }
+    
     setShowStatusUpdateModal(true);
   };
 
@@ -510,8 +713,77 @@ const closeModal = () => {
     setShowStatusUpdateModal(false);
     setSelectedStatusUpdateOrder(null);
     setUpdateReason('');
-    setUpdateStatus('completed');
+    setMedicineStatuses([]);
     setSuccessMessage(null);
+    setLoadingStockValidation(false);
+  };
+
+  const validateOrderStock = async (order: Order): Promise<StockValidationResult[]> => {
+    setLoadingStockValidation(true);
+    const validations: StockValidationResult[] = [];
+    
+    try {
+      // Fetch order details to get proper medicine IDs
+      const orderDetailResponse = await getPharmacyOrderDetail(order.orderId);
+      const orderDetail = orderDetailResponse.data.order;
+      
+      for (const item of order.items) {
+        try {
+          // Find the corresponding detail item to get the real medicine ID
+          const detailItem = orderDetail.medicineItems.find(
+            detail => detail.medicineName === item.medicineName
+          );
+          
+          const medicineId = detailItem?.medicineId;
+          
+          // Only validate stock if we have a valid medicine ID
+          if (!medicineId) {
+            validations.push({
+              isValid: false,
+              medicineId: item.medicineName,
+              medicineName: item.medicineName,
+              currentStock: 0,
+              requiredQuantity: item.quantity,
+              errorMessage: `Medicine ID not available for "${item.medicineName}"`
+            });
+            continue;
+          }
+          
+          const validation = await validateMedicineStock(
+            medicineId,
+            item.medicineName,
+            item.quantity
+          );
+          validations.push(validation);
+        } catch (error) {
+          console.warn(`Failed to validate stock for ${item.medicineName}:`, error);
+          validations.push({
+            isValid: false,
+            medicineId: item.medicineName,
+            medicineName: item.medicineName,
+            currentStock: 0,
+            requiredQuantity: item.quantity,
+            errorMessage: `Could not verify stock for "${item.medicineName}"`
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch order details for stock validation:', error);
+      // Fallback: create validation results without stock checking
+      for (const item of order.items) {
+        validations.push({
+          isValid: false,
+          medicineId: item.medicineName,
+          medicineName: item.medicineName,
+          currentStock: 0,
+          requiredQuantity: item.quantity,
+          errorMessage: `Could not fetch order details for stock validation`
+        });
+      }
+    }
+    
+    setLoadingStockValidation(false);
+    return validations;
   };
 
   const handleUpdateOrderStatus = async () => {
@@ -520,21 +792,51 @@ const closeModal = () => {
       return;
     }
 
+    if (medicineStatuses.length === 0) {
+      setError('Please set status for all medicines');
+      return;
+    }
+
+    // Check stock validations for medicines marked as completed
+    const orderStockValidations = stockValidations.get(selectedStatusUpdateOrder.orderId);
+    const invalidCompletedMedicines = medicineStatuses.filter(medStatus => {
+      if (medStatus.itemStatus !== 'completed') return false;
+      const validation = orderStockValidations?.find(v => v.medicineId === medStatus.medicineId);
+      return validation && !validation.isValid && validation.currentStock <= 0;
+    });
+
+    if (invalidCompletedMedicines.length > 0) {
+      const medicineNames = invalidCompletedMedicines.map(med => med.medicineId).join(', ');
+      setError(`Cannot complete order. The following medicines are out of stock and must be marked as skipped: ${medicineNames}`);
+      return;
+    }
+
     try {
       setUpdatingStatus(true);
       setError(null);
       setSuccessMessage(null);
 
+      // Sanitize medicineStatuses to ensure only valid itemStatus values are sent
+      const sanitizedMedicineStatuses = medicineStatuses.map(med => ({
+        medicineId: med.medicineId,
+        itemStatus: (med.itemStatus === 'completed' || med.itemStatus === 'skipped') 
+          ? med.itemStatus 
+          : 'completed' // Default to 'completed' for any invalid status
+      }));
+
+      // Calculate final status based on medicine statuses - this should be 'cancelled' if all items are skipped
+      const finalStatus = getFinalCalculatedStatus();
+
       await updatePharmacyOrderStatus(
         selectedStatusUpdateOrder.orderId,
-        updateStatus,
+        sanitizedMedicineStatuses,
         updateReason.trim()
       );
 
       // Refresh the orders list
       await fetchOrders(pagination.page);
 
-      setSuccessMessage(`Order status updated to ${updateStatus} successfully!`);
+      setSuccessMessage(`Order status updated to ${finalStatus} successfully!`);
 
       // Close modal after 2 seconds to show success message
       setTimeout(() => {
@@ -552,6 +854,30 @@ const closeModal = () => {
     }
   };
 
+  const handleMedicineStatusChange = (medicineId: string, newStatus: 'completed' | 'skipped') => {
+    // Validate that only valid status values are accepted
+    const validStatus = (newStatus === 'completed' || newStatus === 'skipped') ? newStatus : 'completed';
+    
+    setMedicineStatuses(prev => 
+      prev.map(med => 
+        med.medicineId === medicineId 
+          ? { ...med, itemStatus: validStatus }
+          : med
+      )
+    );
+  };
+
+  const getFinalCalculatedStatus = () => {
+    if (medicineStatuses.length === 0) return 'pending';
+    const allSkipped = medicineStatuses.every(med => med.itemStatus === 'skipped');
+    const atLeastOneCompleted = medicineStatuses.some(med => med.itemStatus === 'completed');
+    return allSkipped ? 'cancelled' : (atLeastOneCompleted ? 'completed' : 'pending');
+  };
+
+  const getAllItemsSkipped = () => {
+    return medicineStatuses.length > 0 && medicineStatuses.every(med => med.itemStatus === 'skipped');
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -563,7 +889,7 @@ const closeModal = () => {
     return new Date(dateString).toLocaleDateString();
   };
 
-  const handlePrintInvoice = (order: Order) => {
+  const handlePrintInvoice = async (order: Order) => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
@@ -588,6 +914,36 @@ const closeModal = () => {
         currency: 'INR'
       }).format(amount);
     };
+
+    // Fetch order details to get the latest item statuses
+    let orderItems = order.items;
+    let calculatedTotal = order.totalAmount;
+
+    try {
+      const response = await getPharmacyOrderDetail(order.orderId);
+      const orderDetail = response.data.order;
+      
+      // Filter out skipped items and get only completed items for invoice
+      const completedItems = orderDetail.medicineItems.filter(item => item.itemStatus === 'completed');
+      
+      if (completedItems.length > 0) {
+        // Use completed items for invoice
+        orderItems = completedItems.map(item => ({
+          medicineId: item.medicineId,
+          medicineName: item.medicineName,
+          quantity: item.quantity,
+          price: item.price
+        }));
+        
+        // Recalculate total amount for completed items only
+        calculatedTotal = completedItems.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+      }
+    } catch (error) {
+      console.warn('Could not fetch order details for invoice filtering:', error);
+      // If we can't fetch details, show all items but still check for any obvious skipped items
+      orderItems = order.items;
+      calculatedTotal = order.totalAmount;
+    }
 
     const html = `
       <!DOCTYPE html>
@@ -763,7 +1119,7 @@ const closeModal = () => {
               </tr>
             </thead>
             <tbody>
-              ${order.items.map(item => `
+              ${orderItems.map(item => `
                 <tr>
                   <td>${item.medicineName}</td>
                   <td>${item.quantity}</td>
@@ -777,7 +1133,7 @@ const closeModal = () => {
           <div class="total-section">
             <div class="total-row">
               <span>Subtotal:</span>
-              <span>${formatCurrency(order.totalAmount)}</span>
+              <span>${formatCurrency(calculatedTotal)}</span>
             </div>
             <div class="total-row">
               <span>Tax (0%):</span>
@@ -785,9 +1141,18 @@ const closeModal = () => {
             </div>
             <div class="total-row total-final">
               <span>Total Amount:</span>
-              <span>${formatCurrency(order.totalAmount)}</span>
+              <span>${formatCurrency(calculatedTotal)}</span>
             </div>
           </div>
+
+          ${orderItems.length < order.items.length ? `
+            <div style="margin-top: 20px; padding: 15px; background-color: #FFF3CD; border: 1px solid #FFEAA7; border-radius: 6px;">
+              <h4 style="margin: 0 0 10px 0; color: #856404; font-size: 14px;">Note: Some items were not included in this invoice</h4>
+              <p style="margin: 0; color: #856404; font-size: 12px;">
+                ${order.items.length - orderItems.length} item(s) were excluded from this invoice due to being out of stock and marked as skipped.
+              </p>
+            </div>
+          ` : ''}
 
           <div class="footer">
             <p>Thank you for choosing HealthCare Pharmacy!</p>
@@ -973,11 +1338,9 @@ const closeModal = () => {
                       <ActionButton onClick={() => handleViewDetails(order)}>
                         View
                       </ActionButton>
-                      {(order.status === 'pending' || order.status === 'confirmed' || order.status === 'processing') && (
-                        <ActionButton onClick={() => handleStatusUpdate(order)}>
-                          Update
-                        </ActionButton>
-                      )}
+                      <ActionButton onClick={() => handleStatusUpdate(order)}>
+                        Update
+                      </ActionButton>
                       {order.status === 'completed' && (
                         <PrintButton onClick={() => handlePrintInvoice(order)}>
                           Print Invoice
@@ -1019,68 +1382,156 @@ const closeModal = () => {
               <ModalTitle>Pharmacy Order Details</ModalTitle>
               <CloseButton onClick={closeModal}>&times;</CloseButton>
             </ModalHeader>
-            
-            <DetailRow>
-              <DetailLabel>Order ID:</DetailLabel>
-              <DetailValue>{selectedOrder.orderId}</DetailValue>
-            </DetailRow>
-            
-            <DetailRow>
-              <DetailLabel>Patient Name:</DetailLabel>
-              <DetailValue>{selectedOrder.patientName}</DetailValue>
-            </DetailRow>
-            
-            <DetailRow>
-              <DetailLabel>Patient ID:</DetailLabel>
-              <DetailValue>{selectedOrder.patientId}</DetailValue>
-            </DetailRow>
-            
-            <DetailRow>
-              <DetailLabel>Order Date:</DetailLabel>
-              <DetailValue>{formatDate(selectedOrder.orderDate)}</DetailValue>
-            </DetailRow>
-            
-            <DetailRow>
-              <DetailLabel>Status:</DetailLabel>
-              <DetailValue>
-                <StatusBadge status={selectedOrder.status}>
-                  {selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
-                </StatusBadge>
-              </DetailValue>
-            </DetailRow>
-            
-            <DetailRow>
-              <DetailLabel>Total Amount:</DetailLabel>
-              <DetailValue style={{ fontWeight: 'bold' }}>
-                {formatCurrency(selectedOrder.totalAmount)}
-              </DetailValue>
-            </DetailRow>
-            
 
-            <DetailRow>
-              <DetailLabel>Medicine Items:</DetailLabel>
-              <DetailValue></DetailValue>
-            </DetailRow>
-            <ItemsList>
-              {selectedOrder.items.map((item, index) => (
-                <ItemRow key={index}>
-                  <div>
-                    <div style={{ fontWeight: '500' }}>{item.medicineName}</div>
-                    <div style={{ fontSize: '12px', color: '#666666' }}>
-                      Quantity: {item.quantity} × {formatCurrency(item.price)}
-                    </div>
-                  </div>
-                  <div style={{ fontWeight: '500' }}>
-                    {formatCurrency(item.quantity * item.price)}
-                  </div>
-                </ItemRow>
-              ))}
-            </ItemsList>
-            
-            <DetailRow>
-              <DetailLabel>Created At:</DetailLabel>
-              <DetailValue>{formatDate(selectedOrder.createdAt)}</DetailValue>
-            </DetailRow>
+            {loadingOrderDetail ? (
+              <div style={{ textAlign: 'center', padding: '40px' }}>
+                <LoadingSpinner />
+                Loading order details...
+              </div>
+            ) : selectedOrderDetail ? (
+              <>
+                <DetailRow>
+                  <DetailLabel>Order ID:</DetailLabel>
+                  <DetailValue>{selectedOrderDetail.orderId}</DetailValue>
+                </DetailRow>
+                
+                <DetailRow>
+                  <DetailLabel>Order Date:</DetailLabel>
+                  <DetailValue>{formatDate(selectedOrderDetail.orderDate)}</DetailValue>
+                </DetailRow>
+                
+                <DetailRow>
+                  <DetailLabel>Status:</DetailLabel>
+                  <DetailValue>
+                    <StatusBadge status={selectedOrderDetail.status}>
+                      {selectedOrderDetail.status.charAt(0).toUpperCase() + selectedOrderDetail.status.slice(1)}
+                    </StatusBadge>
+                  </DetailValue>
+                </DetailRow>
+                
+                <DetailRow>
+                  <DetailLabel>Total Amount:</DetailLabel>
+                  <DetailValue style={{ fontWeight: 'bold' }}>
+                    {formatCurrency(selectedOrderDetail.totalAmount)}
+                  </DetailValue>
+                </DetailRow>
+
+                <DetailRow>
+                  <DetailLabel>Delivery Method:</DetailLabel>
+                  <DetailValue>{selectedOrderDetail.deliveryMethod}</DetailValue>
+                </DetailRow>
+
+                <DetailRow>
+                  <DetailLabel>Estimated Delivery:</DetailLabel>
+                  <DetailValue>{formatDate(selectedOrderDetail.estimatedDelivery)}</DetailValue>
+                </DetailRow>
+
+                {selectedOrderDetail.reason && (
+                  <DetailRow>
+                    <DetailLabel>Reason:</DetailLabel>
+                    <DetailValue>{selectedOrderDetail.reason}</DetailValue>
+                  </DetailRow>
+                )}
+
+
+
+                <DetailRow>
+                  <DetailLabel>Medicine Items:</DetailLabel>
+                  <DetailValue></DetailValue>
+                </DetailRow>
+                <ItemsList>
+                  {selectedOrderDetail.medicineItems.map((item, index) => (
+                    <ItemRow key={index}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: '500' }}>{item.medicineName}</div>
+                        <div style={{ fontSize: '12px', color: '#666666' }}>
+                          Quantity: {item.quantity} × {formatCurrency(item.price)}
+                        </div>
+                        {item.medicineDetails?.description && (
+                          <div style={{ fontSize: '11px', color: '#888888', marginTop: '2px' }}>
+                            {item.medicineDetails.description}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontWeight: '500' }}>
+                          {formatCurrency(item.quantity * item.price)}
+                        </div>
+                        {item.itemStatus && (
+                          <StatusBadge status={item.itemStatus}>
+                            {item.itemStatus.charAt(0).toUpperCase() + item.itemStatus.slice(1)}
+                          </StatusBadge>
+                        )}
+                      </div>
+                    </ItemRow>
+                  ))}
+                </ItemsList>
+              </>
+            ) : (
+              // Fallback to basic order data if detail fetch fails
+              <>
+                <DetailRow>
+                  <DetailLabel>Order ID:</DetailLabel>
+                  <DetailValue>{selectedOrder.orderId}</DetailValue>
+                </DetailRow>
+                
+                <DetailRow>
+                  <DetailLabel>Patient Name:</DetailLabel>
+                  <DetailValue>{selectedOrder.patientName}</DetailValue>
+                </DetailRow>
+                
+                <DetailRow>
+                  <DetailLabel>Patient ID:</DetailLabel>
+                  <DetailValue>{selectedOrder.patientId}</DetailValue>
+                </DetailRow>
+                
+                <DetailRow>
+                  <DetailLabel>Order Date:</DetailLabel>
+                  <DetailValue>{formatDate(selectedOrder.orderDate)}</DetailValue>
+                </DetailRow>
+                
+                <DetailRow>
+                  <DetailLabel>Status:</DetailLabel>
+                  <DetailValue>
+                    <StatusBadge status={selectedOrder.status}>
+                      {selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
+                    </StatusBadge>
+                  </DetailValue>
+                </DetailRow>
+                
+                <DetailRow>
+                  <DetailLabel>Total Amount:</DetailLabel>
+                  <DetailValue style={{ fontWeight: 'bold' }}>
+                    {formatCurrency(selectedOrder.totalAmount)}
+                  </DetailValue>
+                </DetailRow>
+                
+                <DetailRow>
+                  <DetailLabel>Medicine Items:</DetailLabel>
+                  <DetailValue></DetailValue>
+                </DetailRow>
+                <ItemsList>
+                  {selectedOrder.items.map((item, index) => (
+                    <ItemRow key={index}>
+                      <div>
+                        <div style={{ fontWeight: '500' }}>{item.medicineName}</div>
+                        <div style={{ fontSize: '12px', color: '#666666' }}>
+                          Quantity: {item.quantity} × {formatCurrency(item.price)}
+                        </div>
+                      </div>
+                      <div style={{ fontWeight: '500' }}>
+                        {formatCurrency(item.quantity * item.price)}
+                      </div>
+                    </ItemRow>
+                  ))}
+                </ItemsList>
+                
+                <DetailRow>
+                  <DetailLabel>Created At:</DetailLabel>
+                  <DetailValue>{formatDate(selectedOrder.createdAt)}</DetailValue>
+                </DetailRow>
+              </>
+            )}
           </ModalContent>
         </ModalOverlay>
       )}
@@ -1093,10 +1544,24 @@ const closeModal = () => {
               <CloseButton onClick={closeStatusUpdateModal}>&times;</CloseButton>
             </ModalHeader>
 
+            {loadingStockValidation && (
+              <div style={{ textAlign: 'center', padding: '20px' }}>
+                <LoadingSpinner />
+                Checking medicine stock availability...
+              </div>
+            )}
+
+            {loadingPreviousValues && !loadingStockValidation && (
+              <div style={{ textAlign: 'center', padding: '20px' }}>
+                <LoadingSpinner />
+                Loading previous update values...
+              </div>
+            )}
+
             {error && <ErrorMessage>{error}</ErrorMessage>}
             {successMessage && <SuccessBox>{successMessage}</SuccessBox>}
 
-            {!successMessage && (
+            {!loadingStockValidation && !loadingPreviousValues && !successMessage && (
               <>
                 <DetailRow>
                   <DetailLabel>Order ID:</DetailLabel>
@@ -1113,17 +1578,127 @@ const closeModal = () => {
                 </DetailRow>
 
                 <DetailRow>
-                  <DetailLabel>New Status:</DetailLabel>
+                  <DetailLabel>Medicine Status:</DetailLabel>
+                  <DetailValue></DetailValue>
+                </DetailRow>
+                
+                <ItemsList>
+                  {selectedStatusUpdateOrder.items.map((item, index) => {
+                    // Use index-based mapping since we've ensured the medicineStatuses array
+                    // matches the order of items in selectedStatusUpdateOrder.items
+                    const medicineStatus = medicineStatuses[index];
+                    
+                    // Ensure we have a valid medicine status with real ID
+                    if (!medicineStatus) {
+                      console.error(`Missing medicine status for item at index ${index}:`, item);
+                      return (
+                        <ItemRow key={index}>
+                          <div style={{ flex: 1, color: 'red' }}>
+                            <div style={{ fontWeight: '500' }}>{item.medicineName}</div>
+                            <div style={{ fontSize: '12px' }}>Error: Missing medicine status</div>
+                          </div>
+                          <div></div>
+                        </ItemRow>
+                      );
+                    }
+                    
+                    // Validate that we have a real medicine ID (not a medicine name)
+                    if (!medicineStatus.medicineId || medicineStatus.medicineId === item.medicineName) {
+                      console.error(`Invalid medicine ID for item ${item.medicineName}:`, medicineStatus.medicineId);
+                      return (
+                        <ItemRow key={index}>
+                          <div style={{ flex: 1, color: 'red' }}>
+                            <div style={{ fontWeight: '500' }}>{item.medicineName}</div>
+                            <div style={{ fontSize: '12px' }}>Error: Invalid medicine ID</div>
+                          </div>
+                          <div></div>
+                        </ItemRow>
+                      );
+                    }
+                    
+                    // Get stock validation for this medicine
+                    const stockValidation = stockValidations.get(selectedStatusUpdateOrder.orderId)
+                      ?.find(v => v.medicineId === medicineStatus.medicineId);
+                    
+                    // Determine stock status
+                    let stockStatus: 'in-stock' | 'low-stock' | 'out-of-stock' | 'checking' = 'checking';
+                    let stockInfo = '';
+                    let isDisabled = false;
+                    
+                    if (stockValidation) {
+                      if (stockValidation.currentStock <= 0) {
+                        stockStatus = 'out-of-stock';
+                        stockInfo = `Out of stock`;
+                        isDisabled = true; // Disable completion for out of stock items
+                      } else if (stockValidation.currentStock < item.quantity) {
+                        stockStatus = 'low-stock';
+                        stockInfo = `Low stock (${stockValidation.currentStock} available)`;
+                        isDisabled = false; // Allow completion but warn
+                      } else {
+                        stockStatus = 'in-stock';
+                        stockInfo = `${stockValidation.currentStock} in stock`;
+                        isDisabled = false;
+                      }
+                    }
+                    
+                    return (
+                      <ItemRow key={index}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: '500', display: 'flex', alignItems: 'center' }}>
+                            {item.medicineName}
+                            <StockIndicator stockStatus={stockStatus}>
+                              {stockInfo}
+                            </StockIndicator>
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#666666' }}>
+                            Quantity: {item.quantity} × {formatCurrency(item.price)}
+                          </div>
+                          {stockValidation?.errorMessage && (
+                            <div style={{ fontSize: '11px', color: '#721C24', marginTop: '2px' }}>
+                              {stockValidation.errorMessage}
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <SearchSelect
+                            value={medicineStatus.itemStatus}
+                            onChange={(e) => {
+                              // Update the medicineStatus at the same index
+                              const newMedicineStatuses = [...medicineStatuses];
+                              newMedicineStatuses[index] = {
+                                ...newMedicineStatuses[index],
+                                itemStatus: e.target.value as 'completed' | 'skipped'
+                              };
+                              setMedicineStatuses(newMedicineStatuses);
+                            }}
+                            style={{ width: '120px' }}
+                            disabled={isDisabled && medicineStatus.itemStatus !== 'skipped'}
+                          >
+                            <option value="completed">Completed</option>
+                            <option value="skipped">Skipped</option>
+                          </SearchSelect>
+                          {isDisabled && stockStatus === 'out-of-stock' && (
+                            <div style={{ fontSize: '10px', color: '#721C24', marginTop: '2px', textAlign: 'center' }}>
+                              Auto-skipped (out of stock)
+                            </div>
+                          )}
+                        </div>
+                      </ItemRow>
+                    );
+                  })}
+                </ItemsList>
+
+                <DetailRow>
+                  <DetailLabel>Final Status:</DetailLabel>
                   <DetailValue>
-                    <SearchSelect
-                      id="statusSelect"
-                      value={updateStatus}
-                      onChange={(e) => setUpdateStatus(e.target.value)}
-                      style={{ width: '200px' }}
-                    >
-                      <option value="completed">Completed</option>
-                      <option value="cancelled">Cancelled</option>
-                    </SearchSelect>
+                    <StatusBadge status={getFinalCalculatedStatus()}>
+                      {getFinalCalculatedStatus().charAt(0).toUpperCase() + getFinalCalculatedStatus().slice(1)}
+                    </StatusBadge>
+                    {getAllItemsSkipped() && (
+                      <div style={{ fontSize: '12px', color: '#721C24', marginTop: '4px' }}>
+                        All items are skipped - Order will be cancelled
+                      </div>
+                    )}
                   </DetailValue>
                 </DetailRow>
 
@@ -1146,7 +1721,7 @@ const closeModal = () => {
                     onClick={handleUpdateOrderStatus}
                     disabled={updatingStatus || !updateReason.trim()}
                   >
-                    {updatingStatus ? 'Updating...' : `Update to ${updateStatus}`}
+                    {updatingStatus ? 'Updating...' : `Update Order`}
                   </SearchButton>
                   <ResetButton onClick={closeStatusUpdateModal}>
                     Cancel

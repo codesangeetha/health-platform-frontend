@@ -975,7 +975,7 @@ export const DoctorAppointments = () => {
                 </div>
               )}
 
-              {/* Lab Test Orders */}
+              {/* Lab Tests */}
               {selectedPrescription.labTestOrders && selectedPrescription.labTestOrders.length > 0 && (
                 <div style={{ marginBottom: '2.5rem' }}>
                   <h3 style={{
@@ -987,356 +987,99 @@ export const DoctorAppointments = () => {
                     alignItems: 'center',
                     gap: '0.5rem'
                   }}>
-                    🧪 Lab Test Orders ({selectedPrescription.labTestOrders.length})
+                    🧪 Lab Tests
                   </h3>
                   
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    {selectedPrescription.labTestOrders.map((order: any, index: number) => (
-                      <div
-                        key={index}
-                        style={{
-                          backgroundColor: DESIGN_SYSTEM.colors.card_background,
-                          border: `2px solid ${DESIGN_SYSTEM.colors.border}`,
-                          borderRadius: '1rem',
-                          padding: '1.5rem',
-                          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-                          <div style={{ flex: 1 }}>
-                            <h4 style={{
-                              fontSize: DESIGN_SYSTEM.typography.headings.h3.fontSize,
-                              fontWeight: DESIGN_SYSTEM.typography.headings.h3.fontWeight,
-                              color: DESIGN_SYSTEM.colors.text_dark,
-                              margin: 0,
-                              marginBottom: '0.5rem',
-                              lineHeight: DESIGN_SYSTEM.typography.headings.h3.lineHeight
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {selectedPrescription.labTestOrders.flatMap((order: any) => 
+                      order.items?.map((item: any, itemIndex: number) => (
+                        <div
+                          key={`${order._id}-${itemIndex}`}
+                          style={{
+                            backgroundColor: DESIGN_SYSTEM.colors.card_background,
+                            border: `2px solid ${DESIGN_SYSTEM.colors.border}`,
+                            borderRadius: '1rem',
+                            padding: '1.5rem',
+                            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                            <span style={{ 
+                              fontSize: DESIGN_SYSTEM.typography.body_large.fontSize,
+                              fontWeight: '600', 
+                              color: DESIGN_SYSTEM.colors.text_dark 
                             }}>
-                              Lab Order #{order.orderId}
-                            </h4>
-                            <div style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '1rem',
-                              marginTop: '0.5rem'
-                            }}>
-                              <div style={{
-                                padding: '0.5rem 1rem',
-                                backgroundColor: DESIGN_SYSTEM.colors.accessible_success,
-                                color: 'white',
-                                borderRadius: '0.75rem',
-                                fontSize: DESIGN_SYSTEM.typography.subtext.fontSize,
-                                fontWeight: DESIGN_SYSTEM.typography.subtext.fontWeight
-                              }}>
-                                💰 ₹{order.totalAmount}
-                              </div>
-                              <span style={{
-                                fontSize: DESIGN_SYSTEM.typography.body.fontSize,
-                                color: DESIGN_SYSTEM.colors.text_muted,
-                                fontWeight: '500'
-                              }}>
-                                {order.items?.length || 0} test(s) ordered
-                              </span>
-                            </div>
-                          </div>
-                          <span style={{
-                            padding: '0.5rem 1rem',
-                            borderRadius: '0.75rem',
-                            fontSize: DESIGN_SYSTEM.typography.status_text.fontSize,
-                            fontWeight: DESIGN_SYSTEM.typography.status_text.fontWeight,
-                            backgroundColor: getStatusColor(order.status),
-                            color: 'white',
-                            textTransform: 'capitalize',
-                            lineHeight: DESIGN_SYSTEM.typography.status_text.lineHeight
-                          }}>
-                            {order.status}
-                          </span>
-                        </div>
-
-                        <div style={{ 
-                          backgroundColor: DESIGN_SYSTEM.colors.section_background,
-                          borderRadius: '0.75rem',
-                          padding: '1.5rem',
-                          border: `1px solid ${DESIGN_SYSTEM.colors.border}`
-                        }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                            <span style={{ fontSize: '1.25rem' }}>🔬</span>
-                            <label style={DESIGN_SYSTEM.typography.label}>
-                              Ordered Tests
-                            </label>
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            {order.items?.map((item: any, itemIndex: number) => (
-                              <div
-                                key={itemIndex}
-                                style={{
-                                  backgroundColor: DESIGN_SYSTEM.colors.background_white,
-                                  padding: '1rem',
-                                  borderRadius: '0.75rem',
-                                  border: `1px solid ${DESIGN_SYSTEM.colors.border}`,
-                                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
-                                }}
-                              >
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                                  <span style={{ 
-                                    fontSize: DESIGN_SYSTEM.typography.body_large.fontSize,
-                                    fontWeight: '600', 
-                                    color: DESIGN_SYSTEM.colors.text_dark 
-                                  }}>
-                                    {item.name}
-                                  </span>
-                                  <span style={{ 
-                                    fontSize: DESIGN_SYSTEM.typography.body.fontSize, 
-                                    color: DESIGN_SYSTEM.colors.text_muted,
-                                    fontWeight: '500'
-                                  }}>
-                                    ₹{item.price} × {item.quantity}
-                                  </span>
-                                </div>
-                                {item.result && (
-                                  <div style={{ 
-                                    marginTop: '1rem',
-                                    padding: '1rem',
-                                    backgroundColor: DESIGN_SYSTEM.colors.section_background,
-                                    borderRadius: '0.5rem',
-                                    border: `1px solid ${DESIGN_SYSTEM.colors.border}`
-                                  }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                                      <span style={{ fontSize: '1rem' }}>📋</span>
-                                      <label style={DESIGN_SYSTEM.typography.label_small}>
-                                        Result
-                                      </label>
-                                    </div>
-                                    <div style={{
-                                      fontSize: DESIGN_SYSTEM.typography.body.fontSize,
-                                      color: DESIGN_SYSTEM.colors.text_dark,
-                                      lineHeight: DESIGN_SYSTEM.typography.body.lineHeight
-                                    }}>
-                                      {item.result}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {order.collectionMethod && (
-                          <div style={{ 
-                            marginTop: '1rem',
-                            padding: '1rem',
-                            backgroundColor: DESIGN_SYSTEM.colors.section_background,
-                            borderRadius: '0.75rem',
-                            border: `1px solid ${DESIGN_SYSTEM.colors.border}`
-                          }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                              <span style={{ fontSize: '1.25rem' }}>📍</span>
-                              <label style={DESIGN_SYSTEM.typography.label_small}>
-                                Collection Method
-                              </label>
-                              <span style={{
-                                fontSize: DESIGN_SYSTEM.typography.body.fontSize,
-                                color: DESIGN_SYSTEM.colors.text_dark,
-                                fontWeight: '500',
-                                marginLeft: '0.5rem'
-                              }}>
-                                {order.collectionMethod?.replace('_', ' ').toUpperCase()}
-                              </span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Medicine Orders */}
-              {selectedPrescription.medicineOrders && selectedPrescription.medicineOrders.length > 0 && (
-                <div style={{ marginBottom: '2.5rem' }}>
-                  <h3 style={{
-                    fontSize: DESIGN_SYSTEM.typography.headings.h2.fontSize,
-                    fontWeight: DESIGN_SYSTEM.typography.headings.h2.fontWeight,
-                    color: DESIGN_SYSTEM.colors.text_dark,
-                    marginBottom: '1.5rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem'
-                  }}>
-                    💊 Medicine Orders ({selectedPrescription.medicineOrders.length})
-                  </h3>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    {selectedPrescription.medicineOrders.map((order: any, index: number) => (
-                      <div
-                        key={index}
-                        style={{
-                          backgroundColor: DESIGN_SYSTEM.colors.card_background,
-                          border: `2px solid ${DESIGN_SYSTEM.colors.border}`,
-                          borderRadius: '1rem',
-                          padding: '1.5rem',
-                          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-                          <div style={{ flex: 1 }}>
-                            <h4 style={{
-                              fontSize: DESIGN_SYSTEM.typography.headings.h3.fontSize,
-                              fontWeight: DESIGN_SYSTEM.typography.headings.h3.fontWeight,
-                              color: DESIGN_SYSTEM.colors.text_dark,
-                              margin: 0,
-                              marginBottom: '0.5rem',
-                              lineHeight: DESIGN_SYSTEM.typography.headings.h3.lineHeight
-                            }}>
-                              Medicine Order #{order.orderId}
-                            </h4>
-                            <div style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '1rem',
-                              marginTop: '0.5rem'
-                            }}>
-                              <div style={{
-                                padding: '0.5rem 1rem',
-                                backgroundColor: DESIGN_SYSTEM.colors.accessible_success,
-                                color: 'white',
-                                borderRadius: '0.75rem',
-                                fontSize: DESIGN_SYSTEM.typography.subtext.fontSize,
-                                fontWeight: DESIGN_SYSTEM.typography.subtext.fontWeight
-                              }}>
-                                💰 ₹{order.totalAmount}
-                              </div>
-                              <span style={{
-                                fontSize: DESIGN_SYSTEM.typography.body.fontSize,
-                                color: DESIGN_SYSTEM.colors.text_muted,
-                                fontWeight: '500'
-                              }}>
-                                {order.items?.length || 0} medicine(s) ordered
-                              </span>
-                            </div>
-                          </div>
-                          <span style={{
-                            padding: '0.5rem 1rem',
-                            borderRadius: '0.75rem',
-                            fontSize: DESIGN_SYSTEM.typography.status_text.fontSize,
-                            fontWeight: DESIGN_SYSTEM.typography.status_text.fontWeight,
-                            backgroundColor: getStatusColor(order.status),
-                            color: 'white',
-                            textTransform: 'capitalize',
-                            lineHeight: DESIGN_SYSTEM.typography.status_text.lineHeight
-                          }}>
-                            {order.status}
-                          </span>
-                        </div>
-
-                        <div style={{ 
-                          backgroundColor: DESIGN_SYSTEM.colors.section_background,
-                          borderRadius: '0.75rem',
-                          padding: '1.5rem',
-                          border: `1px solid ${DESIGN_SYSTEM.colors.border}`,
-                          marginBottom: '1rem'
-                        }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                            <span style={{ fontSize: '1.25rem' }}>💊</span>
-                            <label style={DESIGN_SYSTEM.typography.label}>
-                              Ordered Medicines
-                            </label>
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            {order.items?.map((item: any, itemIndex: number) => (
-                              <div
-                                key={itemIndex}
-                                style={{
-                                  backgroundColor: DESIGN_SYSTEM.colors.background_white,
-                                  padding: '1rem',
-                                  borderRadius: '0.75rem',
-                                  border: `1px solid ${DESIGN_SYSTEM.colors.border}`,
-                                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
-                                }}
-                              >
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <span style={{ 
-                                    fontSize: DESIGN_SYSTEM.typography.body_large.fontSize,
-                                    fontWeight: '600', 
-                                    color: DESIGN_SYSTEM.colors.text_dark 
-                                  }}>
-                                    {item.name}
-                                  </span>
-                                  <span style={{ 
-                                    fontSize: DESIGN_SYSTEM.typography.body.fontSize, 
-                                    color: DESIGN_SYSTEM.colors.text_muted,
-                                    fontWeight: '500'
-                                  }}>
-                                    ₹{item.price} × {item.quantity}
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                          <div style={{
-                            padding: '1rem',
-                            backgroundColor: DESIGN_SYSTEM.colors.section_background,
-                            borderRadius: '0.75rem',
-                            border: `1px solid ${DESIGN_SYSTEM.colors.border}`
-                          }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                              <span style={{ fontSize: '1.25rem' }}>🚚</span>
-                              <label style={DESIGN_SYSTEM.typography.label_small}>
-                                Delivery Method
-                              </label>
-                            </div>
+                              {item.name}
+                            </span>
                             <span style={{
-                              fontSize: DESIGN_SYSTEM.typography.body.fontSize,
-                              color: DESIGN_SYSTEM.colors.text_dark,
-                              fontWeight: '500',
-                              lineHeight: DESIGN_SYSTEM.typography.body.lineHeight
+                              padding: '0.5rem 1rem',
+                              borderRadius: '0.75rem',
+                              fontSize: DESIGN_SYSTEM.typography.status_text.fontSize,
+                              fontWeight: DESIGN_SYSTEM.typography.status_text.fontWeight,
+                              backgroundColor: item.testStatus === 'skipped' ? DESIGN_SYSTEM.colors.status_cancelled : DESIGN_SYSTEM.colors.status_confirmed,
+                              color: 'white',
+                              textTransform: 'capitalize',
+                              lineHeight: DESIGN_SYSTEM.typography.status_text.lineHeight
                             }}>
-                              {order.deliveryMethod?.toUpperCase() || 'Not specified'}
+                              {item.testStatus}
                             </span>
                           </div>
                           
-                          {order.estimatedDelivery && (
-                            <div style={{
+                          {item.result && (
+                            <div style={{ 
                               padding: '1rem',
                               backgroundColor: DESIGN_SYSTEM.colors.section_background,
                               borderRadius: '0.75rem',
                               border: `1px solid ${DESIGN_SYSTEM.colors.border}`
                             }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                                <span style={{ fontSize: '1.25rem' }}>📅</span>
+                                <span style={{ fontSize: '1rem' }}>📋</span>
                                 <label style={DESIGN_SYSTEM.typography.label_small}>
-                                  Estimated Delivery
+                                  Result
                                 </label>
                               </div>
-                              <span style={{
+                              <div style={{
                                 fontSize: DESIGN_SYSTEM.typography.body.fontSize,
                                 color: DESIGN_SYSTEM.colors.text_dark,
-                                fontWeight: '500',
                                 lineHeight: DESIGN_SYSTEM.typography.body.lineHeight
                               }}>
-                                {new Date(order.estimatedDelivery).toLocaleDateString('en-US', {
-                                  weekday: 'short',
-                                  year: 'numeric',
-                                  month: 'short',
-                                  day: 'numeric'
-                                })}
-                              </span>
+                                {item.result}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {item.testStatus === 'skipped' && (
+                            <div style={{ 
+                              marginTop: '1rem',
+                              padding: '1rem',
+                              backgroundColor: DESIGN_SYSTEM.colors.status_cancelled,
+                              borderRadius: '0.75rem',
+                              border: `1px solid ${DESIGN_SYSTEM.colors.status_cancelled}`
+                            }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <span style={{ fontSize: '1rem', color: 'white' }}>⚠️</span>
+                                <span style={{
+                                  fontSize: DESIGN_SYSTEM.typography.body.fontSize,
+                                  color: 'white',
+                                  fontWeight: '500'
+                                }}>
+                                  This lab test was skipped
+                                </span>
+                              </div>
                             </div>
                           )}
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </div>
               )}
 
+
+
               {/* No Data Message */}
               {!selectedPrescription.prescription?.medicines?.length && 
-               !selectedPrescription.labTestOrders?.length && 
-               !selectedPrescription.medicineOrders?.length && (
+               !selectedPrescription.labTestOrders?.length && (
                 <div style={{
                   textAlign: 'center',
                   padding: '3rem 2rem',

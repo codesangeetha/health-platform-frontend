@@ -223,10 +223,16 @@ body {
 }
 
 .experience,
-.location {
+.location,
+.available-time {
   font-size: 0.875rem;
   color: var(--text-muted);
   margin: 0;
+}
+
+.available-time {
+  color: var(--text-primary);
+  font-weight: 500;
 }
 
 .doctor-actions {

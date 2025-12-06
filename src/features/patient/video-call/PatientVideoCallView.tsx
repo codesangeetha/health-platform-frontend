@@ -350,7 +350,7 @@ export const PatientVideoCallView: React.FC = () => {
   }, [socket, roomId]);
 
   return (
-    <PatientLayout>
+    // <PatientLayout>
       <div className="patient-video-call-container">
         <div className="patient-video-call-controls">
           <div className="patient-call-info">
@@ -415,7 +415,7 @@ export const PatientVideoCallView: React.FC = () => {
           </div>
         </div>
       </div>
-    </PatientLayout>
+    // </PatientLayout>
   );
 };
 
