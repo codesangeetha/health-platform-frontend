@@ -49,6 +49,14 @@ export const DoctorDirectory = () => {
     }).format(amount);
   };
 
+  const formatTimeTo12Hour = (time: string) => {
+    const [hours, minutes] = time.split(':');
+    const hour24 = parseInt(hours, 10);
+    const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+    const ampm = hour24 >= 12 ? 'PM' : 'AM';
+    return `${hour12}:${minutes} ${ampm}`;
+  };
+
   return (
     <>
       {/* Search and Filters Section */}
@@ -141,6 +149,11 @@ export const DoctorDirectory = () => {
                       <div className="doctor-details">
                         <p className="experience">{doctor.experience} years experience</p>
                         <p className="location">{doctor.hospital}</p>
+                        {doctor.availableTime?.start && doctor.availableTime?.end && (
+                          <p className="available-time">
+                            Available: {formatTimeTo12Hour(doctor.availableTime.start)} - {formatTimeTo12Hour(doctor.availableTime.end)}
+                          </p>
+                        )}
                       </div>
                       
                       <div className="doctor-actions">

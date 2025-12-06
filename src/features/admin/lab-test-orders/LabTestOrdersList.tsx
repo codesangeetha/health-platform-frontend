@@ -429,6 +429,8 @@ interface LabTestItem {
   testName: string;
   price: number;
   labTestId: string;
+  testStatus?: 'completed' | 'skipped';
+  result?: string | null;
   labTestDetails: LabTestDetails;
 }
 
@@ -471,7 +473,6 @@ const [orders, setOrders] = useState<Order[]>([]);
   const [showModal, setShowModal] = useState(false);
 const [showStatusUpdateModal, setShowStatusUpdateModal] = useState(false);
   const [selectedStatusUpdateOrder, setSelectedStatusUpdateOrder] = useState<Order | null>(null);
-  const [updateStatus, setUpdateStatus] = useState<'completed' | 'cancelled'>('completed');
   const [updateReason, setUpdateReason] = useState('');
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -572,18 +573,24 @@ const handleViewDetails = async (order: Order) => {
   const handleStatusUpdate = async (order: Order) => {
     setSelectedStatusUpdateOrder(order);
     setUpdateReason('');
-    setUpdateStatus('completed');
     setTestResults([]);
     
     // Fetch order details to get labTestIds
     try {
       const response = await getLabTestOrderById(order.orderId);
-      setOrderDetails(response.data.order);
+      const orderData = response.data.order;
+      setOrderDetails(orderData);
       
-      // Initialize test results for each test item
-      const initialResults: TestResult[] = response.data.order.testItems.map((item: any) => ({
+      // Prepopulate reason with existing reason if available
+      if (orderData.reason) {
+        setUpdateReason(orderData.reason);
+      }
+      
+      // Initialize test results for each test item with existing data
+      const initialResults: TestResult[] = orderData.testItems.map((item: any) => ({
         labTestId: item.labTestId,
-        testResult: ''
+        testStatus: item.testStatus || 'completed' as const, // Use existing test status or default to completed
+        testResult: item.result || '' // Use existing result or empty string
       }));
       setTestResults(initialResults);
     } catch (err) {
@@ -603,7 +610,6 @@ const closeStatusUpdateModal = () => {
     setShowStatusUpdateModal(false);
     setSelectedStatusUpdateOrder(null);
     setUpdateReason('');
-    setUpdateStatus('completed');
     setSuccessMessage(null);
     setTestResults([]);
     setOrderDetails(null);
@@ -617,19 +623,46 @@ const closeStatusUpdateModal = () => {
     );
   };
 
+  const handleTestStatusChange = (index: number, status: 'completed' | 'skipped') => {
+    setTestResults(prev => 
+      prev.map((result, i) => 
+        i === index ? { 
+          ...result, 
+          testStatus: status,
+          testResult: status === 'skipped' ? null : result.testResult
+        } : result
+      )
+    );
+  };
+
+  const calculateFinalOrderStatus = (testResults: TestResult[]): 'completed' | 'cancelled' => {
+    const completedTests = testResults.filter(result => result.testStatus === 'completed');
+    if (completedTests.length === 0) {
+      return 'cancelled'; // All tests skipped
+    }
+    return 'completed'; // At least one test completed
+  };
+
 const handleUpdateOrderStatus = async () => {
     if (!selectedStatusUpdateOrder || !updateReason.trim()) {
       setError('Please provide a reason for the status update');
       return;
     }
 
-    // Validate test results when status is completed
-    if (updateStatus === 'completed') {
-      const emptyResults = testResults.filter(result => !result.testResult.trim());
-      if (emptyResults.length > 0) {
-        setError('Please provide results for all tests');
-        return;
-      }
+    // Validate that at least one test has a status
+    const completedTests = testResults.filter(result => result.testStatus === 'completed');
+    const skippedTests = testResults.filter(result => result.testStatus === 'skipped');
+    
+    if (testResults.length === 0) {
+      setError('Please configure test results');
+      return;
+    }
+
+    // Validate that completed tests have results
+    const invalidCompletedTests = completedTests.filter(result => !result.testResult || !result.testResult.trim());
+    if (invalidCompletedTests.length > 0) {
+      setError('Please provide results for all completed tests');
+      return;
     }
 
     try {
@@ -637,10 +670,12 @@ const handleUpdateOrderStatus = async () => {
       setError(null);
       setSuccessMessage(null);
 
+      const finalStatus = calculateFinalOrderStatus(testResults);
+      
       const updateData = {
-        status: updateStatus,
+        status: finalStatus,
         reason: updateReason.trim(),
-        result: updateStatus === 'completed' ? testResults : undefined
+        result: testResults
       };
 
       await updateLabTestOrderStatus(
@@ -651,7 +686,7 @@ const handleUpdateOrderStatus = async () => {
       // Refresh the orders list
       await fetchOrders(pagination.page);
       
-      setSuccessMessage(`Order status updated to ${updateStatus} successfully!`);
+      setSuccessMessage(`Order status updated to ${finalStatus} successfully!`);
 
       // Close modal after 2 seconds to show success message
       setTimeout(() => {
@@ -677,12 +712,18 @@ const handleUpdateOrderStatus = async () => {
       const response = await getLabTestOrderById(order.orderId);
       const detailedOrder = response.data.order as DetailedLabTestOrder;
       
+      // Filter out skipped tests from the invoice
+      const completedTestItems = detailedOrder.testItems.filter(item => item.testStatus !== 'skipped');
+      
       // Create a new window for printing
       const printWindow = window.open('', '_blank');
       if (!printWindow) {
         setError('Unable to open print window. Please check your browser settings.');
         return;
       }
+
+      // Calculate the total amount for completed tests only
+      const completedTestsTotal = completedTestItems.reduce((sum, item) => sum + item.price, 0);
 
       // Generate invoice HTML
       const invoiceHTML = `
@@ -771,6 +812,15 @@ const handleUpdateOrderStatus = async () => {
               font-size: 12px;
               font-weight: 500;
             }
+            .note {
+              background-color: #FFF3CD;
+              border: 1px solid #FFEAA7;
+              border-radius: 4px;
+              padding: 10px;
+              margin: 10px 0;
+              font-size: 14px;
+              color: #856404;
+            }
             @media print {
               body { margin: 0; }
               .no-print { display: none; }
@@ -820,8 +870,24 @@ const handleUpdateOrderStatus = async () => {
                 <span class="label">Total Tests:</span>
                 ${detailedOrder.testItems.length}
               </div>
+              <div class="info-row">
+                <span class="label">Completed Tests:</span>
+                ${completedTestItems.length}
+              </div>
+              ${completedTestItems.length !== detailedOrder.testItems.length ? `
+                <div class="info-row">
+                  <span class="label">Skipped Tests:</span>
+                  ${detailedOrder.testItems.length - completedTestItems.length}
+                </div>
+              ` : ''}
             </div>
           </div>
+
+          ${completedTestItems.length !== detailedOrder.testItems.length ? `
+            <div class="note">
+              <strong>Note:</strong> This invoice only includes completed tests. Skipped tests are not charged.
+            </div>
+          ` : ''}
 
           <table class="items-table">
             <thead>
@@ -832,7 +898,7 @@ const handleUpdateOrderStatus = async () => {
               </tr>
             </thead>
             <tbody>
-              ${detailedOrder.testItems.map(item => `
+              ${completedTestItems.map(item => `
                 <tr>
                   <td>${item.testName}</td>
                   <td>${item.labTestDetails.description}</td>
@@ -844,7 +910,7 @@ const handleUpdateOrderStatus = async () => {
 
           <div class="total-section">
             <div class="total-row">
-              Total Amount: ${formatCurrency(detailedOrder.totalAmount)}
+              Total Amount: ${formatCurrency(completedTestsTotal)}
             </div>
           </div>
 
@@ -1014,6 +1080,33 @@ const handleUpdateOrderStatus = async () => {
               font-weight: 500;
               display: inline-block;
             }
+            .status-completed {
+              background-color: #D4EDDA;
+              color: #155724;
+              padding: 4px 8px;
+              border-radius: 4px;
+              font-size: 12px;
+              font-weight: 500;
+              display: inline-block;
+            }
+            .status-skipped {
+              background-color: #FFF3CD;
+              color: #856404;
+              padding: 4px 8px;
+              border-radius: 4px;
+              font-size: 12px;
+              font-weight: 500;
+              display: inline-block;
+            }
+            .status-unknown {
+              background-color: #E2E3E5;
+              color: #383D41;
+              padding: 4px 8px;
+              border-radius: 4px;
+              font-size: 12px;
+              font-weight: 500;
+              display: inline-block;
+            }
             @media print {
               body { margin: 0; }
               .no-print { display: none; }
@@ -1070,18 +1163,24 @@ const handleUpdateOrderStatus = async () => {
             
             ${order.testItems && order.testItems.length > 0 ? 
               order.testItems.map((item, index) => {
-                const resultValue = order.resultData && order.resultData[item.testName] ? 
-                  order.resultData[item.testName] : 'Results not available';
+                const testStatus = item.testStatus || 'unknown';
+                const resultValue = item.result || 
+                  (order.resultData && order.resultData[item.testName]) || 
+                  'No result available';
+                
+                const statusClass = testStatus === 'completed' ? 'status-completed' : 
+                                  testStatus === 'skipped' ? 'status-skipped' : 'status-unknown';
                 
                 return `
                   <div class="test-result">
                     <div class="test-header">
                       <h4 class="test-name">Test ${index + 1}: ${item.testName}</h4>
                       <p class="test-description">${item.labTestDetails.description}</p>
+                      <span class="${statusClass}">${testStatus.charAt(0).toUpperCase() + testStatus.slice(1)}</span>
                     </div>
                     <div class="test-result-value">
                       <div class="result-label">Test Result:</div>
-                      <div class="result-value">${resultValue}</div>
+                      <div class="result-value">${testStatus === 'skipped' ? 'Test was skipped' : resultValue}</div>
                     </div>
                   </div>
                 `;
@@ -1296,17 +1395,15 @@ const handleUpdateOrderStatus = async () => {
                       {formatCurrency(order.totalAmount)}
                     </Td>
 <Td>
-  <ActionButton onClick={() => handleViewDetails(order)}>
-    View
+  <ActionButton onClick={() => handleViewDetails(order)} title="View Details">
+    👁️
   </ActionButton>
-  {(order.status === 'pending' || order.status === 'confirmed' || order.status === 'processing') && (
-    <ActionButton onClick={() => handleStatusUpdate(order)}>
-      Update
-    </ActionButton>
-  )}
+  <ActionButton onClick={() => handleStatusUpdate(order)} title="Update Status">
+    ✏️
+  </ActionButton>
   {order.status === 'completed' && (
-    <PrintButton onClick={() => handlePrintInvoice(order)}>
-      Print Invoice
+    <PrintButton onClick={() => handlePrintInvoice(order)} title="Print Invoice">
+      🖨️
     </PrintButton>
   )}
 </Td>
@@ -1410,9 +1507,28 @@ const handleUpdateOrderStatus = async () => {
                     <div style={{ fontSize: '12px', color: '#666666', marginBottom: '4px' }}>
                       {item.labTestDetails.description}
                     </div>
-                    <div style={{ fontSize: '12px', color: '#666666' }}>
+                    <div style={{ fontSize: '12px', color: '#666666', marginBottom: '4px' }}>
                       Price: {formatCurrency(item.price)}
                     </div>
+                    {item.testStatus && (
+                      <div style={{ fontSize: '12px', marginBottom: '4px' }}>
+                        <span style={{ fontWeight: '500', color: '#666666' }}>Status: </span>
+                        <StatusBadge status={item.testStatus}>
+                          {item.testStatus.charAt(0).toUpperCase() + item.testStatus.slice(1)}
+                        </StatusBadge>
+                      </div>
+                    )}
+                    {item.result && (
+                      <div style={{ fontSize: '12px', color: '#666666' }}>
+                        <span style={{ fontWeight: '500' }}>Result: </span>
+                        {item.result}
+                      </div>
+                    )}
+                    {!item.result && item.testStatus === 'skipped' && (
+                      <div style={{ fontSize: '12px', color: '#999999', fontStyle: 'italic' }}>
+                        Test was skipped
+                      </div>
+                    )}
                   </div>
                   <div style={{ fontWeight: '500' }}>
                     {formatCurrency(item.price)}
@@ -1480,17 +1596,11 @@ const handleUpdateOrderStatus = async () => {
                 </DetailRow>
 
                 <DetailRow>
-                  <DetailLabel>New Status:</DetailLabel>
+                  <DetailLabel>Final Status:</DetailLabel>
                   <DetailValue>
-                    <SearchSelect
-                      id="statusSelect"
-                      value={updateStatus}
-                      onChange={(e) => setUpdateStatus(e.target.value as 'completed' | 'cancelled')}
-                      style={{ width: '200px' }}
-                    >
-                      <option value="completed">Completed</option>
-                      <option value="cancelled">Cancelled</option>
-                    </SearchSelect>
+                    <StatusBadge status={calculateFinalOrderStatus(testResults)}>
+                      {calculateFinalOrderStatus(testResults).charAt(0).toUpperCase() + calculateFinalOrderStatus(testResults).slice(1)}
+                    </StatusBadge>
                   </DetailValue>
                 </DetailRow>
 
@@ -1508,23 +1618,45 @@ const handleUpdateOrderStatus = async () => {
                   </DetailValue>
                 </DetailRow>
 
-                {updateStatus === 'completed' && orderDetails && (
+                {orderDetails && (
                   <DetailRow style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
                     <DetailLabel style={{ marginBottom: '8px' }}>Test Results *</DetailLabel>
                     <DetailValue style={{ width: '100%' }}>
                       {orderDetails.testItems.map((item: any, index: number) => (
                         <div key={item.labTestId} style={{ marginBottom: '16px', padding: '12px', backgroundColor: '#F8F9FA', borderRadius: '4px' }}>
                           <div style={{ fontWeight: '500', marginBottom: '8px' }}>{item.testName}</div>
-                          <SearchInput
-                            type="text"
-                            placeholder={`Enter result for ${item.testName}`}
-                            value={testResults[index]?.testResult || ''}
-                            onChange={(e) => {
-                              handleTestResultChange(index, e.target.value);
-                              setError(null);
-                            }}
-                            style={{ width: '100%' }}
-                          />
+                          <div style={{ marginBottom: '8px' }}>
+                            <SearchLabel htmlFor={`testStatus-${index}`} style={{ marginBottom: '4px', display: 'block' }}>
+                              Test Status
+                            </SearchLabel>
+                            <SearchSelect
+                              id={`testStatus-${index}`}
+                              value={testResults[index]?.testStatus || 'completed'}
+                              onChange={(e) => handleTestStatusChange(index, e.target.value as 'completed' | 'skipped')}
+                              style={{ width: '100%' }}
+                            >
+                              <option value="completed">Completed</option>
+                              <option value="skipped">Skipped</option>
+                            </SearchSelect>
+                          </div>
+                          {testResults[index]?.testStatus === 'completed' && (
+                            <div>
+                              <SearchLabel htmlFor={`testResult-${index}`} style={{ marginBottom: '4px', display: 'block' }}>
+                                Test Result
+                              </SearchLabel>
+                              <SearchInput
+                                id={`testResult-${index}`}
+                                type="text"
+                                placeholder={`Enter result for ${item.testName}`}
+                                value={testResults[index]?.testResult || ''}
+                                onChange={(e) => {
+                                  handleTestResultChange(index, e.target.value);
+                                  setError(null);
+                                }}
+                                style={{ width: '100%' }}
+                              />
+                            </div>
+                          )}
                         </div>
                       ))}
                     </DetailValue>
@@ -1537,10 +1669,11 @@ const handleUpdateOrderStatus = async () => {
                     disabled={
                       updatingStatus || 
                       !updateReason.trim() || 
-                      (updateStatus === 'completed' && testResults.some(result => !result.testResult.trim()))
+                      testResults.length === 0 ||
+                      testResults.filter(result => result.testStatus === 'completed').some(result => !result.testResult || !result.testResult.trim())
                     }
                   >
-                    {updatingStatus ? 'Updating...' : `Update to ${updateStatus}`}
+                    {updatingStatus ? 'Updating...' : `Update Order Status`}
                   </SearchButton>
                   <ResetButton onClick={closeStatusUpdateModal}>
                     Cancel
