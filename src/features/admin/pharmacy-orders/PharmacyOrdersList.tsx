@@ -1421,10 +1421,7 @@ const closeModal = () => {
                   <DetailValue>{selectedOrderDetail.deliveryMethod}</DetailValue>
                 </DetailRow>
 
-                <DetailRow>
-                  <DetailLabel>Estimated Delivery:</DetailLabel>
-                  <DetailValue>{formatDate(selectedOrderDetail.estimatedDelivery)}</DetailValue>
-                </DetailRow>
+
 
                 {selectedOrderDetail.reason && (
                   <DetailRow>
