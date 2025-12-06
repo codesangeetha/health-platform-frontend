@@ -1,7 +1,7 @@
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../context/AuthContext';
-import { AuthService } from '../../../services/auth/auth.service';
+import { getAuthToken } from '../../../services/auth/auth.service';
 import { DoctorLayout } from '../../../components/layout/DoctorLayout';
 import { BASE_URL } from '@/config/constants';
 import '../../../styles/components/patient-dashboard.styles.css';
@@ -16,7 +16,6 @@ interface DoctorProfileData {
   experience?: string | number;
   consultationFee?: number | string;
   qualification?: string;
-  hospital?: string;
   availableDays?: string[];
   availableTime?: {
     start?: string;
@@ -33,7 +32,6 @@ type FieldKey =
   | 'experience'
   | 'consultationFee'
   | 'qualification'
-  | 'hospital'
   | 'availableDays'
   | 'availableStart'
   | 'availableEnd';
@@ -45,7 +43,7 @@ export const DoctorProfileEdit = () => {
   const navigate = useNavigate();
   const location = useLocation() as any;
 
-  const token = useMemo(() => authState.token || AuthService.getToken() || '', [authState.token]);
+  const token = useMemo(() => getAuthToken('doctor') || '', []);
 
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
@@ -63,7 +61,6 @@ export const DoctorProfileEdit = () => {
     experience: '',
     consultationFee: '',
     qualification: '',
-    hospital: '',
     availableDays: [],
     availableTime: { start: '', end: '' },
   });
@@ -78,7 +75,6 @@ export const DoctorProfileEdit = () => {
     experience: false,
     consultationFee: false,
     qualification: false,
-    hospital: false,
     availableDays: false,
     availableStart: false,
     availableEnd: false,
@@ -93,7 +89,6 @@ export const DoctorProfileEdit = () => {
     experience: null,
     consultationFee: null,
     qualification: null,
-    hospital: null,
     availableDays: null,
     availableStart: null,
     availableEnd: null,
@@ -124,7 +119,6 @@ export const DoctorProfileEdit = () => {
           experience: false,
           consultationFee: false,
           qualification: false,
-          hospital: false,
           availableDays: false,
           availableStart: false,
           availableEnd: false,
@@ -138,7 +132,6 @@ export const DoctorProfileEdit = () => {
           experience: null,
           consultationFee: null,
           qualification: null,
-          hospital: null,
           availableDays: null,
           availableStart: null,
           availableEnd: null,
@@ -185,14 +178,13 @@ export const DoctorProfileEdit = () => {
         setForm({
           firstName: data.firstName || '',
           lastName: data.lastName || '',
-          email: data.email || authState.user?.email || '',
+          email: data.email || authState.sessions.doctor.user?.email || '',
           phone: data.phone || '',
           specialization: data.specialization || '',
           licenseNumber: data.licenseNumber || '',
           experience: data.experience || '',
           consultationFee: data.consultationFee ?? '',
           qualification: data.qualification || '',
-          hospital: data.hospital || '',
           availableDays: Array.isArray(data.availableDays) ? data.availableDays : [],
           availableTime: { start: data.availableTime?.start || '', end: data.availableTime?.end || '' },
         });
@@ -206,7 +198,6 @@ export const DoctorProfileEdit = () => {
           experience: false,
           consultationFee: false,
           qualification: false,
-          hospital: false,
           availableDays: false,
           availableStart: false,
           availableEnd: false,
@@ -220,7 +211,6 @@ export const DoctorProfileEdit = () => {
           experience: null,
           consultationFee: null,
           qualification: null,
-          hospital: null,
           availableDays: null,
           availableStart: null,
           availableEnd: null,
@@ -234,7 +224,7 @@ export const DoctorProfileEdit = () => {
 
     bootstrap();
     return () => { isMounted = false; };
-  }, [token, authState.user?.email, location?.state]);
+  }, [token, authState.sessions.doctor.user?.email, location?.state]);
 
   const handleLogout = () => {
     logout();
@@ -257,7 +247,6 @@ export const DoctorProfileEdit = () => {
     const specialization = trim(currentForm.specialization);
     const licenseNumber = trim(currentForm.licenseNumber);
     const qualification = trim(currentForm.qualification);
-    const hospital = trim(currentForm.hospital);
 
     const expRaw = String(currentForm.experience ?? '').trim();
     const feeRaw = String(currentForm.consultationFee ?? '').trim();
@@ -308,10 +297,7 @@ export const DoctorProfileEdit = () => {
         if (!qualification) return 'Qualification is required.';
         if (!qualOk(qualification)) return 'Use letters, commas, periods; 2–100 characters.';
         return null;
-      case 'hospital':
-        if (!hospital) return 'Hospital/Clinic is required.';
-        if (hospital.length < 2 || hospital.length > 100) return 'Hospital must be 2–100 characters.';
-        return null;
+
       case 'availableDays': {
         const days = currentForm.availableDays || [];
         if (!days.length) return 'Select at least one available day.';
@@ -340,7 +326,6 @@ export const DoctorProfileEdit = () => {
       experience: validateField('experience', currentForm),
       consultationFee: validateField('consultationFee', currentForm),
       qualification: validateField('qualification', currentForm),
-      hospital: validateField('hospital', currentForm),
       availableDays: validateField('availableDays', currentForm),
       availableStart: validateField('availableStart', currentForm),
       availableEnd: validateField('availableEnd', currentForm),
@@ -358,7 +343,6 @@ export const DoctorProfileEdit = () => {
       experience: true,
       consultationFee: true,
       qualification: true,
-      hospital: true,
       availableDays: true,
       availableStart: true,
       availableEnd: true,
@@ -456,7 +440,6 @@ export const DoctorProfileEdit = () => {
         experience: form.experience,
         consultationFee: form.consultationFee === '' ? undefined : Number(form.consultationFee),
         qualification: trim(form.qualification),
-        hospital: trim(form.hospital),
         availableDays: form.availableDays || [],
         availableTime: {
           start: form.availableTime?.start || '',
@@ -685,22 +668,7 @@ export const DoctorProfileEdit = () => {
                   )}
                 </div>
 
-                <div style={{ gridColumn: 'span 2' }}>
-                  <label className="pd-stat-label" htmlFor="hospital">Hospital / Clinic</label>
-                  <input
-                    id="hospital"
-                    name="hospital"
-                    value={form.hospital}
-                    onChange={onChange}
-                    onBlur={() => handleBlur('hospital')}
-                    style={{ width: '90%', padding: 10, borderRadius: 6, ...invalidInputStyle('hospital') }}
-                    aria-invalid={touched.hospital && !!fieldErrors.hospital}
-                    aria-describedby={fieldErrors.hospital ? 'hospital-error' : undefined}
-                  />
-                  {touched.hospital && fieldErrors.hospital && (
-                    <div id="hospital-error" style={{ color: '#e63946', fontSize: 12, marginTop: 6 }}>{fieldErrors.hospital}</div>
-                  )}
-                </div>
+
               </div>
             )}
 
