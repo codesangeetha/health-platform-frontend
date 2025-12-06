@@ -17,7 +17,6 @@ interface DoctorProfileData {
   experience?: string | number; // years
   consultationFee?: number;
   qualification?: string; // e.g., "MD, MBBS"
-  hospital?: string;
   availableDays?: string[];
   availableTime?: {
     start?: string; // HH:mm
@@ -191,10 +190,6 @@ export const DoctorProfile = () => {
                   <div className="pd-stat-label">Qualification</div>
                   <div style={{ color: 'var(--color-text-dark)' }}>{profile?.qualification || '—'}</div>
                 </div>
-                <div>
-                  <div className="pd-stat-label">Hospital / Clinic</div>
-                  <div style={{ color: 'var(--color-text-dark)' }}>{profile?.hospital || '—'}</div>
-                </div>
               </div>
             )}
           </div>
@@ -214,7 +209,7 @@ export const DoctorProfile = () => {
                   </div>
                   <div>
                     <div className="pd-stat-label">Consultation Fee</div>
-                    <div style={{ color: 'var(--color-text-dark)' }}>{profile?.consultationFee != null ? `$${profile.consultationFee}` : '—'}</div>
+                    <div style={{ color: 'var(--color-text-dark)' }}>{profile?.consultationFee != null ? `₹${profile.consultationFee}` : '—'}</div>
                   </div>
                   <div>
                     <div className="pd-stat-label">Available Days</div>
