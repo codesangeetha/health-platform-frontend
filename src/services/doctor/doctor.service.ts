@@ -38,6 +38,7 @@ interface DoctorAppointmentsResponse {
       status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
       appointmentType: 'video' | 'in-person';
       reason: string;
+      createdAt: string;
     }>;
     pagination: {
       page: number;
