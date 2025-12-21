@@ -126,6 +126,7 @@ interface DoctorAppointment {
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
   appointmentType: 'video' | 'in-person';
   reason: string;
+  createdAt: string;
 }
 
 export const DoctorAppointments = () => {
@@ -333,7 +334,7 @@ export const DoctorAppointments = () => {
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   {appointments
-                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                     .map(appointment => {
                       const getSpecializationIcon = (type: string) => {
                         const lowerType = type.toLowerCase();
